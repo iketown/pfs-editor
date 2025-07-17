@@ -12,68 +12,187 @@ import {
   Tooltip
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import dragDataPlugin from 'chartjs-plugin-dragdata';
+
+import React, { useRef, useState, useEffect, useMemo } from 'react';
+import zoomPlugin from 'chartjs-plugin-zoom';
+import ButtonRow from './FSGraphButtons';
+import { ChartJSOrUndefined } from 'react-chartjs-2/dist/types';
+import {
+  FsEditActorContext,
+  useEditActorRef,
+  useEditSelector
+} from './FsEditActorContext';
+import { useMotionActorRef } from './MotionActorContext';
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
+  zoomPlugin,
+  dragDataPlugin,
   Title,
   Tooltip,
   Legend
 );
 
 export default function FSGraph({ funscript }: { funscript: FunscriptObject }) {
-  // Calculate a dynamic width based on number of actions, but at least window width
-  const minWidth = typeof window !== 'undefined' ? window.innerWidth : 800;
-  const chartWidth = Math.max(minWidth, funscript.actions.length * 4);
-  const chartData = {
-    datasets: [
-      {
-        label: 'Position',
-        data: funscript.actions.map((a) => ({ x: a.at, y: a.pos })),
-        borderColor: 'rgb(75, 192, 192)',
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        pointRadius: 0,
-        borderWidth: 2,
-        tension: 0.2
+  const actor = FsEditActorContext.useActorRef();
+  const send = actor.send;
+  const selectedActionIds = useEditSelector(
+    (state) => state.context.selectedActionIds
+  ) as string[];
+  const { send: motionSend } = useMotionActorRef();
+  const { send: editSend } = useEditActorRef();
+  const chartRef =
+    useRef<ChartJSOrUndefined<'line', { x: number; y: number }[], unknown>>(
+      null
+    );
+  useEffect(() => {
+    motionSend({ type: 'SET_CHART_REF', chartRef });
+    editSend({ type: 'SET_CHART_REF', chartRef });
+  }, [chartRef, motionSend, editSend]);
+
+  const handleChartClick = (event: any) => {
+    const chart = chartRef?.current;
+    if (!chart) return;
+    const points = chart.getElementsAtEventForMode(
+      event.nativeEvent,
+      'nearest',
+      { intersect: true },
+      true
+    );
+    if (points.length > 0) {
+      const idx = points[0].index;
+      const action = funscript.actions[idx];
+      const { id, at, pos } = action;
+      send({ type: 'SEEK_VIDEO', time: at / 1000 });
+      const actionId = id; // or whatever uniquely identifies your action
+      if (event.metaKey) {
+        send({ type: 'TOGGLE_SELECTED_NODE', actionId });
+      } else {
+        send({ type: 'SELECT_NODE', actionId });
       }
-    ]
-  };
-  const options = {
-    responsive: false,
-    maintainAspectRatio: false,
-    scales: {
-      x: {
-        type: 'linear' as const,
-        title: { display: true, text: 'Time (ms)' },
-        ticks: { autoSkip: true, maxTicksLimit: 20 }
-      },
-      y: {
-        min: 0,
-        max: 100,
-        title: { display: true, text: 'Position' }
-      }
-    },
-    plugins: {
-      legend: { display: false },
-      tooltip: { enabled: true },
-      title: { display: false }
-    },
-    elements: {
-      line: { cubicInterpolationMode: 'monotone' as const }
+      send({ type: 'SET_NODE_IDX', nodeIdx: idx });
+    } else {
+      send({ type: 'CLEAR_SELECTED_NODES' });
     }
   };
+  // Track current node index for navigation
+
+  // Expose chart instance for debugging
+  // useEffect(() => {
+  //   if (typeof window !== 'undefined' && chartRef.current) {
+  //     // @ts-ignore
+  //     window.chart = chartRef.current;
+  //   }
+  // }, [chartRef.current]);
+
+  const chartData = useMemo(
+    () => ({
+      datasets: [
+        {
+          label: 'Position',
+          data: funscript.actions.map((a) => ({ x: a.at, y: a.pos })),
+          borderColor: 'rgb(75, 192, 192)',
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          pointRadius: 5,
+          pointHoverRadius: 8,
+          pointBackgroundColor: funscript.actions.map((a) =>
+            selectedActionIds.includes(a.id) ? 'purple' : 'rgb(75, 192, 192)'
+          ),
+          borderWidth: 2,
+          tension: 0.2
+        }
+      ]
+    }),
+    [funscript.actions, selectedActionIds]
+  );
+
+  const options = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          type: 'linear' as const,
+          title: { display: true, text: 'Time (ms)' },
+          min: 0,
+          max: 5000,
+          ticks: { autoSkip: true, maxTicksLimit: 20 }
+        },
+        y: {
+          min: 0,
+          max: 100,
+          title: { display: true, text: 'Position' }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: true },
+        title: { display: false },
+        dragData: {
+          showTooltip: true,
+          dragX: true,
+          dragY: true,
+          onDragEnd: (
+            e: any,
+            datasetIndex: number,
+            index: number,
+            value: any
+          ) => {
+            // You can update your funscript/actions here
+            console.log('Dragged point', { e, datasetIndex, index, value });
+          }
+        },
+        zoom: {
+          pan: {
+            enabled: true,
+            mode: 'x' as const
+          },
+          zoom: {
+            wheel: {
+              enabled: true
+            },
+            pinch: {
+              enabled: true
+            },
+            mode: 'x' as const,
+            limits: {
+              x: { minRange: 3000, maxRange: 10000 } // 3s to 10s
+            },
+            onZoom: ({ chart }: { chart: any }) => {
+              // const min = chart.scales.x.min;
+              // const max = chart.scales.x.max;
+              // const visibleMs = max - min;
+              // console.log('Zoom changed:', { min, max, visibleMs });
+            }
+          }
+        }
+      },
+      elements: {
+        line: { cubicInterpolationMode: 'monotone' as const }
+      }
+    }),
+    []
+  );
+
   return (
-    <div style={{ width: '100vw', overflowX: 'auto', height: 400 }}>
-      <div style={{ width: chartWidth, height: 400 }}>
+    <>
+      <ButtonRow />
+      <div style={{ width: '80vw', height: 400 }}>
         <Line
+          ref={chartRef}
+          onLoadedData={(arg) => {
+            console.log('onLoadedData', arg);
+          }}
           data={chartData}
           options={options}
-          width={chartWidth}
           height={400}
+          onClick={handleChartClick}
         />
       </div>
-    </div>
+    </>
   );
 }

@@ -1,7 +1,8 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import ChooseVideoButton from '@/components/fs_components/ChooseVideoButton';
-import FSGraph from '@/components/fs_components/FSGraph';
+import dynamic from 'next/dynamic';
 import FunscriptUploadButton from '@/components/fs_components/FSUploadButton';
 import ContextView from '@/components/fs_components/ContextView';
 import { Icons } from '@/components/icons';
@@ -14,36 +15,75 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog';
-import { fsEditMachine } from '@/lib/fs_machines/fsEditMachine';
 import type { FunscriptObject } from '@/types/funscript';
-import { useMachine } from '@xstate/react';
-import { useState } from 'react';
+import VideoPlayer from '@/components/fs_components/VideoPlayer';
+import {
+  FsEditActorContext,
+  useEditActorRef
+} from '@/components/fs_components/FsEditActorContext';
+import { MotionActorContext } from '@/components/fs_components/MotionActorContext';
 
-export default function EditPage() {
-  const [state, send] = useMachine(fsEditMachine);
-  const { videoUrl, funscript } = state.context;
+const FSGraph = dynamic(
+  () => import('@/components/fs_components/FSGraph.client'),
+  { ssr: false }
+);
+
+function EditPage() {
+  const videoUrl = FsEditActorContext.useSelector(
+    (state) => state.context.videoUrl
+  );
+  const funscript = FsEditActorContext.useSelector(
+    (state) => state.context.funscript
+  );
+  const isEditing = FsEditActorContext.useSelector((state) =>
+    state.matches('editing')
+  );
+  const editActorRef = useEditActorRef();
   const [settingsOpen, setSettingsOpen] = useState(false);
 
+  // On mount, check localStorage for a saved videoUrl and try to fetch it
+  useEffect(() => {
+    const savedUrl = localStorage.getItem('videoUrl');
+    const savedFileName = localStorage.getItem('videoFileName');
+    if (savedUrl && !videoUrl) {
+      fetch(savedUrl)
+        .then((res) => {
+          if (res.ok) {
+            editActorRef.send({
+              type: 'LOAD_VIDEO',
+              url: savedUrl,
+              file: null as any // TODO: Fix this type issue
+            });
+          } else {
+            console.log(`video file not found at ${savedUrl}`);
+            localStorage.removeItem('videoUrl');
+            localStorage.removeItem('videoFileName');
+          }
+        })
+        .catch(() => {
+          console.log(`video file not found at ${savedUrl}`);
+          localStorage.removeItem('videoUrl');
+          localStorage.removeItem('videoFileName');
+        });
+    }
+  }, [editActorRef, videoUrl]);
+
   const handleVideoSelected = (url: string, file: File) => {
-    if (videoUrl) URL.revokeObjectURL(videoUrl);
-    const event = state.matches('editing')
-      ? { type: 'REPLACE_VIDEO' as const, url, file }
-      : { type: 'LOAD_VIDEO' as const, url, file };
-    console.log('Sending video event to XState:', event);
-    send(event);
+    // Save to localStorage
+    localStorage.setItem('videoUrl', url);
+    localStorage.setItem('videoFileName', file.name);
+
+    editActorRef.send({ type: 'LOAD_VIDEO' as const, url, file });
   };
   const handleFunscriptParsed = (funscriptObj: FunscriptObject) => {
-    const event = state.matches('editing')
-      ? { type: 'REPLACE_FUNSCRIPT' as const, funscript: funscriptObj }
-      : { type: 'LOAD_FUNSCRIPT' as const, funscript: funscriptObj };
-    console.log('Sending funscript event to XState:', event);
-    send(event);
+    editActorRef.send({
+      type: 'LOAD_FUNSCRIPT' as const,
+      funscript: funscriptObj
+    });
   };
 
-  // Show settings card if not in editing state
-  const showSettingsCard = !state.matches('editing');
+  const showSettingsCard = !isEditing;
 
-  // Helper to render button with checkmark
   const renderChooseVideoButton = () => (
     <ChooseVideoButton onVideoSelected={handleVideoSelected} done={!!videoUrl}>
       Choose Video
@@ -59,9 +99,6 @@ export default function EditPage() {
       {funscript && <Icons.check className='ml-2 inline text-green-600' />}
     </FunscriptUploadButton>
   );
-
-  // Add a debug log for state.context
-  console.log('Current XState context:', state.context);
 
   return (
     <div className='flex min-h-screen flex-col items-center justify-center p-8'>
@@ -102,8 +139,7 @@ export default function EditPage() {
           {/* Video player and FSGraph */}
           <div className='flex w-full flex-col items-center gap-8'>
             {videoUrl && (
-              <video
-                src={videoUrl}
+              <VideoPlayer
                 controls
                 className='mb-4 w-full max-w-2xl rounded shadow-lg'
                 style={{ maxHeight: 400 }}
@@ -114,7 +150,17 @@ export default function EditPage() {
         </>
       )}
       {/* Always show context view button in top right */}
-      <ContextView context={state.context} state={String(state.value)} />
+      <ContextView />
     </div>
+  );
+}
+
+export default function WrappedEditPage() {
+  return (
+    <MotionActorContext.Provider>
+      <FsEditActorContext.Provider>
+        <EditPage />
+      </FsEditActorContext.Provider>
+    </MotionActorContext.Provider>
   );
 }

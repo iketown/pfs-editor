@@ -1,0 +1,65 @@
+import React, { useEffect, useRef } from 'react';
+import { useEditActorRef, useEditSelector } from './FsEditActorContext';
+import { useMotionActorRef } from './MotionActorContext';
+import { VideoROIWrapper } from './VideoROIWrapper';
+
+interface VideoPlayerProps
+  extends Omit<React.VideoHTMLAttributes<HTMLVideoElement>, 'onTimeUpdate'> {
+  src?: string;
+  onTimeUpdate?: (time: number) => void;
+}
+
+const VideoPlayer: React.FC<VideoPlayerProps> = ({
+  src,
+  onTimeUpdate,
+  ...props
+}) => {
+  const playerRef = useRef<HTMLVideoElement>(null);
+  const videoUrl = useEditSelector((state) => state.context.videoUrl);
+  const { send: editSend } = useEditActorRef();
+  const { send: motionSend } = useMotionActorRef();
+
+  useEffect(() => {
+    motionSend({
+      type: 'SET_PLAYER_REF',
+      playerRef: playerRef as React.RefObject<HTMLVideoElement>
+    });
+    editSend({
+      type: 'SET_PLAYER_REF',
+      playerRef: playerRef as React.RefObject<HTMLVideoElement>
+    });
+  }, [playerRef, motionSend, editSend]);
+
+  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const timeMs = Math.round(e.currentTarget.currentTime * 1000);
+    if (onTimeUpdate) {
+      onTimeUpdate(timeMs);
+    }
+
+    motionSend({
+      type: 'VIDEO_TIME_UPDATE',
+      time: timeMs
+    });
+  };
+
+  const handleLoadedData = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    console.log('onLoadedData', e.currentTarget);
+    // send({ type: 'SET_VIDEO_DURATION', duration: e.currentTarget.duration });
+  };
+
+  if (!videoUrl && !src) return null;
+
+  return (
+    <VideoROIWrapper>
+      <video
+        ref={playerRef}
+        src={src || videoUrl || undefined}
+        onLoadedData={handleLoadedData}
+        onTimeUpdate={handleTimeUpdate}
+        {...props}
+      />
+    </VideoROIWrapper>
+  );
+};
+
+export default VideoPlayer;
