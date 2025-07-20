@@ -1,9 +1,5 @@
-import {
-  FsEditActorContext,
-  useEditActorRef,
-  useEditSelector
-} from '@/components/fs_components/FsEditActorContext';
-import { MotionActorContext } from '@/components/fs_components/MotionActorContext';
+'use client';
+
 import type { FunscriptObject } from '@/types/funscript-types';
 import {
   CategoryScale,
@@ -15,11 +11,20 @@ import {
   Title,
   Tooltip
 } from 'chart.js';
-import dragDataPlugin from 'chartjs-plugin-dragdata';
-import zoomPlugin from 'chartjs-plugin-zoom';
-import { useMemo, useEffect as useReactEffect, useRef } from 'react';
 import { Line } from 'react-chartjs-2';
+import dragDataPlugin from 'chartjs-plugin-dragdata';
+
+import React, { useRef, useState, useEffect, useMemo } from 'react';
+import zoomPlugin from 'chartjs-plugin-zoom';
+import ButtonRow from './FSGraphButtons';
+import FrameIndicator from './FrameIndicator';
 import { ChartJSOrUndefined } from 'react-chartjs-2/dist/types';
+import {
+  FsEditActorContext,
+  useEditActorRef,
+  useEditSelector
+} from './FsEditActorContext';
+import { useMotionActorRef } from './MotionActorContext';
 
 ChartJS.register(
   CategoryScale,
@@ -33,13 +38,9 @@ ChartJS.register(
   Legend
 );
 
-// FSGraph component that reads funscript from context
-export function FSGraph() {
+export default function FSGraph({ funscript }: { funscript: FunscriptObject }) {
   const actor = FsEditActorContext.useActorRef();
   const send = actor.send;
-  const funscript = useEditSelector(
-    (state) => state.context.funscript
-  ) as FunscriptObject | null;
   const selectedActionIds = useEditSelector(
     (state) => state.context.selectedActionIds
   ) as string[];
@@ -49,21 +50,18 @@ export function FSGraph() {
   const videoTime = useEditSelector(
     (state) => state.context.videoTime
   ) as number;
-  const { send: motionSend } = MotionActorContext.useActorRef();
+  const { send: motionSend } = useMotionActorRef();
   const { send: editSend } = useEditActorRef();
   const chartRef =
     useRef<ChartJSOrUndefined<'line', { x: number; y: number }[], unknown>>(
       null
     );
-
-  useReactEffect(() => {
+  useEffect(() => {
     motionSend({ type: 'SET_CHART_REF', chartRef });
     editSend({ type: 'SET_CHART_REF', chartRef });
   }, [chartRef, motionSend, editSend]);
 
   const handleChartClick = (event: any) => {
-    if (!funscript) return;
-
     const chart = chartRef?.current;
     if (!chart) return;
 
@@ -110,27 +108,35 @@ export function FSGraph() {
     send({ type: 'SEEK_VIDEO', time: timeMs / 1000 });
     send({ type: 'CLEAR_SELECTED_NODES' });
   };
+  // Track current node index for navigation
+
+  // Expose chart instance for debugging
+  // useEffect(() => {
+  //   if (typeof window !== 'undefined' && chartRef.current) {
+  //     // @ts-ignore
+  //     window.chart = chartRef.current;
+  //   }
+  // }, [chartRef.current]);
 
   const chartData = useMemo(
     () => ({
       datasets: [
         {
           label: 'Position',
-          data: funscript?.actions.map((a) => ({ x: a.at, y: a.pos })) || [],
+          data: funscript.actions.map((a) => ({ x: a.at, y: a.pos })),
           borderColor: 'rgb(75, 192, 192)',
           backgroundColor: 'rgba(75, 192, 192, 0.2)',
           pointRadius: 5,
           pointHoverRadius: 8,
-          pointBackgroundColor:
-            funscript?.actions.map((a) =>
-              selectedActionIds.includes(a.id) ? 'purple' : 'rgb(75, 192, 192)'
-            ) || [],
+          pointBackgroundColor: funscript.actions.map((a) =>
+            selectedActionIds.includes(a.id) ? 'purple' : 'rgb(75, 192, 192)'
+          ),
           borderWidth: 2,
           tension: 0.2
         }
       ]
     }),
-    [funscript?.actions, selectedActionIds]
+    [funscript.actions, selectedActionIds]
   );
 
   const options = useMemo(
@@ -201,36 +207,32 @@ export function FSGraph() {
     []
   );
 
-  if (!funscript) {
-    return (
-      <div className='flex h-64 items-center justify-center'>
-        <p className='text-muted-foreground'>No funscript data available</p>
-      </div>
-    );
-  }
-
   return (
-    <div style={{ width: '100%', height: 430 }}>
-      {videoFps && (
-        <div style={{ height: 30 }}>
-          {/* FrameIndicator component would go here */}
-          <div className='text-muted-foreground mb-2 text-xs'>
-            Current Time: {videoTime.toFixed(2)}s
-          </div>
+    <>
+      <ButtonRow />
+      <div style={{ width: '80vw', height: 430 }}>
+        {videoFps && (
+          <FrameIndicator
+            chartRef={chartRef}
+            fps={videoFps}
+            currentTimeMs={videoTime}
+            onFrameClick={handleFrameClick}
+            height={30}
+          />
+        )}
+        <div style={{ height: 400 }}>
+          <Line
+            ref={chartRef}
+            onLoadedData={(arg) => {
+              console.log('onLoadedData', arg);
+            }}
+            data={chartData}
+            options={options}
+            height={400}
+            onClick={handleChartClick}
+          />
         </div>
-      )}
-      <div style={{ height: 400 }}>
-        <Line
-          ref={chartRef}
-          onLoadedData={(arg) => {
-            console.log('onLoadedData', arg);
-          }}
-          data={chartData}
-          options={options}
-          height={400}
-          onClick={handleChartClick}
-        />
       </div>
-    </div>
+    </>
   );
 }

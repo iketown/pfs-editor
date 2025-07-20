@@ -1,0 +1,54 @@
+# XState v5 Syntax Rules
+
+## **Assign Actions**
+- **Correct Syntax**: Use destructured parameters `({ context, event })` from the first argument
+- **Incorrect Syntax**: Do NOT use `(context, event)` or `(_, event)`
+
+```typescript
+// ✅ DO: Correct XState v5 assign syntax
+actions: assign({
+  currentProject: ({ context, event }) => ({
+    ...context.currentProject!,
+    name: event.name
+  }),
+  videoBlobUrl: ({ event }) => event.blobUrl,
+  error: null
+})
+
+// ❌ DON'T: Old XState v4 syntax
+actions: assign({
+  currentProject: (context, event) => ({ ... }), // Wrong!
+  videoBlobUrl: (_, event) => event.blobUrl,     // Wrong!
+})
+```
+
+## **State Machine Structure**
+- Use `createMachine` from 'xstate'
+- Define context interface with proper typing
+- Use union types for events
+- Use `types: {} as { context: ContextType; events: EventType }` for TypeScript
+
+## **Actor Context Pattern**
+- Create actor context using `createActorContext`
+- Export provider and hooks for React integration
+- Use `useSelector` and `useActorRef` hooks
+
+## **Common Patterns**
+- **State Transitions**: Use absolute targets (e.g., `target: 'selectVideo'`)
+- **Actions**: Use `assign` for context updates
+- **Services**: Define in second argument to `createMachine`
+- **Guards**: Use `guard` function for conditional transitions
+
+## **Error Handling**
+- Include error state in context
+- Use `CLEAR_ERROR` events
+- Handle service errors with `onError` transitions
+
+## **File Organization**
+- Place machines in `lib/fs_machines/` directory
+- Name files as `*Machine.ts`
+- Create corresponding `*ActorContext.tsx` for React integration
+description:
+globs:
+alwaysApply: false
+---

@@ -116,7 +116,6 @@ export const motionMachine = createMachine({
                 },
                 SET_CHART_REF: {
                     actions: assign(({ event }) => {
-                        console.log('SET_CHART_REF', event);
                         return {
                             chartRef: event?.chartRef ?? null
                         }

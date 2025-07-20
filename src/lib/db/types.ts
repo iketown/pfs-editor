@@ -1,3 +1,6 @@
+import type { FunscriptObject } from '@/types/funscript-types';
+import { nanoid } from 'nanoid';
+
 // Core project data model
 export interface Project {
     id: string;
@@ -11,15 +14,7 @@ export interface Project {
         handle?: FileSystemFileHandle; // For Chromium browsers
         lastModified?: number;
     };
-    funscriptData?: {
-        version: string;
-        range: number;
-        inverted: boolean;
-        actions: Array<{
-            at: number;
-            pos: number;
-        }>;
-    };
+    funscriptData?: FunscriptObject;
     settings?: {
         playbackRate?: number;
         volume?: number;
@@ -50,6 +45,6 @@ export abstract class BaseStorageProvider implements StorageProvider {
 
     // Helper to generate unique IDs
     generateId(): string {
-        return Date.now().toString(36) + Math.random().toString(36).substring(2);
+        return nanoid(5);
     }
 } 
