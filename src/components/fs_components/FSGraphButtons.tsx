@@ -1,6 +1,9 @@
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useEditActorRef, useEditSelector } from './FsEditActorContext';
 import { useMotionSelector } from './MotionActorContext';
+import { useState } from 'react';
 
 // ButtonRow component for graph controls
 export default function ButtonRow({}: {}) {
@@ -10,14 +13,17 @@ export default function ButtonRow({}: {}) {
     (state) => state.context.currentNodeIdx
   );
   const funscript = useEditSelector((state) => state.context.funscript) as any;
+  const videoFps = useEditSelector((state) => state.context.videoFps) as
+    | number
+    | null;
   const chartRef = useMotionSelector(
     (state) => state.context.chartRef
   ) as React.RefObject<any> | null;
+  const [fpsInput, setFpsInput] = useState(videoFps?.toString() || '30');
   // Helper to get current zoom window size
 
   function getCurrentWindowSize() {
     const chart = chartRef?.current;
-    console.log('get current window size', chart);
     if (chart && typeof chart.getZoomedScaleBounds === 'function') {
       const bounds = chart.getZoomedScaleBounds();
       if (
@@ -34,7 +40,6 @@ export default function ButtonRow({}: {}) {
   }
 
   function jumpToNode(idx: number) {
-    console.log('jumpToNode', idx);
     if (!funscript?.actions[idx]) {
       console.log('no action at idx', idx);
       return;
@@ -67,6 +72,13 @@ export default function ButtonRow({}: {}) {
     }
   }
 
+  function handleFpsChange() {
+    const fps = parseInt(fpsInput);
+    if (fps > 0 && fps <= 120) {
+      send({ type: 'SET_VIDEO_FPS', fps });
+    }
+  }
+
   return (
     <div
       style={{
@@ -93,6 +105,22 @@ export default function ButtonRow({}: {}) {
       >
         → next node
       </Button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <Label htmlFor='fps-input' style={{ fontSize: 12 }}>
+          FPS:
+        </Label>
+        <Input
+          id='fps-input'
+          type='number'
+          value={fpsInput}
+          onChange={(e) => setFpsInput(e.target.value)}
+          onBlur={handleFpsChange}
+          onKeyDown={(e) => e.key === 'Enter' && handleFpsChange()}
+          style={{ width: 60, height: 28, fontSize: 12 }}
+          min='1'
+          max='120'
+        />
+      </div>
     </div>
   );
 }

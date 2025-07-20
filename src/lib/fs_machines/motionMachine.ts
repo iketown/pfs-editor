@@ -1,6 +1,6 @@
 import { createMachine, assign } from 'xstate';
 import { ChartJSOrUndefined } from 'react-chartjs-2/dist/types';
-import type { ROI } from '@/components/fs_components/VideoROIWrapper';
+import type { ROI } from '@/types/roi-types';
 
 export type MotionContext = {
     playerRef: React.RefObject<HTMLVideoElement> | null;
@@ -8,6 +8,7 @@ export type MotionContext = {
     currentROI: ROI;
     selectedROIid: string | null;
     rois: ROI[];
+    videoFps: number | null;
 };
 
 export type MotionEvent =
@@ -19,10 +20,11 @@ export type MotionEvent =
     | { type: 'UPDATE_ROI'; roi: ROI }
     | { type: 'REMOVE_ROI'; roiId: string }
     | { type: 'VIDEO_TIME_UPDATE'; time: number }
+    | { type: 'SET_VIDEO_FPS'; fps: number }
 
-const initialROI: ROI = { x: 0, y: 0, width: 100, height: 100, id: 'default', timeStart: 0 };
-const test5s = { ...initialROI, id: 'test5s', timeStart: 5000 }
-const test10s = { ...initialROI, id: 'test10s', timeStart: 10000 }
+const initialROI: ROI = { x: 0, y: 0, w: 100, h: 100, id: 'default', timeStart: 0, timeEnd: 10000 };
+const test5s = { ...initialROI, id: 'test5s', timeStart: 5000, timeEnd: 15000 }
+const test10s = { ...initialROI, id: 'test10s', timeStart: 10000, timeEnd: 20000 }
 
 export const motionMachine = createMachine({
     id: 'motion',
@@ -32,7 +34,8 @@ export const motionMachine = createMachine({
         chartRef: null,
         currentROI: initialROI,
         selectedROIid: null,
-        rois: [initialROI, test5s, test10s]
+        rois: [initialROI, test5s, test10s],
+        videoFps: null
     },
     on: {
         VIDEO_TIME_UPDATE: {
@@ -46,13 +49,16 @@ export const motionMachine = createMachine({
                     const newROI = sorted[0] || currentROI;
                     // Only update if different
                     if (currentROI && newROI && currentROI.id === newROI.id) {
-                        console.log('currentROI same', newROI);
                         return currentROI;
-                    } else {
-                        console.log('newROI different', newROI);
                     }
                     return newROI;
+
                 }
+            })
+        },
+        SET_VIDEO_FPS: {
+            actions: assign({
+                videoFps: ({ event }) => event.fps
             })
         },
     },

@@ -32,6 +32,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
     const timeMs = Math.round(e.currentTarget.currentTime * 1000);
+
     if (onTimeUpdate) {
       onTimeUpdate(timeMs);
     }
@@ -44,7 +45,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   const handleLoadedData = (e: React.SyntheticEvent<HTMLVideoElement>) => {
     console.log('onLoadedData', e.currentTarget);
-    // send({ type: 'SET_VIDEO_DURATION', duration: e.currentTarget.duration });
+    const video = e.currentTarget;
+
+    // For now, use a default FPS of 30 as it's most common
+    // In a real implementation, you might want to analyze the video stream
+    console.log('Using default FPS: 30');
+    motionSend({ type: 'SET_VIDEO_FPS', fps: 30 });
+    editSend({ type: 'SET_VIDEO_FPS', fps: 30 });
   };
 
   if (!videoUrl && !src) return null;

@@ -1,0 +1,212 @@
+<context>
+# Overview  
+PFS Editor is a web-based video editor specifically designed for creating and editing Funscript files. Funscript is a format used for synchronized motion control, where position data (0-100) is mapped to timestamps in milliseconds. The application allows users to upload videos and corresponding Funscript files, then edit the motion data through an interactive graph interface while previewing the video playback.
+
+The editor solves the problem of creating precise, time-synchronized motion control scripts by providing a visual interface that combines video playback with an editable position graph. This is valuable for content creators who need to synchronize motion with video content, particularly in adult entertainment and other motion-controlled applications.
+
+# Core Features  
+1. **Video Upload and Playback**
+   - Upload video files through drag-and-drop or file picker
+   - Video player with standard controls (play, pause, seek, volume)
+   - Automatic video format detection and browser compatibility
+   - Persistent video storage using localStorage
+
+2. **Funscript File Management**
+   - Upload and parse Funscript JSON files
+   - Validate Funscript format and metadata
+   - Support for Funscript version 1.0 with extensible metadata
+   - Export edited Funscript files
+
+3. **Interactive Graph Editor**
+   - Visual representation of position data over time
+   - Drag-and-drop editing of position points
+   - Zoom and pan functionality for precise editing
+   - Click-to-seek video playback synchronization
+   - Multi-point selection with keyboard modifiers
+
+4. **Real-time Synchronization**
+   - Video playback position synchronized with graph cursor
+   - Frame indicator showing current video position
+   - Click on graph to seek video to specific timestamp
+   - Visual feedback for selected points and current playback position
+
+5. **Advanced Editing Tools**
+   - Multi-point selection and bulk editing
+   - Undo/redo functionality for editing operations
+   - Copy/paste of position data
+   - Smooth interpolation between points
+   - Range and inversion controls
+
+# User Experience  
+**Primary User Persona**: Content creators and motion control enthusiasts who need to create precise, time-synchronized motion scripts.
+
+**Key User Flows**:
+1. **Initial Setup**: User uploads video file, then uploads corresponding Funscript file
+2. **Editing Workflow**: User plays video while observing graph, clicks to seek, drags points to adjust positions
+3. **Precision Editing**: User zooms into specific time ranges, selects multiple points, makes bulk adjustments
+4. **Export**: User saves the edited Funscript file for use in motion control systems
+
+**UI/UX Considerations**:
+- Clean, distraction-free interface focused on video and graph
+- Intuitive drag-and-drop interactions
+- Keyboard shortcuts for power users
+- Responsive design for different screen sizes
+- Dark/light theme support
+- Accessibility features for users with disabilities
+</context>
+<PRD>
+# Technical Architecture  
+**Frontend Framework**: Next.js 15 with React 19, TypeScript
+**State Management**: XState for complex state machines, Zustand for simpler state
+**UI Components**: Shadcn/ui with Radix UI primitives, Tailwind CSS
+**Charts**: Chart.js with custom plugins for drag-and-drop functionality
+**Video Playback**: HTML5 video with custom controls
+**File Handling**: Browser File API with drag-and-drop support
+
+**System Components**:
+- Video Player Component: Handles video playback and synchronization
+- FSGraph Component: Interactive chart for position data editing
+- Motion Capture Component: OpenCV integration for motion detection
+- Motion Path Overlay: Visual representation of detected motion paths
+- Range Mapping Interface: UI for setting motion bounds and normalization
+- State Machines: FsEditActor for editing state, MotionActor for motion calculations
+- File Upload Components: Video and Funscript file handling
+- Context View: Debug and state inspection tools
+
+**Data Models**:
+- FunscriptObject: Main data structure with actions array and metadata
+- FunscriptAction: Individual position points with id, timestamp, and position
+- FunscriptMetadata: Version, range, inversion settings
+
+**APIs and Integrations**:
+- File system access for upload/download
+- localStorage for session persistence
+- OpenCV.js for motion detection and tracking
+- Web Workers for video processing to avoid blocking UI
+- Potential future: Cloud storage integration, collaborative editing
+
+# Development Roadmap  
+**Phase 1: Core MVP (Foundation)**
+- Basic video upload and playback functionality
+- Simple Funscript file parsing and validation
+- Basic graph visualization without editing
+- Video-graph synchronization (seek on click)
+- Minimal UI with upload buttons and video player
+
+**Phase 2: Basic Editing (Usable Frontend)**
+- Drag-and-drop point editing on the graph
+- Multi-point selection with keyboard modifiers
+- Undo/redo functionality
+- Zoom and pan controls for the graph
+- Frame indicator showing current video position
+- Export functionality for edited Funscript files
+
+**Phase 3: Motion Capture & Auto-Generation (Core Value Proposition)**
+- OpenCV integration for motion detection and tracking
+- Visual motion path overlay on video with dots/points
+- Motion path selection and editing interface
+- Automatic conversion of motion paths to normalized 0-100% values
+- Range mapping system (set bottom/top bounds for motion conversion)
+- Batch processing of multiple motion paths throughout video
+- Preview of generated Funscript data before applying
+- Manual refinement tools for auto-generated motion data
+- Export of motion capture settings and parameters
+
+**Phase 4: Advanced Features & Polish (Enhanced Functionality)**
+- Bulk editing operations (copy/paste, delete multiple points)
+- Smooth interpolation between points
+- Range and inversion controls in UI
+- Keyboard shortcuts for all major operations
+- Performance optimizations for large files
+- Error handling and validation feedback
+
+**Phase 5: Polish and UX (Refinement)**
+- Advanced UI themes and customization
+- Accessibility improvements
+- Mobile responsiveness
+- Tutorial and help system
+- Performance monitoring and analytics
+- Advanced export options (different formats, compression)
+
+# Logical Dependency Chain
+**Foundation First (Phase 1)**:
+1. Video upload and playback system - core requirement for any editing
+2. Funscript parsing and validation - needed before any graph display
+3. Basic graph visualization - foundation for all editing features
+4. Video-graph synchronization - essential for usable editing workflow
+
+**Quickly to Usable Frontend (Phase 2)**:
+1. Drag-and-drop editing - transforms static graph into interactive editor
+2. Multi-point selection - enables bulk operations and better UX
+3. Zoom/pan controls - allows precision editing of specific time ranges
+4. Frame indicator - provides visual feedback for current position
+5. Export functionality - makes the editor actually useful for end users
+
+**Motion Capture & Auto-Generation (Phase 3)**:
+1. OpenCV integration - enables automatic motion detection
+2. Visual motion path overlay - shows detected motion on video
+3. Motion path selection - allows user to choose which motions to track
+4. Range mapping system - converts motion bounds to 0-100% scale
+5. Auto-generation - creates Funscript data from motion paths
+6. Manual refinement - allows editing of auto-generated data
+
+**Advanced Features (Phase 4)**:
+1. Bulk editing operations - leverages multi-point selection
+2. Interpolation - improves quality of edited motion data
+3. Range/inversion controls - adds professional features
+4. Keyboard shortcuts - improves efficiency for power users
+
+**Refine and Polish (Phase 5)**:
+1. UI/UX improvements - builds on all previous functionality
+2. Accessibility - ensures broad usability
+3. Performance optimizations - handles larger files and more complex operations
+4. Advanced features - adds professional-grade capabilities
+
+# Risks and Mitigations  
+**Technical Challenges**:
+- **Risk**: Browser compatibility for video formats and File API
+- **Mitigation**: Use widely supported formats, provide fallbacks, test across browsers
+
+- **Risk**: Performance with large video files or complex Funscript data
+- **Mitigation**: Implement lazy loading, virtual scrolling for large datasets, optimize rendering
+
+- **Risk**: Complex state management between video and graph synchronization
+- **Mitigation**: Use XState for predictable state machines, thorough testing of edge cases
+
+- **Risk**: OpenCV.js integration and motion detection accuracy
+- **Mitigation**: Use Web Workers for processing, implement fallback manual tracking, test with various video qualities
+
+- **Risk**: Motion path normalization and range mapping complexity
+- **Mitigation**: Create intuitive UI for range selection, provide preview of normalized values, allow manual adjustment
+
+**MVP Definition**:
+- **Risk**: Over-engineering the initial version
+- **Mitigation**: Focus on core video-graph synchronization first, add features incrementally
+
+- **Risk**: Missing essential features for actual use
+- **Mitigation**: User testing with target audience, prioritize export functionality
+
+**Resource Constraints**:
+- **Risk**: Complex drag-and-drop implementation
+- **Mitigation**: Use proven libraries (Chart.js plugins), start with simple interactions
+
+- **Risk**: Video processing performance
+- **Mitigation**: Use browser-native video capabilities, avoid server-side processing initially
+
+# Appendix  
+**Research Findings**:
+- Funscript format is widely used in motion control applications
+- Chart.js provides excellent foundation for interactive graphs
+- XState is ideal for complex state management in editing applications
+- Next.js 15 with App Router provides excellent developer experience
+
+**Technical Specifications**:
+- Funscript format: JSON with actions array containing id, at (timestamp), pos (position)
+- Video formats: MP4, WebM, OGV (browser-supported formats)
+- Graph interaction: Chart.js with custom drag-and-drop plugins
+- State persistence: localStorage for session data, file export for permanent storage
+- Motion detection: OpenCV.js with object tracking algorithms (KCF, CSRT, MOSSE)
+- Motion path format: Array of [x, y] coordinates with timestamps
+- Range mapping: User-defined bottom/top bounds converted to 0-100% scale
+- Processing: Web Workers for non-blocking video analysis
+</PRD> 

@@ -1,6 +1,6 @@
 'use client';
 
-import type { FunscriptObject } from '@/types/funscript';
+import type { FunscriptObject } from '@/types/funscript-types';
 import {
   CategoryScale,
   Chart as ChartJS,
@@ -17,6 +17,7 @@ import dragDataPlugin from 'chartjs-plugin-dragdata';
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import zoomPlugin from 'chartjs-plugin-zoom';
 import ButtonRow from './FSGraphButtons';
+import FrameIndicator from './FrameIndicator';
 import { ChartJSOrUndefined } from 'react-chartjs-2/dist/types';
 import {
   FsEditActorContext,
@@ -43,6 +44,12 @@ export default function FSGraph({ funscript }: { funscript: FunscriptObject }) {
   const selectedActionIds = useEditSelector(
     (state) => state.context.selectedActionIds
   ) as string[];
+  const videoFps = useEditSelector((state) => state.context.videoFps) as
+    | number
+    | null;
+  const videoTime = useEditSelector(
+    (state) => state.context.videoTime
+  ) as number;
   const { send: motionSend } = useMotionActorRef();
   const { send: editSend } = useEditActorRef();
   const chartRef =
@@ -57,27 +64,49 @@ export default function FSGraph({ funscript }: { funscript: FunscriptObject }) {
   const handleChartClick = (event: any) => {
     const chart = chartRef?.current;
     if (!chart) return;
+
+    // Get the canvas coordinates from the click event
+    const canvasPosition = chart.canvas.getBoundingClientRect();
+    const x = event.nativeEvent.clientX - canvasPosition.left;
+    const y = event.nativeEvent.clientY - canvasPosition.top;
+
+    // Convert canvas coordinates to data coordinates
+    const xScale = chart.scales.x;
+    const clickedTime = xScale.getValueForPixel(x);
+
+    // Check if we clicked on a data point
     const points = chart.getElementsAtEventForMode(
       event.nativeEvent,
       'nearest',
       { intersect: true },
       true
     );
+
     if (points.length > 0) {
+      // Clicked on a data point
       const idx = points[0].index;
       const action = funscript.actions[idx];
       const { id, at, pos } = action;
       send({ type: 'SEEK_VIDEO', time: at / 1000 });
-      const actionId = id; // or whatever uniquely identifies your action
+      const actionId = id;
       if (event.metaKey) {
         send({ type: 'TOGGLE_SELECTED_NODE', actionId });
       } else {
         send({ type: 'SELECT_NODE', actionId });
       }
       send({ type: 'SET_NODE_IDX', nodeIdx: idx });
-    } else {
+    } else if (clickedTime !== undefined) {
+      // Clicked on empty space - seek to the clicked time
+      console.log('Clicked at time:', clickedTime, 'ms');
+      send({ type: 'SEEK_VIDEO', time: clickedTime / 1000 });
       send({ type: 'CLEAR_SELECTED_NODES' });
     }
+  };
+
+  const handleFrameClick = (timeMs: number) => {
+    console.log('Frame clicked at:', timeMs, 'ms');
+    send({ type: 'SEEK_VIDEO', time: timeMs / 1000 });
+    send({ type: 'CLEAR_SELECTED_NODES' });
   };
   // Track current node index for navigation
 
@@ -181,17 +210,28 @@ export default function FSGraph({ funscript }: { funscript: FunscriptObject }) {
   return (
     <>
       <ButtonRow />
-      <div style={{ width: '80vw', height: 400 }}>
-        <Line
-          ref={chartRef}
-          onLoadedData={(arg) => {
-            console.log('onLoadedData', arg);
-          }}
-          data={chartData}
-          options={options}
-          height={400}
-          onClick={handleChartClick}
-        />
+      <div style={{ width: '80vw', height: 430 }}>
+        {videoFps && (
+          <FrameIndicator
+            chartRef={chartRef}
+            fps={videoFps}
+            currentTimeMs={videoTime}
+            onFrameClick={handleFrameClick}
+            height={30}
+          />
+        )}
+        <div style={{ height: 400 }}>
+          <Line
+            ref={chartRef}
+            onLoadedData={(arg) => {
+              console.log('onLoadedData', arg);
+            }}
+            data={chartData}
+            options={options}
+            height={400}
+            onClick={handleChartClick}
+          />
+        </div>
       </div>
     </>
   );

@@ -1,12 +1,13 @@
-import { auth } from '@clerk/nextjs/server';
-import { redirect } from 'next/navigation';
+'use client';
 
-export default async function Page() {
-  const { userId } = await auth();
+import { ProjectWorkflow } from '@/components/ProjectWorkflow';
 
-  if (!userId) {
-    return redirect('/auth/sign-in');
-  } else {
-    redirect('/dashboard/overview');
-  }
+export default function Home() {
+  return (
+    <main className='flex min-h-screen flex-col items-center justify-between p-24'>
+      <div className='w-full'>
+        <ProjectWorkflow />
+      </div>
+    </main>
+  );
 }

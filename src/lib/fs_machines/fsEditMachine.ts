@@ -1,6 +1,6 @@
 import { createMachine } from 'xstate';
 import { fsEditActions } from './fsEditActions';
-import type { FunscriptObject } from '@/types/funscript';
+import type { FunscriptObject } from '@/types/funscript-types';
 import { ChartJSOrUndefined } from 'react-chartjs-2/dist/types';
 
 export type FSEditContext = {
@@ -12,6 +12,7 @@ export type FSEditContext = {
     currentNodeIdx: number;
     playerRef: React.RefObject<HTMLVideoElement> | null;
     chartRef: React.RefObject<ChartJSOrUndefined<'line', { x: number; y: number }[], unknown>> | null;
+    videoFps: number | null;
 };
 
 export type FSEditEvent =
@@ -24,7 +25,8 @@ export type FSEditEvent =
     | { type: 'SELECT_NODE'; actionId: string }
     | { type: 'SET_NODE_IDX'; nodeIdx: number }
     | { type: 'TOGGLE_SELECTED_NODE'; actionId: string }
-    | { type: 'CLEAR_SELECTED_NODES' };
+    | { type: 'CLEAR_SELECTED_NODES' }
+    | { type: 'SET_VIDEO_FPS'; fps: number };
 
 export const fsEditMachine = createMachine({
     id: 'fsEdit',
@@ -37,7 +39,8 @@ export const fsEditMachine = createMachine({
         selectedActionIds: [],
         currentNodeIdx: 0,
         playerRef: null,
-        chartRef: null
+        chartRef: null,
+        videoFps: null
     },
     on: {
         LOAD_FUNSCRIPT: {
@@ -48,6 +51,9 @@ export const fsEditMachine = createMachine({
         },
         SET_CHART_REF: {
             actions: 'setChartRef'
+        },
+        SET_VIDEO_FPS: {
+            actions: 'setVideoFps'
         }
     },
     states: {

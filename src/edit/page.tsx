@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { parseFunscript } from '@/lib/funscript';
-import type { FunscriptObject } from '@/types/funscript';
+import type { FunscriptObject } from '@/types/funscript-types';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,

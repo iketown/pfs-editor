@@ -15,7 +15,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog';
-import type { FunscriptObject } from '@/types/funscript';
+import type { FunscriptObject } from '@/types/funscript-types';
 import VideoPlayer from '@/components/fs_components/VideoPlayer';
 import {
   FsEditActorContext,

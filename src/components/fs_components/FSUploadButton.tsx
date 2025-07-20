@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { parseFunscript } from '@/lib/funscript';
-import type { FunscriptObject } from '@/types/funscript';
+import type { FunscriptObject } from '@/types/funscript-types';
 import React from 'react';
 
 export default function FunscriptUploadButton({

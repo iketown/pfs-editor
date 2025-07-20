@@ -1,5 +1,5 @@
 // parser.ts
-import type { FunscriptObject } from '@/types/funscript';
+import type { FunscriptObject } from '@/types/funscript-types';
 
 export function parseFunscript(jsonString: string): FunscriptObject {
     let obj: any;

@@ -79,6 +79,11 @@ const setChartRef = assign(({ event }: any) => {
     return { chartRef: event.chartRef };
 });
 
+const setVideoFps = assign(({ event }: any) => {
+    invariant(event.type === 'SET_VIDEO_FPS', 'setVideoFps must be called with a SET_VIDEO_FPS event');
+    return { videoFps: event.fps };
+});
+
 export const fsEditActions = {
     updateVideoTime,
     loadVideo,
@@ -89,5 +94,6 @@ export const fsEditActions = {
     setNodeIdx,
     seekVideo,
     setPlayerRef,
-    setChartRef
+    setChartRef,
+    setVideoFps
 }; 

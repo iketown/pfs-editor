@@ -7,15 +7,7 @@ import React, {
 } from 'react';
 import Moveable, { OnDrag, OnResize } from 'react-moveable';
 import { useMotionSelector, useMotionActorRef } from './MotionActorContext';
-
-export type ROI = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  id: string;
-  timeStart: number;
-};
+import { ROI } from '@/types/roi-types';
 
 interface VideoROIWrapperProps {
   style?: CSSProperties;
@@ -30,9 +22,10 @@ export const VideoROIWrapper: React.FC<VideoROIWrapperProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useMotionSelector(
-    (state) => state.context.videoRef
+    (state) => state.context.playerRef
   ) as React.RefObject<HTMLVideoElement> | null;
   const currentROI = useMotionSelector((state) => state.context.currentROI);
+
   const selectedROIid = useMotionSelector(
     (state) => state.context.selectedROIid
   );
@@ -46,7 +39,7 @@ export const VideoROIWrapper: React.FC<VideoROIWrapperProps> = ({
   const [frame, setFrame] = useState<ROI>(currentROI);
   const [target, setTarget] = useState<SVGRectElement | null>(null);
   const [svgSize, setSvgSize] = useState({ w: 0, h: 0 });
-
+  console.log('svgSize', svgSize);
   // Update frame when currentROI changes
   useEffect(() => {
     setFrame(currentROI);
@@ -56,8 +49,10 @@ export const VideoROIWrapper: React.FC<VideoROIWrapperProps> = ({
   useEffect(() => {
     const vid = playerRef?.current;
     if (!vid) {
+      console.log('no video ref');
       return;
     }
+    console.log('video ref', vid);
     const onLoaded = () => {
       setSvgSize({ w: vid.videoWidth, h: vid.videoHeight });
       console.log('setting svg size', {
@@ -74,6 +69,7 @@ export const VideoROIWrapper: React.FC<VideoROIWrapperProps> = ({
   }, [playerRef]);
 
   const onUpdateROI = (updatedFrame: ROI) => {
+    console.log('onUpdateROI', updatedFrame);
     motionActorRef.send({
       type: 'UPDATE_ROI',
       roi: updatedFrame
@@ -97,8 +93,8 @@ export const VideoROIWrapper: React.FC<VideoROIWrapperProps> = ({
           ref={setTarget}
           x={frame.x}
           y={frame.y}
-          width={frame.width}
-          height={frame.height}
+          width={frame.w}
+          height={frame.h}
           fill='rgba(0,255,0,0.1)'
           stroke='lime'
           strokeWidth={2}
