@@ -61,6 +61,17 @@ export function EditProjectPage() {
             funscript: loadedProject.funscriptData
           });
         }
+
+        // Load saved fsChapters if they exist, otherwise they will be generated from funscript metadata
+        if (
+          loadedProject.fsChapters &&
+          Object.keys(loadedProject.fsChapters).length > 0
+        ) {
+          editSend({
+            type: 'LOAD_FS_CHAPTERS',
+            fsChapters: loadedProject.fsChapters
+          });
+        }
       } catch (err) {
         console.error('Failed to load project:', err);
         setError('Failed to load project');

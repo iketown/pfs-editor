@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { ChevronDown } from 'lucide-react';
 import { useEditActorRef, useEditSelector } from './FsEditActorContext';
 import { cn } from '@/lib/utils';
+import { useParams } from 'next/navigation';
 
 interface VideoChapterSliderProps {
   onChaptersChange?: (chapters: any[]) => void;
@@ -30,6 +31,8 @@ const VideoChapterSlider: React.FC<VideoChapterSliderProps> = ({
   const selectedChapterId = useEditSelector(
     (state) => state.context.selectedChapterId
   );
+  const params = useParams();
+  const projectId = params.project_id as string;
 
   // State for popover
   const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
@@ -136,25 +139,49 @@ const VideoChapterSlider: React.FC<VideoChapterSliderProps> = ({
         );
       });
 
-      // Update each chapter individually
+      // Find which chapter changed by comparing values
       for (let i = 0; i < values.length; i += 2) {
         const chapterIndex = Math.floor(i / 2);
         if (chapterIndex < visibleChapters.length) {
           const chapter = visibleChapters[chapterIndex];
           const newStartTime = values[i];
           const newEndTime = values[i + 1];
-
-          // Send individual chapter update
-          send({
-            type: 'UPDATE_CHAPTER',
-            chapterId: chapter.id,
-            startTime: newStartTime,
-            endTime: newEndTime
-          });
+          const startChanged =
+            Math.abs(newStartTime - chapter.startTime) > 0.01;
+          const endChanged = Math.abs(newEndTime - chapter.endTime) > 0.01;
+          // Only update if values actually changed
+          if (startChanged) {
+            send({ type: 'SEEK_VIDEO', time: newStartTime });
+          }
+          if (endChanged) {
+            send({ type: 'SEEK_VIDEO', time: newEndTime });
+          }
+          if (startChanged || endChanged) {
+            send({
+              type: 'UPDATE_CHAPTER',
+              chapterId: chapter.id,
+              startTime: newStartTime,
+              endTime: newEndTime
+            });
+            // Since only one thumb can be dragged at a time, we can break after finding the changed chapter
+            break;
+          }
         }
       }
     },
     [allChapters, rangeStart, rangeEnd, send]
+  );
+
+  const handleChapterCommit = useCallback(
+    (values: number[]) => {
+      handleChapterChange(values);
+
+      // Auto-save to backend after chapter changes are committed
+      if (projectId) {
+        send({ type: 'SAVE_PROJECT', projectId });
+      }
+    },
+    [handleChapterChange, projectId, send]
   );
 
   // Format time for display
@@ -250,11 +277,12 @@ const VideoChapterSlider: React.FC<VideoChapterSliderProps> = ({
   const handleSave = () => {
     if (openPopoverId && Object.keys(validationErrors).length === 0) {
       send({
-        type: 'UPDATE_CHAPTER',
+        type: 'UPDATE_CHAPTER_AND_SAVE',
         chapterId: openPopoverId,
         title: formData.title,
         startTime: formData.startTime,
-        endTime: formData.endTime
+        endTime: formData.endTime,
+        projectId: projectId
       });
       setOpenPopoverId(null);
     }
@@ -299,6 +327,7 @@ const VideoChapterSlider: React.FC<VideoChapterSliderProps> = ({
         className='relative flex w-full touch-none items-center select-none'
         value={handlePositions}
         onValueChange={handleChapterChange}
+        onValueCommit={handleChapterCommit}
         max={rangeEnd}
         min={rangeStart}
         step={0.1}

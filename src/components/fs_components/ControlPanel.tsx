@@ -9,24 +9,27 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Save } from 'lucide-react';
+import { useParams } from 'next/navigation';
+import { useState } from 'react';
 
 const editModes = [
   { label: 'Play', value: 'playing' },
-  { label: 'Funscript', value: 'funscript_editing' },
+  { label: 'Actions', value: 'fsaction_editing' },
   { label: 'Chapters', value: 'chapters_editing' },
   { label: 'Zoom', value: 'zoom_editing' },
   { label: 'ROI', value: 'roi_editing' },
   { label: 'Motion', value: 'motion_editing' }
 ];
 
-export default function ControlPanel() {
+const ControlPanel = () => {
   const { send } = useEditActorRef();
 
   // Get the current editing substate
-  const currentEditingState = useEditSelector((state) => {
+  const editMode = useEditSelector((state) => {
     if (state.matches('editing')) {
-      if (state.matches('editing.funscript_editing'))
-        return 'funscript_editing';
+      if (state.matches('editing.fsaction_editing')) return 'fsaction_editing';
       if (state.matches('editing.chapters_editing')) return 'chapters_editing';
       if (state.matches('editing.zoom_editing')) return 'zoom_editing';
       if (state.matches('editing.roi_editing')) return 'roi_editing';
@@ -36,10 +39,32 @@ export default function ControlPanel() {
     return 'playing';
   });
 
+  const fsChapters = useEditSelector((state) => state.context.fsChapters);
+  const params = useParams();
+  const projectId = params.project_id as string;
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSaveChapters = async () => {
+    if (!projectId) {
+      console.error('No project ID available');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      send({ type: 'SAVE_PROJECT', projectId });
+      console.log('Chapters saved successfully');
+    } catch (error) {
+      console.error('Failed to save chapters:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleTabChange = (value: string) => {
     switch (value) {
-      case 'funscript_editing':
-        send({ type: 'SWITCH_TO_FUNSCRIPT_EDITING' });
+      case 'fsaction_editing':
+        send({ type: 'SWITCH_TO_FSACTIONS_EDITING' });
         break;
       case 'chapters_editing':
         send({ type: 'SWITCH_TO_CHAPTERS_EDITING' });
@@ -61,13 +86,26 @@ export default function ControlPanel() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Controls</CardTitle>
-        <CardDescription>Project editing controls and settings</CardDescription>
+      <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+        <div>
+          <CardTitle className='text-sm font-medium'>Controls</CardTitle>
+          <CardDescription>
+            Switch between different editing modes
+          </CardDescription>
+        </div>
+        <Button
+          onClick={handleSaveChapters}
+          disabled={isSaving}
+          size='sm'
+          variant='outline'
+        >
+          <Save className='mr-2 h-4 w-4' />
+          {isSaving ? 'Saving...' : 'Save'}
+        </Button>
       </CardHeader>
       <CardContent>
         <Tabs
-          value={currentEditingState}
+          value={editMode}
           onValueChange={handleTabChange}
           className='w-full'
         >
@@ -78,46 +116,17 @@ export default function ControlPanel() {
               </TabsTrigger>
             ))}
           </TabsList>
-
-          <TabsContent value='playing' className='mt-4'>
-            <div className='bg-muted flex h-48 items-center justify-center rounded'>
-              <p className='text-muted-foreground'>Video playback mode</p>
-            </div>
-          </TabsContent>
-
-          <TabsContent value='funscript_editing' className='mt-4'>
-            <div className='bg-muted flex h-48 items-center justify-center rounded'>
-              <p className='text-muted-foreground'>
-                Funscript editing controls
-              </p>
-            </div>
-          </TabsContent>
-
-          <TabsContent value='chapters_editing' className='mt-4'>
-            <div className='bg-muted flex h-48 items-center justify-center rounded'>
-              <p className='text-muted-foreground'>Chapter editing controls</p>
-            </div>
-          </TabsContent>
-
-          <TabsContent value='zoom_editing' className='mt-4'>
-            <div className='bg-muted flex h-48 items-center justify-center rounded'>
-              <p className='text-muted-foreground'>Zoom editing controls</p>
-            </div>
-          </TabsContent>
-
-          <TabsContent value='roi_editing' className='mt-4'>
-            <div className='bg-muted flex h-48 items-center justify-center rounded'>
-              <p className='text-muted-foreground'>ROI editing controls</p>
-            </div>
-          </TabsContent>
-
-          <TabsContent value='motion_editing' className='mt-4'>
-            <div className='bg-muted flex h-48 items-center justify-center rounded'>
-              <p className='text-muted-foreground'>Motion editing controls</p>
-            </div>
-          </TabsContent>
+          {editModes.map((mode) => (
+            <TabsContent key={mode.value} value={mode.value}>
+              <div className='text-muted-foreground text-center text-sm'>
+                {mode.label} mode active
+              </div>
+            </TabsContent>
+          ))}
         </Tabs>
       </CardContent>
     </Card>
   );
-}
+};
+
+export default ControlPanel;

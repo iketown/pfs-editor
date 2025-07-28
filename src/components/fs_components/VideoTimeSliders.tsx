@@ -33,16 +33,16 @@ const VideoTimeSliders: React.FC<VideoTimeSlidersProps> = ({
     <div className='w-full space-y-4'>
       {/* Top Slider - Range Selector */}
       <div className='bg-card rounded-lg border p-4'>
-        <h3 className='mb-2 text-sm font-medium'>Range Selector</h3>
+        {/* <h3 className='mb-2 text-sm font-medium'>Range Selector</h3> */}
         {!!videoDuration && <VideoRangeSlider />}
 
         {/* Range Summary */}
-        <div className='text-muted-foreground mt-2 text-xs'>
-          <div>Full Duration: {formatTime(videoDuration)}</div>
+        <div className='text-muted-foreground mt-2 flex justify-between text-xs'>
+          <div>Full: {formatTime(videoDuration)}</div>
           <div>
-            Selected Range: {formatTime(rangeStart)} - {formatTime(rangeEnd)}
+            Range: {formatTime(rangeStart)} - {formatTime(rangeEnd)}
           </div>
-          <div>Range Size: {formatTime(rangeEnd - rangeStart)}</div>
+          <div>Size: {formatTime(rangeEnd - rangeStart)}</div>
         </div>
       </div>
       {/*  Slider - Chapter Editor */}

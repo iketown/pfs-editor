@@ -40,10 +40,10 @@ const VideoRangeSlider: React.FC<VideoRangeSliderProps> = ({}) => {
   };
 
   return (
-    <div className='h-10 w-full'>
-      <div className='text-muted-foreground mb-2 text-sm'>
+    <div className='h-6 w-full'>
+      {/* <div className='text-muted-foreground mb-2 text-sm'>
         Working Range: {formatTime(rangeStart)} - {formatTime(rangeEnd)}
-      </div>
+      </div> */}
       <Slider
         min={0}
         max={videoDuration}

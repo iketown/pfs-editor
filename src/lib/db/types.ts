@@ -21,6 +21,15 @@ export interface Project {
         graphZoom?: number;
         [key: string]: any;
     };
+    fsChapters?: {
+        [chapter_id: string]: {
+            startTime: number;
+            endTime: number;
+            title: string;
+            color: string;
+            id: string;
+        };
+    };
 }
 
 // Storage provider interface

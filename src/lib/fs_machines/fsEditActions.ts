@@ -2,6 +2,8 @@ import { assign } from 'xstate';
 import invariant from 'tiny-invariant';
 import { FSEditContext } from './fsEditMachine';
 import { nanoid } from 'nanoid';
+import { db } from '@/lib/db';
+
 const updateVideoTime = assign(({ event }: any) => {
     invariant(event.type === 'VIDEO_TIME_UPDATE', 'updateVideoTime must be called with a VIDEO_TIME_UPDATE event');
     const videoTime = event.time;
@@ -39,6 +41,31 @@ const setVideoDuration = assign(({ event }: any) => {
     return {};
 })
 
+const saveProject = async ({ event, context }: any) => {
+    if (
+        event &&
+        typeof event === 'object' &&
+        'type' in event &&
+        event.type === 'SAVE_PROJECT' &&
+        'projectId' in event
+    ) {
+        try {
+            const project = await db.getProject(event.projectId);
+            if (project) {
+                const updatedProject = {
+                    ...project,
+                    fsChapters: context.fsChapters,
+                    updatedAt: Date.now()
+                };
+                await db.saveProject(updatedProject);
+                console.log('Project auto-saved successfully');
+            }
+        } catch (error) {
+            console.error('Failed to auto-save project:', error);
+        }
+    }
+};
+
 /**
  * Converts a time string in format "HH:MM:SS.mmm" to milliseconds
  * @param timeString - Time string like "00:08:52.733"
@@ -62,7 +89,21 @@ const minSecToMS = (timeString: string): number => {
     return Math.round((hours * 3600 + minutes * 60 + seconds) * 1000 + milliseconds);
 };
 
-const loadFunScript = assign(({ event }: any) => {
+// New action to load fsChapters directly from project data
+const loadFsChapters = assign(({ event }: any) => {
+    if (
+        event &&
+        typeof event === 'object' &&
+        'type' in event &&
+        event.type === 'LOAD_FS_CHAPTERS' &&
+        'fsChapters' in event
+    ) {
+        return { fsChapters: event.fsChapters };
+    }
+    return {};
+});
+
+const loadFunScript = assign(({ event, context }: any) => {
     if (
         event &&
         typeof event === 'object' &&
@@ -85,31 +126,35 @@ const loadFunScript = assign(({ event }: any) => {
             }));
         }
 
-        // Create fsChapters object from funscript chapters
-        const fsChapters: { [chapter_id: string]: { startTime: number; endTime: number; title: string; color: string; } } = {};
+        // Only generate fsChapters if they don't already exist
+        let fsChapters = context.fsChapters;
+        if (!fsChapters || Object.keys(fsChapters).length === 0) {
+            // Create fsChapters object from funscript chapters
+            fsChapters = {};
 
-        // 6 equidistant colors on the color wheel (60 degrees apart)
-        const chapterColors = [
-            'bg-red-500',    // 0° - Red
-            'bg-yellow-500', // 60° - Yellow
-            'bg-green-500',  // 120° - Green
-            'bg-cyan-500',   // 180° - Cyan
-            'bg-blue-500',   // 240° - Blue
-            'bg-purple-500'  // 300° - Purple
-        ];
+            // 6 equidistant colors on the color wheel (60 degrees apart)
+            const chapterColors = [
+                'bg-red-500',    // 0° - Red
+                'bg-yellow-500', // 60° - Yellow
+                'bg-green-500',  // 120° - Green
+                'bg-cyan-500',   // 180° - Cyan
+                'bg-blue-500',   // 240° - Blue
+                'bg-purple-500'  // 300° - Purple
+            ];
 
-        if (funscript.metadata?.chapters) {
-            funscript.metadata.chapters.forEach((chapter: any, index: number) => {
-                const chapterId = nanoid(6);
-                const colorIndex = index % chapterColors.length; // Cycle through colors if more than 6 chapters
-                fsChapters[chapterId] = {
-                    startTime: typeof chapter.startTime === 'string' ? parseFloat(chapter.startTime) : chapter.startTime,
-                    endTime: typeof chapter.endTime === 'string' ? parseFloat(chapter.endTime) : chapter.endTime,
-                    title: chapter.name || `Chapter ${index + 1}`,
-                    color: chapterColors[colorIndex],
-                    id: chapterId
-                };
-            });
+            if (funscript.metadata?.chapters) {
+                funscript.metadata.chapters.forEach((chapter: any, index: number) => {
+                    const chapterId = nanoid(6);
+                    const colorIndex = index % chapterColors.length; // Cycle through colors if more than 6 chapters
+                    fsChapters[chapterId] = {
+                        startTime: typeof chapter.startTime === 'string' ? parseFloat(chapter.startTime) : chapter.startTime,
+                        endTime: typeof chapter.endTime === 'string' ? parseFloat(chapter.endTime) : chapter.endTime,
+                        title: chapter.name || `Chapter ${index + 1}`,
+                        color: chapterColors[colorIndex],
+                        id: chapterId
+                    };
+                });
+            }
         }
 
         return { funscript, fsChapters };
@@ -118,14 +163,33 @@ const loadFunScript = assign(({ event }: any) => {
 })
 
 const updateChapter = assign(({ context, event }: any) => {
+    invariant(event.type === 'UPDATE_CHAPTER', 'updateChapter must be called with a UPDATE_CHAPTER event');
+
+    const { chapterId, startTime, endTime, title } = event;
+    const updatedChapters = { ...context.fsChapters };
+
+    if (updatedChapters[chapterId]) {
+        if (startTime !== undefined) updatedChapters[chapterId].startTime = startTime;
+        if (endTime !== undefined) updatedChapters[chapterId].endTime = endTime;
+        if (title !== undefined) updatedChapters[chapterId].title = title;
+    }
+
+    return { fsChapters: updatedChapters };
+});
+
+
+
+const updateChapterAndSave = async ({ context, event }: any) => {
     if (
         event &&
         typeof event === 'object' &&
         'type' in event &&
-        event.type === 'UPDATE_CHAPTER' &&
-        'chapterId' in event
+        event.type === 'UPDATE_CHAPTER_AND_SAVE' &&
+        'chapterId' in event &&
+        'projectId' in event
     ) {
-        const { chapterId, startTime, endTime, title } = event;
+        // First update the chapter
+        const { chapterId, startTime, endTime, title, projectId } = event;
         const updatedChapters = { ...context.fsChapters };
 
         if (updatedChapters[chapterId]) {
@@ -134,10 +198,23 @@ const updateChapter = assign(({ context, event }: any) => {
             if (title !== undefined) updatedChapters[chapterId].title = title;
         }
 
-        return { fsChapters: updatedChapters };
+        // Then save to database
+        try {
+            const project = await db.getProject(projectId);
+            if (project) {
+                const updatedProject = {
+                    ...project,
+                    fsChapters: updatedChapters,
+                    updatedAt: Date.now()
+                };
+                await db.saveProject(updatedProject);
+                console.log('Chapter updated and auto-saved successfully');
+            }
+        } catch (error) {
+            console.error('Failed to update chapter and save:', error);
+        }
     }
-    return {};
-});
+};
 
 
 const selectNode = assign(({ context, event }: any) => {
@@ -280,12 +357,39 @@ const switchEditMode = assign(({ event }: any) => {
     return { editMode: event.mode };
 });
 
+const seekToChapterStart = assign(({ context, event }: any) => {
+    invariant(event.type === 'SELECT_CHAPTER', 'seekToChapterStart must be called with a SELECT_CHAPTER event');
+
+    const { chapterId } = event;
+
+    // If no chapter is selected (toggling OFF), don't seek
+    if (!chapterId) {
+        return {};
+    }
+
+    // Get the chapter data
+    const chapter = context.fsChapters[chapterId];
+    if (!chapter) {
+        return {};
+    }
+
+    // Seek to the beginning of the chapter
+    const { playerRef } = context;
+    if (playerRef && playerRef.current) {
+        playerRef.current.currentTime = chapter.startTime;
+    }
+
+    return {};
+});
+
 export const fsEditActions = {
     updateVideoTime,
     loadVideo,
     setVideoDuration,
+    loadFsChapters,
     loadFunScript,
     updateChapter,
+    updateChapterAndSave,
     selectNode,
     toggleSelectedNode,
     clearSelectedNodes,
@@ -303,5 +407,7 @@ export const fsEditActions = {
     setRangeEnd,
     resetRange,
     selectChapter,
-    switchEditMode
+    switchEditMode,
+    seekToChapterStart,
+    saveProject
 }; 
