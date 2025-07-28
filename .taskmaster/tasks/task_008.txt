@@ -1,0 +1,11 @@
+# Task ID: 8
+# Title: Add Drag-and-Drop Point Editing to Graph
+# Status: pending
+# Dependencies: 7
+# Priority: medium
+# Description: Implement interactive editing functionality allowing users to drag position points on the graph with project-based persistence
+# Details:
+Extend FSGraph component with Chart.js drag plugin. Implement mouse event handlers: onMouseDown, onMouseMove, onMouseUp. Add point selection logic with visual feedback (highlight selected points). Implement drag constraints (position 0-100, time boundaries). Update Funscript data in real-time during drag operations. Add hover effects and cursor changes. Implement touch support for mobile devices. Create undo/redo system using command pattern. Automatically save changes to project data and maintain edit history.
+
+# Test Strategy:
+Test drag functionality across different browsers. Verify constraints prevent invalid values. Test undo/redo operations. Validate touch interactions on mobile devices. Test performance with multiple simultaneous drags. Verify changes are properly saved to project data.

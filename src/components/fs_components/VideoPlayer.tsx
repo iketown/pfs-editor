@@ -5,12 +5,10 @@ import { VideoROIWrapper } from './VideoROIWrapper';
 
 interface VideoPlayerProps
   extends Omit<React.VideoHTMLAttributes<HTMLVideoElement>, 'onTimeUpdate'> {
-  src?: string;
   onTimeUpdate?: (time: number) => void;
 }
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({
-  src,
   onTimeUpdate,
   ...props
 }) => {
@@ -52,15 +50,16 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     console.log('Using default FPS: 30');
     motionSend({ type: 'SET_VIDEO_FPS', fps: 30 });
     editSend({ type: 'SET_VIDEO_FPS', fps: 30 });
+    editSend({ type: 'SET_VIDEO_DURATION', duration: video.duration });
   };
 
-  if (!videoUrl && !src) return null;
+  if (!videoUrl) return null;
 
   return (
     <VideoROIWrapper>
       <video
         ref={playerRef}
-        src={src || videoUrl || undefined}
+        src={videoUrl}
         onLoadedData={handleLoadedData}
         onTimeUpdate={handleTimeUpdate}
         {...props}

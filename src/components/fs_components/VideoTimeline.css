@@ -1,0 +1,18 @@
+/* Custom styling for VideoTimeline component */
+.video-timeline-container .rvt-slider {
+  background-color: #6b7280 !important; /* grey-500 */
+}
+
+.video-timeline-container .rvt-slider .rvt-slider-track {
+  background-color: #6b7280 !important; /* grey-500 */
+}
+
+.video-timeline-container .rvt-slider .rvt-slider-range {
+  background-color: #22c55e !important; /* green-500 */
+}
+
+/* Ensure handles are visible on green background */
+.video-timeline-container .rvt-slider .rvt-slider-handle {
+  background-color: white !important;
+  border: 2px solid #22c55e !important;
+} 

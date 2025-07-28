@@ -1,0 +1,321 @@
+# Task ID: 4
+# Title: Create HTML5 Video Player Component
+# Status: in-progress
+# Dependencies: 14
+# Priority: high
+# Description: Build custom video player with standard controls and programmatic seek functionality for graph synchronization, integrating with MotionActorContext and FsEditActorContext
+# Details:
+Create components/VideoPlayer.tsx using HTML5 video element or video.js library for advanced features. Integrate with MotionActorContext and FsEditActorContext for state management and synchronization. Implement custom controls: play/pause button, progress bar, volume control, fullscreen toggle. Add programmatic seek functionality via context and refs. Implement video event handlers (timeupdate, loadedmetadata, ended). Expose control APIs through context providers for external synchronization. Style with Tailwind CSS to match application theme. Ensure responsive design for different screen sizes. Integrate with project-based video file system to load video files from project data. Use video.js library where appropriate for advanced playback features while maintaining compatibility with existing context system.
+
+# Test Strategy:
+Test video playbook across different browsers with both HTML5 and video.js implementations. Verify all controls function correctly and integrate properly with MotionActorContext and FsEditActorContext. Test programmatic seeking accuracy via context APIs. Validate responsive behavior on mobile devices. Test integration with project-based file loading system. Verify context synchronization works correctly with other components.
+
+# Subtasks:
+## 1. Set up video.js library and basic component structure [done]
+### Dependencies: None
+### Description: Install video.js library and create basic VideoPlayer component structure in components/VideoPlayer.tsx
+### Details:
+<info added on 2025-07-22T16:17:15.254Z>
+Completed implementation of custom video controls component. Created VideoControls.tsx with play/pause, prev/next frame navigation, and zoom toggle buttons. Integrated with MotionActorContext and FsEditActorContext for state management. Removed "Video Player" heading from EditProjectPage and integrated custom controls above the video player. Used Tailwind CSS for styling with clean, modern design. Buttons are properly connected to XState actions for video control.
+</info added on 2025-07-22T16:17:15.254Z>
+
+## 2. Integrate with MotionActorContext and FsEditActorContext [done]
+### Dependencies: None
+### Description: Connect VideoPlayer component to existing context providers for state management and synchronization
+### Details:
+<info added on 2025-07-22T16:34:36.806Z>
+Refactored video file handling architecture to follow better separation of concerns. Moved video file handling logic from EditProjectPage into a dedicated useVideoFileManager hook. Updated fsEditMachine to include videoPrompt in context and added new events for video file management (SET_VIDEO_URL, SET_VIDEO_PROMPT, RESTORE_VIDEO_FILE, SELECT_VIDEO_FILE). Modified VideoPlayer component to get videoUrl from XState context instead of props, eliminating prop drilling. The videoUrl and videoPrompt state now live in the fsEditMachine context, providing centralized state management for video-related functionality.
+</info added on 2025-07-22T16:34:36.806Z>
+
+## 3. Implement custom video controls with video.js [done]
+### Dependencies: None
+### Description: Create custom play/pause, progress bar, volume control, and fullscreen toggle using video.js API
+### Details:
+<info added on 2025-07-22T16:56:18.434Z>
+Implemented VideoTimeline component using react-video-timelines-slider library. Created comprehensive timeline with chapter markers from funscript metadata.chapters and loop point controls. Added loopStart and loopEnd to fsEditMachine context with SET_LOOP_POINTS event and action. Timeline displays chapter boundaries as disabled intervals and allows setting loop ranges via selectedInterval. Added clickable chapter labels below timeline for quick navigation. Integrated timeline under VideoPlayer in EditProjectPage with proper styling and padding.
+</info added on 2025-07-22T16:56:18.434Z>
+<info added on 2025-07-22T17:04:33.944Z>
+Fixed timeline display issues based on user feedback: 1) Reduced tick density from 60 to max 20 ticks (every 5 seconds) to eliminate smudged overlapping time labels, 2) Removed chapter disabledIntervals as requested for different handling approach, 3) Added custom CSS styling to make timeline background grey (#6b7280) with green selected area (#22c55e) for loop points, 4) Added white handles with green borders for better visibility on green background. Timeline now has clean, readable time labels and proper color scheme.
+</info added on 2025-07-22T17:04:33.944Z>
+
+## 4. Add programmatic seek functionality via context and refs [pending]
+### Dependencies: None
+### Description: Expose seek and control APIs through context providers and component refs for external synchronization
+### Details:
+
+
+## 5. Implement video event handlers and context integration [pending]
+### Dependencies: None
+### Description: Handle timeupdate, loadedmetadata, ended events and sync with MotionActorContext and FsEditActorContext
+### Details:
+
+
+## 6. Style component with Tailwind CSS and ensure responsive design [pending]
+### Dependencies: None
+### Description: Apply consistent styling and ensure component works across different screen sizes
+### Details:
+
+
+## 7. Integrate with project-based video file system [pending]
+### Dependencies: None
+### Description: Connect component to load video files from project data and handle file management
+### Details:
+
+
+## 8. Implement stacked range sliders for video time control [done]
+### Dependencies: None
+### Description: Create dual-slider system with bottom range selector and top chapter editor
+### Details:
+Implement VideoTimeSlider component with two stacked sliders:
+
+1. **Bottom Slider (Range Selector)**:
+   - Range: 0 → ctx.videoDuration (full video length)
+   - Two handles: ctx.rangeStart and ctx.rangeEnd
+   - Sets the working range for the top slider
+   - Uses nouislider-react with simple range configuration
+
+2. **Top Slider (Chapter Editor)**:
+   - Range: ctx.rangeStart → ctx.rangeEnd (dynamic based on bottom slider)
+   - Multiple handles for chapter startTime and endTime
+   - Only shows chapters within the selected range
+   - Filters out chapters outside range to reduce visual clutter
+
+**State Management**:
+- Add rangeStart and rangeEnd to fsEditMachine context
+- Add SET_RANGE_START and SET_RANGE_END events
+- Filter chapters based on range selection
+- Update chapter handles when range changes
+
+**Visual Design**:
+- Bottom slider: Full width, clear handle distinction
+- Top slider: Positioned above, chapter labels overlaid
+- Responsive design for different screen sizes
+- Clear visual separation between sliders
+
+**Technical Implementation**:
+- Use nouislider-react for both sliders
+- Implement range filtering logic for chapter visibility
+- Handle positioning: direct time values for bottom, normalized for top
+- Real-time updates to XState context on slider changes
+<info added on 2025-07-25T14:01:27.697Z>
+**Implementation Complete:**
+
+**Created Stacked Range Sliders System:**
+
+1. **VideoRangeSlider Component** (`src/components/fs_components/VideoRangeSlider.tsx`):
+   - ✅ Bottom slider for range selection (0 → videoDuration)
+   - ✅ Two handles for rangeStart and rangeEnd
+   - ✅ Real-time updates to XState context
+   - ✅ Time formatting and tooltips
+   - ✅ Validation to ensure start < end
+
+2. **VideoChapterSlider Component** (`src/components/fs_components/VideoChapterSlider.tsx`):
+   - ✅ Top slider for chapter editing within selected range
+   - ✅ Dynamic range based on bottom slider selection
+   - ✅ Chapter filtering to show only chapters within range
+   - ✅ Handle positioning normalized to selected range
+   - ✅ Chapter labels overlaid at handle positions
+   - ✅ Real-time chapter updates
+
+3. **VideoTimeSliders Component** (`src/components/fs_components/VideoTimeSliders.tsx`):
+   - ✅ Stacked layout with clear visual separation
+   - ✅ Chapter Editor (top) and Range Selector (bottom)
+   - ✅ Range summary display
+   - ✅ Responsive design with proper spacing
+
+4. **XState Integration**:
+   - ✅ Added SET_RANGE_START, SET_RANGE_END, RESET_RANGE events
+   - ✅ Added corresponding actions in fsEditActions.ts
+   - ✅ rangeStart and rangeEnd already in context
+   - ✅ Proper state management and validation
+
+**Key Features Implemented:**
+- **Range Selection**: Bottom slider sets working range for top slider
+- **Chapter Filtering**: Only chapters within range are displayed
+- **Handle Positioning**: Bottom uses direct time values, top uses normalized positions
+- **Real-time Updates**: Changes immediately reflect in XState context
+- **Visual Design**: Clean stacked layout with proper labeling
+- **Performance**: Memoized calculations and efficient filtering
+
+**Ready for Testing:**
+The stacked range sliders system is now fully implemented and ready for integration with the video player component.
+</info added on 2025-07-25T14:01:27.697Z>
+
+## 9. Add range state management to fsEditMachine [done]
+### Dependencies: None
+### Description: Extend XState machine to support range selection and chapter filtering
+### Details:
+Update fsEditMachine to support the stacked range slider functionality:
+
+**Context Updates**:
+- Add `rangeStart: number` to context (default: 0)
+- Add `rangeEnd: number` to context (default: videoDuration)
+- Ensure these values are properly initialized when video loads
+
+**New Events**:
+- `SET_RANGE_START`: Updates the start of the working range
+- `SET_RANGE_END`: Updates the end of the working range
+- `RESET_RANGE`: Resets range to full video duration
+
+**Actions**:
+- `updateRangeStart`: Updates context.rangeStart
+- `updateRangeEnd`: Updates context.rangeEnd
+- `resetRange`: Sets range to [0, videoDuration]
+
+**State Transitions**:
+- Handle range updates in all relevant states
+- Ensure range values are validated (rangeStart < rangeEnd)
+- Update range when video duration changes
+
+**Integration**:
+- Connect with VideoTimeSlider component
+- Provide selectors for range values
+- Ensure chapter filtering works with range changes
+<info added on 2025-07-25T14:12:19.098Z>
+**Implementation Complete:**
+
+**XState Machine Range Management Added:**
+
+1. **Events Added** (`src/lib/fs_machines/fsEditMachine.ts`):
+   - ✅ `SET_RANGE_START`: Updates the start of the working range
+   - ✅ `SET_RANGE_END`: Updates the end of the working range  
+   - ✅ `RESET_RANGE`: Resets range to full video duration
+
+2. **Actions Added** (`src/lib/fs_machines/fsEditActions.ts`):
+   - ✅ `setRangeStart`: Updates context.rangeStart
+   - ✅ `setRangeEnd`: Updates context.rangeEnd
+   - ✅ `resetRange`: Sets range to [0, videoDuration]
+
+3. **Context Already Available**:
+   - ✅ `rangeStart: number` already in FSEditContext
+   - ✅ `rangeEnd: number` already in FSEditContext
+   - ✅ Proper initialization in machine context
+
+4. **Integration**:
+   - ✅ Events connected to actions in machine definition
+   - ✅ Actions exported from fsEditActions
+   - ✅ Ready for use by VideoRangeSlider and VideoChapterSlider components
+
+**State Management Features:**
+- **Validation**: Range updates ensure start < end
+- **Initialization**: Range properly initialized when video loads
+- **Persistence**: Range state maintained across component updates
+- **Integration**: Seamless connection with slider components
+
+**Ready for Use:**
+The XState machine now fully supports range selection and chapter filtering functionality.
+</info added on 2025-07-25T14:12:19.098Z>
+
+## 10. Implement chapter filtering and handle positioning logic [done]
+### Dependencies: None
+### Description: Create logic to filter chapters by range and position handles correctly
+### Details:
+Implement the core logic for chapter filtering and handle positioning:
+
+**Chapter Filtering Logic**:
+```typescript
+// Filter chapters to only show those within the selected range
+const visibleChapters = chapters.filter(chapter => 
+  chapter.startTime >= rangeStart && 
+  chapter.endTime <= rangeEnd
+);
+```
+
+**Handle Positioning**:
+- **Bottom Slider**: Direct time values (0 to videoDuration)
+- **Top Slider**: Normalized to selected range (0 to 100% of rangeEnd - rangeStart)
+
+**Chapter Handle Calculation**:
+- Convert chapter times to normalized positions within selected range
+- Handle edge cases where chapters span range boundaries
+- Ensure handles don't exceed slider bounds
+
+**Real-time Updates**:
+- Recalculate handle positions when range changes
+- Update chapter visibility when range updates
+- Maintain handle positions during video playback
+
+**Performance Optimization**:
+- Memoize filtered chapters and handle positions
+- Debounce range updates to prevent excessive recalculations
+- Use efficient algorithms for large chapter counts
+<info added on 2025-07-25T14:12:44.684Z>
+**Implementation Complete:**
+
+**Chapter Filtering and Handle Positioning Logic Implemented:**
+
+1. **Chapter Filtering Logic** (`VideoChapterSlider.tsx`):
+   - ✅ Filter chapters to only show those within selected range
+   - ✅ `visibleChapters` computed with useMemo for performance
+   - ✅ Handles edge cases where chapters span range boundaries
+   - ✅ Graceful handling when no chapters in range
+
+2. **Handle Positioning System**:
+   - ✅ **Bottom Slider**: Direct time values (0 to videoDuration)
+   - ✅ **Top Slider**: Normalized to selected range (0 to 100% of rangeEnd - rangeStart)
+   - ✅ Chapter times converted to normalized positions within range
+   - ✅ Proper calculation: `((chapterTime - rangeStart) / (rangeEnd - rangeStart)) * 100`
+
+3. **Real-time Updates**:
+   - ✅ Recalculate handle positions when range changes
+   - ✅ Update chapter visibility when range updates
+   - ✅ Maintain handle positions during video playback
+   - ✅ Efficient updates with useCallback and useMemo
+
+4. **Performance Optimization**:
+   - ✅ Memoized filtered chapters with useMemo
+   - ✅ Memoized handle positions calculation
+   - ✅ Debounced range updates in slider components
+   - ✅ Efficient algorithms for large chapter counts
+
+5. **Edge Case Handling**:
+   - ✅ Invalid ranges (rangeEnd <= rangeStart)
+   - ✅ Empty chapter arrays
+   - ✅ Chapters outside selected range
+   - ✅ Proper fallback UI for no chapters in range
+
+**Key Features:**
+- **Dynamic Filtering**: Chapters automatically filtered based on range selection
+- **Precise Positioning**: Handles positioned accurately within selected range
+- **Performance**: Optimized calculations prevent unnecessary re-renders
+- **Robustness**: Handles all edge cases gracefully
+
+**Ready for Integration:**
+The chapter filtering and handle positioning logic is fully implemented and ready for use with the stacked range sliders.
+</info added on 2025-07-25T14:12:44.684Z>
+
+## 11. Implement chapter editing popover with form validation [pending]
+### Dependencies: None
+### Description: Transform chapter labels into interactive buttons with popover forms for editing chapter properties
+### Details:
+Transform the chapter labels in VideoChapterSlider into interactive buttons with the following features:
+
+1. **Button Layout**:
+   - Keep all chapters visible (don't filter by range)
+   - Place in horizontally scrollable container
+   - Handle overflow when many chapters exist
+
+2. **Popover Form**:
+   - Click button opens popover with edit form
+   - Form fields: title, startTime, endTime
+   - Cancel and Save buttons
+
+3. **Validation Logic**:
+   - Start time must be after previous chapter's end time
+   - End time must be before next chapter's start time
+   - Show red input styling and error messages for invalid times
+   - Error messages: "end time must be before the next chapter's (chapter name) start time" or "start time must be after the previous chapter's (chapter name) end time"
+
+4. **Implementation Details**:
+   - Use Radix UI Popover component
+   - Use Shadcn/ui form components
+   - Integrate with existing XState context for chapter updates
+   - Maintain real-time validation during form input
+   - Handle edge cases (first/last chapters)
+
+5. **UI/UX**:
+   - Smooth animations for popover open/close
+   - Clear visual feedback for validation errors
+   - Responsive design for different screen sizes
+   - Keyboard navigation support
+

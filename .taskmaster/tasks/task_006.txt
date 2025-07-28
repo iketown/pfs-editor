@@ -1,0 +1,11 @@
+# Task ID: 6
+# Title: Build Interactive Graph Visualization with Chart.js
+# Status: pending
+# Dependencies: 4, 5
+# Priority: high
+# Description: Create the core graph component to visualize Funscript position data over time using Chart.js with project-based data integration
+# Details:
+Create components/FSGraph.tsx using Chart.js line chart. Configure chart options: responsive: true, maintainAspectRatio: false, scales with time (x-axis) and position 0-100 (y-axis). Implement data transformation from FunscriptAction[] to Chart.js dataset format. Add zoom and pan plugins. Style with custom colors and grid lines. Create useFSGraph hook for chart state management. Implement click-to-seek functionality that updates video player time. Integrate with project system to load and display Funscript data from the current project.
+
+# Test Strategy:
+Test graph rendering with sample Funscript data. Verify zoom and pan functionality. Test click-to-seek integration with video player. Validate performance with large datasets (1000+ points). Test integration with project-based data loading system.

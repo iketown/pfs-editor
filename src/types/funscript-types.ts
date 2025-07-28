@@ -8,8 +8,10 @@ export interface FunscriptAction {
 
 export interface FSChapter {
     name: string;
-    startTime: string;
-    endTime: string;
+    startTime: string | number;
+    endTime: string | number;
+    id: string;
+    color: string;
 }
 
 export interface FSBookmark {

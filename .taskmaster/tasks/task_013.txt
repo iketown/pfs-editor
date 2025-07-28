@@ -1,0 +1,451 @@
+# Task ID: 13
+# Title: Create Mock Database Layer with localStorage
+# Status: pending
+# Dependencies: 14
+# Priority: high
+# Description: Implement a database abstraction layer using localStorage that can be easily migrated to Supabase later, handling storage of Funscript files, ROI data, motion capture data, edit history, and project settings.
+# Details:
+1. Create a `lib/db/` directory structure for the database abstraction layer:
+   - `lib/db/index.ts`: Main entry point exporting all database functionality
+   - `lib/db/types.ts`: Define interfaces for all data models and database operations
+   - `lib/db/localStorage.ts`: Implementation using browser's localStorage
+   - `lib/db/migrations.ts`: Utilities for future data migration to Supabase
+
+2. In `lib/db/types.ts`, define the following interfaces:
+   ```typescript
+   // Database provider interface
+   export interface DatabaseProvider {
+     // CRUD operations
+     getItem<T>(collection: string, id: string): Promise<T | null>;
+     setItem<T>(collection: string, id: string, data: T): Promise<void>;
+     removeItem(collection: string, id: string): Promise<void>;
+     listItems<T>(collection: string, query?: QueryParams): Promise<T[]>;
+     
+     // Collection operations
+     createCollection(name: string): Promise<void>;
+     dropCollection(name: string): Promise<void>;
+     
+     // Utility methods
+     clear(): Promise<void>;
+     migrate(provider: DatabaseProvider): Promise<void>;
+   }
+   
+   // Query parameters for filtering data
+   export interface QueryParams {
+     filters?: Record<string, any>;
+     limit?: number;
+     offset?: number;
+     orderBy?: string;
+     orderDirection?: 'asc' | 'desc';
+   }
+   
+   // Data models
+   export interface FunscriptData {
+     id: string;
+     name: string;
+     content: any; // The actual Funscript JSON
+     createdAt: number;
+     updatedAt: number;
+   }
+   
+   export interface ROIData {
+     id: string;
+     funscriptId: string;
+     regions: Array<{
+       start: number;
+       end: number;
+       name: string;
+       color?: string;
+     }>;
+     createdAt: number;
+     updatedAt: number;
+   }
+   
+   export interface MotionCaptureData {
+     id: string;
+     funscriptId: string;
+     data: any; // Motion capture data structure
+     createdAt: number;
+     updatedAt: number;
+   }
+   
+   export interface EditHistoryEntry {
+     id: string;
+     funscriptId: string;
+     timestamp: number;
+     changes: any; // Description of changes made
+     snapshot: any; // Optional full snapshot of data at this point
+   }
+   
+   export interface ProjectSettings {
+     id: string;
+     name: string;
+     settings: Record<string, any>;
+     createdAt: number;
+     updatedAt: number;
+   }
+   ```
+
+3. Implement `lib/db/localStorage.ts`:
+   ```typescript
+   import { DatabaseProvider, QueryParams } from './types';
+   
+   export class LocalStorageProvider implements DatabaseProvider {
+     private prefix = 'pfs-editor-';
+     
+     // Helper to get collection key
+     private getCollectionKey(collection: string): string {
+       return `${this.prefix}${collection}`;
+     }
+     
+     // Helper to get item key
+     private getItemKey(collection: string, id: string): string {
+       return `${this.prefix}${collection}:${id}`;
+     }
+     
+     // Helper to parse stored JSON data
+     private parseItem<T>(data: string | null): T | null {
+       if (!data) return null;
+       try {
+         return JSON.parse(data) as T;
+       } catch (e) {
+         console.error('Failed to parse stored data:', e);
+         return null;
+       }
+     }
+     
+     // CRUD implementations
+     async getItem<T>(collection: string, id: string): Promise<T | null> {
+       const data = localStorage.getItem(this.getItemKey(collection, id));
+       return this.parseItem<T>(data);
+     }
+     
+     async setItem<T>(collection: string, id: string, data: T): Promise<void> {
+       try {
+         // Ensure collection exists in index
+         await this.ensureCollection(collection);
+         
+         // Store the item
+         localStorage.setItem(
+           this.getItemKey(collection, id),
+           JSON.stringify(data)
+         );
+         
+         // Update collection index
+         const index = await this.getCollectionIndex(collection);
+         if (!index.includes(id)) {
+           index.push(id);
+           await this.setCollectionIndex(collection, index);
+         }
+       } catch (e) {
+         console.error('Failed to store item:', e);
+         throw new Error(`Storage error: ${e.message}`);
+       }
+     }
+     
+     async removeItem(collection: string, id: string): Promise<void> {
+       localStorage.removeItem(this.getItemKey(collection, id));
+       
+       // Update collection index
+       const index = await this.getCollectionIndex(collection);
+       const newIndex = index.filter(itemId => itemId !== id);
+       await this.setCollectionIndex(collection, newIndex);
+     }
+     
+     async listItems<T>(collection: string, query?: QueryParams): Promise<T[]> {
+       const index = await this.getCollectionIndex(collection);
+       const items: T[] = [];
+       
+       for (const id of index) {
+         const item = await this.getItem<T>(collection, id);
+         if (item) {
+           // Apply filters if provided
+           if (query?.filters && !this.matchesFilters(item, query.filters)) {
+             continue;
+           }
+           items.push(item);
+         }
+       }
+       
+       // Apply sorting if needed
+       if (query?.orderBy) {
+         items.sort((a, b) => {
+           const aVal = a[query.orderBy];
+           const bVal = b[query.orderBy];
+           const direction = query.orderDirection === 'desc' ? -1 : 1;
+           
+           if (aVal < bVal) return -1 * direction;
+           if (aVal > bVal) return 1 * direction;
+           return 0;
+         });
+       }
+       
+       // Apply pagination if needed
+       if (query?.offset || query?.limit) {
+         const offset = query.offset || 0;
+         const limit = query.limit || items.length;
+         return items.slice(offset, offset + limit);
+       }
+       
+       return items;
+     }
+     
+     // Collection operations
+     private async getCollectionIndex(collection: string): Promise<string[]> {
+       const key = this.getCollectionKey(collection);
+       const data = localStorage.getItem(key);
+       return this.parseItem<string[]>(data) || [];
+     }
+     
+     private async setCollectionIndex(collection: string, index: string[]): Promise<void> {
+       const key = this.getCollectionKey(collection);
+       localStorage.setItem(key, JSON.stringify(index));
+     }
+     
+     private async ensureCollection(collection: string): Promise<void> {
+       const key = this.getCollectionKey(collection);
+       if (!localStorage.getItem(key)) {
+         localStorage.setItem(key, JSON.stringify([]));
+       }
+     }
+     
+     async createCollection(name: string): Promise<void> {
+       await this.ensureCollection(name);
+     }
+     
+     async dropCollection(name: string): Promise<void> {
+       // Get all items in the collection
+       const index = await this.getCollectionIndex(name);
+       
+       // Remove each item
+       for (const id of index) {
+         localStorage.removeItem(this.getItemKey(name, id));
+       }
+       
+       // Remove the collection index
+       localStorage.removeItem(this.getCollectionKey(name));
+     }
+     
+     // Utility methods
+     async clear(): Promise<void> {
+       // Only clear items with our prefix
+       for (let i = 0; i < localStorage.length; i++) {
+         const key = localStorage.key(i);
+         if (key.startsWith(this.prefix)) {
+           localStorage.removeItem(key);
+         }
+       }
+     }
+     
+     async migrate(provider: DatabaseProvider): Promise<void> {
+       // This would be implemented when Supabase is ready
+       // It would iterate through all collections and items
+       // and copy them to the new provider
+     }
+     
+     // Helper for filtering
+     private matchesFilters<T>(item: T, filters: Record<string, any>): boolean {
+       for (const [key, value] of Object.entries(filters)) {
+         if (item[key] !== value) {
+           return false;
+         }
+       }
+       return true;
+     }
+   }
+   ```
+
+4. Create `lib/db/index.ts` to export the database functionality:
+   ```typescript
+   import { LocalStorageProvider } from './localStorage';
+   import type { DatabaseProvider } from './types';
+   
+   // Export all types
+   export * from './types';
+   
+   // Create and export the database instance
+   const db: DatabaseProvider = new LocalStorageProvider();
+   
+   // Initialize standard collections
+   const initializeDatabase = async () => {
+     await db.createCollection('funscripts');
+     await db.createCollection('roi');
+     await db.createCollection('motioncapture');
+     await db.createCollection('history');
+     await db.createCollection('settings');
+   };
+   
+   // Initialize on import
+   initializeDatabase().catch(console.error);
+   
+   export { db };
+   ```
+
+5. Create `lib/db/migrations.ts` for future Supabase migration:
+   ```typescript
+   import { db } from './index';
+   import type { DatabaseProvider } from './types';
+   
+   export async function exportDatabaseDump(): Promise<string> {
+     const collections = ['funscripts', 'roi', 'motioncapture', 'history', 'settings'];
+     const dump: Record<string, any[]> = {};
+     
+     for (const collection of collections) {
+       dump[collection] = await db.listItems(collection);
+     }
+     
+     return JSON.stringify(dump);
+   }
+   
+   export async function importDatabaseDump(json: string): Promise<void> {
+     try {
+       const dump = JSON.parse(json);
+       
+       // Clear existing data
+       await db.clear();
+       
+       // Import each collection
+       for (const [collection, items] of Object.entries(dump)) {
+         await db.createCollection(collection);
+         
+         for (const item of items) {
+           await db.setItem(collection, item.id, item);
+         }
+       }
+     } catch (e) {
+       console.error('Failed to import database dump:', e);
+       throw new Error(`Import failed: ${e.message}`);
+     }
+   }
+   
+   export async function migrateToProvider(newProvider: DatabaseProvider): Promise<void> {
+     await db.migrate(newProvider);
+   }
+   ```
+
+6. Create a simple hook for using the database in components:
+   ```typescript
+   // lib/hooks/useDatabase.ts
+   import { useCallback } from 'react';
+   import { db } from '../db';
+   import type { QueryParams } from '../db/types';
+   
+   export function useDatabase() {
+     const getFunscript = useCallback(async (id: string) => {
+       return db.getItem('funscripts', id);
+     }, []);
+     
+     const saveFunscript = useCallback(async (id: string, data: any) => {
+       return db.setItem('funscripts', id, {
+         id,
+         content: data,
+         updatedAt: Date.now(),
+         ...data
+       });
+     }, []);
+     
+     // Add similar methods for other data types
+     
+     return {
+       db,
+       getFunscript,
+       saveFunscript,
+       // ... other convenience methods
+     };
+   }
+   ```
+
+7. Implement storage size monitoring and quota management:
+   ```typescript
+   // Add to LocalStorageProvider class
+   async getStorageUsage(): Promise<{ used: number, quota: number }> {
+     let used = 0;
+     for (let i = 0; i < localStorage.length; i++) {
+       const key = localStorage.key(i);
+       if (key.startsWith(this.prefix)) {
+         const value = localStorage.getItem(key) || '';
+         used += key.length + value.length;
+       }
+     }
+     
+     // Convert to bytes (approximate)
+     used = used * 2; // UTF-16 characters are 2 bytes each
+     
+     // Estimate quota (typically 5-10MB)
+     const quota = 5 * 1024 * 1024; // 5MB
+     
+     return { used, quota };
+   }
+   ```
+
+# Test Strategy:
+1. **Unit Testing Database Provider Interface**:
+   - Create a test suite for the LocalStorageProvider class
+   - Test each CRUD operation individually:
+     - Test `getItem` with existing and non-existing items
+     - Test `setItem` with new and updated items
+     - Test `removeItem` functionality
+     - Test `listItems` with various query parameters
+   - Test collection operations:
+     - Test `createCollection` creates new collections
+     - Test `dropCollection` removes all collection data
+   - Test utility methods:
+     - Test `clear` removes all database data
+     - Test storage usage calculation
+
+2. **Integration Testing with Mock Data**:
+   - Create a test suite that simulates real application usage
+   - Test storing and retrieving Funscript files:
+     ```typescript
+     const funscript = {
+       id: 'test-1',
+       name: 'Test Funscript',
+       content: { version: '1.0', actions: [{ at: 100, pos: 50 }] },
+       createdAt: Date.now(),
+       updatedAt: Date.now()
+     };
+     await db.setItem('funscripts', funscript.id, funscript);
+     const retrieved = await db.getItem('funscripts', 'test-1');
+     expect(retrieved).toEqual(funscript);
+     ```
+   - Test storing and retrieving ROI data
+   - Test storing and retrieving motion capture data
+   - Test edit history functionality
+   - Test project settings storage
+
+3. **Performance Testing**:
+   - Test with large datasets (100+ Funscript files)
+   - Measure read/write performance
+   - Test storage limits by filling localStorage to near capacity
+   - Implement and test pagination for large collections
+
+4. **Error Handling Testing**:
+   - Test behavior when localStorage is full
+   - Test with malformed JSON data
+   - Test with missing or invalid collection names
+   - Verify error messages are descriptive and helpful
+
+5. **Migration Testing**:
+   - Create mock Supabase provider that implements DatabaseProvider interface
+   - Test migration from localStorage to mock Supabase provider
+   - Verify all data is correctly transferred
+   - Test import/export functionality with sample database dumps
+
+6. **Browser Compatibility Testing**:
+   - Test in Chrome, Firefox, Safari, and Edge
+   - Verify localStorage behavior is consistent across browsers
+   - Test with private browsing mode enabled
+   - Verify storage persistence across browser sessions
+
+7. **React Component Integration**:
+   - Create test components that use the database hooks
+   - Test database operations from within React components
+   - Verify state updates correctly after database operations
+   - Test error handling in UI components
+
+8. **Manual Testing Checklist**:
+   - Verify data persistence after browser refresh
+   - Test storage and retrieval of all data types
+   - Verify query filtering works correctly
+   - Test storage quota monitoring
+   - Verify clear functionality works as expected

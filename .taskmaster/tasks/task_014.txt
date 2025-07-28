@@ -1,0 +1,313 @@
+# Task ID: 14
+# Title: Create Database Abstraction Layer with Storage Provider Interface
+# Status: done
+# Dependencies: 2
+# Priority: high
+# Description: Implement a simplified project-focused storage system using localStorage initially but can be easily migrated to Supabase later, providing a consistent interface for storing project metadata, video file references, and funscript data.
+# Details:
+1. Create a `lib/db/` directory structure with the following files:
+   - `lib/db/index.ts`: Main entry point exporting the database API
+   - `lib/db/types.ts`: Define interfaces for project data models and storage providers
+   - `lib/db/localStorage.ts`: Implementation using browser's localStorage
+   - `lib/db/providers/base.ts`: Abstract base provider class
+
+2. In `lib/db/types.ts`, define the following simplified interfaces:
+   ```typescript
+   // Core project data model
+   export interface Project {
+     id: string;
+     name: string;
+     createdAt: number;
+     updatedAt: number;
+     videoFile?: {
+       name: string;
+       size: number;
+       type: string;
+       handle?: FileSystemFileHandle; // For Chromium browsers
+       lastModified?: number;
+     };
+     funscriptData?: {
+       version: string;
+       range: number;
+       inverted: boolean;
+       actions: Array<{
+         at: number;
+         pos: number;
+       }>;
+     };
+     settings?: {
+       playbackRate?: number;
+       volume?: number;
+       graphZoom?: number;
+       [key: string]: any;
+     };
+   }
+   ```
+
+3. Create a simplified storage provider interface in `lib/db/providers/base.ts`:
+   ```typescript
+   export interface StorageProvider {
+     // Project CRUD operations
+     getProject(id: string): Promise<Project | null>;
+     getAllProjects(): Promise<Project[]>;
+     saveProject(project: Project): Promise<Project>;
+     deleteProject(id: string): Promise<boolean>;
+     
+     // Utility operations
+     clear(): Promise<boolean>;
+   }
+   
+   export abstract class BaseStorageProvider implements StorageProvider {
+     abstract getProject(id: string): Promise<Project | null>;
+     abstract getAllProjects(): Promise<Project[]>;
+     abstract saveProject(project: Project): Promise<Project>;
+     abstract deleteProject(id: string): Promise<boolean>;
+     abstract clear(): Promise<boolean>;
+     
+     // Helper to generate unique IDs
+     generateId(): string {
+       return Date.now().toString(36) + Math.random().toString(36).substring(2);
+     }
+   }
+   ```
+
+4. Implement the localStorage provider in `lib/db/localStorage.ts`:
+   ```typescript
+   import { BaseStorageProvider } from './providers/base';
+   import type { Project } from './types';
+   
+   export class LocalStorageProvider extends BaseStorageProvider {
+     private readonly STORAGE_KEY = 'pfs-editor-projects';
+     
+     private getStoredProjects(): Project[] {
+       try {
+         const data = localStorage.getItem(this.STORAGE_KEY);
+         return data ? JSON.parse(data) : [];
+       } catch (error) {
+         console.error('Failed to parse stored projects:', error);
+         return [];
+       }
+     }
+     
+     private saveStoredProjects(projects: Project[]): void {
+       try {
+         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(projects));
+       } catch (error) {
+         console.error('Failed to save projects:', error);
+         throw new Error('Storage quota exceeded or localStorage unavailable');
+       }
+     }
+     
+     async getProject(id: string): Promise<Project | null> {
+       const projects = this.getStoredProjects();
+       return projects.find(p => p.id === id) || null;
+     }
+     
+     async getAllProjects(): Promise<Project[]> {
+       return this.getStoredProjects();
+     }
+     
+     async saveProject(project: Project): Promise<Project> {
+       const projects = this.getStoredProjects();
+       const existingIndex = projects.findIndex(p => p.id === project.id);
+       
+       const updatedProject = {
+         ...project,
+         updatedAt: Date.now()
+       };
+       
+       if (existingIndex >= 0) {
+         projects[existingIndex] = updatedProject;
+       } else {
+         projects.push(updatedProject);
+       }
+       
+       this.saveStoredProjects(projects);
+       return updatedProject;
+     }
+     
+     async deleteProject(id: string): Promise<boolean> {
+       const projects = this.getStoredProjects();
+       const filteredProjects = projects.filter(p => p.id !== id);
+       
+       if (filteredProjects.length === projects.length) {
+         return false; // Project not found
+       }
+       
+       this.saveStoredProjects(filteredProjects);
+       return true;
+     }
+     
+     async clear(): Promise<boolean> {
+       try {
+         localStorage.removeItem(this.STORAGE_KEY);
+         return true;
+       } catch (error) {
+         console.error('Failed to clear projects:', error);
+         return false;
+       }
+     }
+   }
+   ```
+
+5. Create the main database API in `lib/db/index.ts`:
+   ```typescript
+   import { LocalStorageProvider } from './localStorage';
+   import type { Project } from './types';
+   
+   // Use localStorage provider initially
+   const storageProvider = new LocalStorageProvider();
+   
+   // Database API
+   export const db = {
+     // Project operations
+     getProject: (id: string) => storageProvider.getProject(id),
+     getAllProjects: () => storageProvider.getAllProjects(),
+     saveProject: (project: Project) => storageProvider.saveProject(project),
+     deleteProject: (id: string) => storageProvider.deleteProject(id),
+     
+     // Utility operations
+     createProject: (name: string): Project => {
+       return {
+         id: storageProvider.generateId(),
+         name,
+         createdAt: Date.now(),
+         updatedAt: Date.now()
+       };
+     },
+     
+     // Helper to generate unique IDs
+     generateId: () => storageProvider.generateId(),
+     
+     // Clear all data (useful for testing)
+     clear: () => storageProvider.clear()
+   };
+   
+   // Export types
+   export type { Project };
+   export { LocalStorageProvider };
+   ```
+
+6. Create a utility for future migration to Supabase in `lib/db/migrations.ts`:
+   ```typescript
+   import { db } from './index';
+   
+   export async function exportAllProjects() {
+     const projects = await db.getAllProjects();
+     return {
+       version: '1.0',
+       exportedAt: Date.now(),
+       projects: projects
+     };
+   }
+   
+   export async function importProjects(data: any) {
+     if (!data.projects || !Array.isArray(data.projects)) {
+       throw new Error('Invalid import data format');
+     }
+     
+     const results = [];
+     for (const project of data.projects) {
+       try {
+         const savedProject = await db.saveProject(project);
+         results.push({ success: true, project: savedProject });
+       } catch (error) {
+         results.push({ success: false, error: error.message, project });
+       }
+     }
+     
+     return results;
+   }
+   
+   // This will be expanded later when Supabase integration is added
+   ```
+
+7. Create a placeholder for future Supabase provider in `lib/db/supabaseProvider.ts`:
+   ```typescript
+   import { BaseStorageProvider } from './providers/base';
+   import type { Project } from './types';
+   
+   // This is a placeholder that will be implemented when Supabase integration is added
+   export class SupabaseProvider extends BaseStorageProvider {
+     // Implementation will go here when Supabase is integrated
+     // The interface will match LocalStorageProvider
+     
+     async getProject(id: string): Promise<Project | null> {
+       throw new Error('SupabaseProvider not implemented yet');
+     }
+     
+     async getAllProjects(): Promise<Project[]> {
+       throw new Error('SupabaseProvider not implemented yet');
+     }
+     
+     async saveProject(project: Project): Promise<Project> {
+       throw new Error('SupabaseProvider not implemented yet');
+     }
+     
+     async deleteProject(id: string): Promise<boolean> {
+       throw new Error('SupabaseProvider not implemented yet');
+     }
+     
+     async clear(): Promise<boolean> {
+       throw new Error('SupabaseProvider not implemented yet');
+     }
+   }
+   ```
+
+# Test Strategy:
+1. **Unit Testing Storage Provider Interface**:
+   - Create a test suite for the LocalStorageProvider class
+   - Test each CRUD operation individually:
+     - Test `getProject` with existing and non-existing projects
+     - Test `saveProject` with new and updated projects
+     - Test `deleteProject` functionality
+     - Test `getAllProjects` returns correct data
+   - Test ID generation uniqueness
+   - Test clear functionality
+
+2. **Integration Testing Database API**:
+   - Create test cases for project lifecycle (create, save, retrieve, delete)
+   - Test saving and retrieving projects with video file references
+   - Test saving and retrieving projects with funscript data
+   - Verify project settings persistence
+   - Test concurrent operations and data consistency
+
+3. **Storage Limit Testing**:
+   - Test behavior when approaching localStorage limits (typically 5-10MB)
+   - Test graceful error handling when storage is full
+   - Verify appropriate error messages for storage issues
+
+4. **Data Migration Testing**:
+   - Test the export functionality to ensure all projects are properly collected
+   - Test import functionality with valid and invalid data
+   - Verify data structure is suitable for future Supabase migration
+   - Test data integrity during export/import cycles
+
+5. **Performance Testing**:
+   - Measure read/write performance with multiple projects
+   - Test performance with large funscript data
+   - Benchmark operations with projects containing video file references
+
+6. **Mock Application Integration**:
+   - Create a simple test application that uses the database layer
+   - Test real-world usage patterns (create project, save funscript, reopen project)
+   - Verify the API is intuitive and consistent for project-based workflow
+
+7. **Error Handling and Recovery**:
+   - Test behavior when localStorage is unavailable
+   - Test handling of corrupted data in localStorage
+   - Verify error messages are helpful and actionable
+   - Test recovery mechanisms for interrupted operations
+
+8. **Cross-Browser Compatibility**:
+   - Test in Chrome, Firefox, Safari, and Edge
+   - Test File System Access API availability (Chromium browsers)
+   - Verify consistent behavior across browsers
+   - Test in private/incognito mode
+
+9. **Manual Testing Checklist**:
+   - Verify all database operations through browser console
+   - Inspect localStorage contents to confirm proper data structure
+   - Test project persistence across page refreshes
+   - Test video file handle persistence in supported browsers
+   - Verify no memory leaks occur during extended usage

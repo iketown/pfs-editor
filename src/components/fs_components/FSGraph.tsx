@@ -1,3 +1,5 @@
+'use client';
+
 import {
   FsEditActorContext,
   useEditActorRef,
@@ -16,7 +18,7 @@ import {
   Tooltip
 } from 'chart.js';
 import dragDataPlugin from 'chartjs-plugin-dragdata';
-import zoomPlugin from 'chartjs-plugin-zoom';
+// import zoomPlugin from 'chartjs-plugin-zoom';
 import { useMemo, useEffect as useReactEffect, useRef } from 'react';
 import { Line } from 'react-chartjs-2';
 import { ChartJSOrUndefined } from 'react-chartjs-2/dist/types';
@@ -26,7 +28,7 @@ ChartJS.register(
   LinearScale,
   PointElement,
   LineElement,
-  zoomPlugin,
+  // zoomPlugin,
   dragDataPlugin,
   Title,
   Tooltip,
@@ -168,31 +170,31 @@ export function FSGraph() {
             // You can update your funscript/actions here
             console.log('Dragged point', { e, datasetIndex, index, value });
           }
-        },
-        zoom: {
-          pan: {
-            enabled: true,
-            mode: 'x' as const
-          },
-          zoom: {
-            wheel: {
-              enabled: true
-            },
-            pinch: {
-              enabled: true
-            },
-            mode: 'x' as const,
-            limits: {
-              x: { minRange: 3000, maxRange: 10000 } // 3s to 10s
-            },
-            onZoom: ({ chart }: { chart: any }) => {
-              // const min = chart.scales.x.min;
-              // const max = chart.scales.x.max;
-              // const visibleMs = max - min;
-              // console.log('Zoom changed:', { min, max, visibleMs });
-            }
-          }
         }
+        // zoom: {
+        //   pan: {
+        //     enabled: true,
+        //     mode: 'x' as const
+        //   },
+        //   zoom: {
+        //     wheel: {
+        //       enabled: true
+        //     },
+        //     pinch: {
+        //       enabled: true
+        //     },
+        //     mode: 'x' as const,
+        //     limits: {
+        //       x: { minRange: 3000, maxRange: 10000 } // 3s to 10s
+        //     },
+        //     onZoom: ({ chart }: { chart: any }) => {
+        //       // const min = chart.scales.x.min;
+        //       // const max = chart.scales.x.max;
+        //       // const visibleMs = max - min;
+        //       // console.log('Zoom changed:', { min, max, visibleMs });
+        //     }
+        //   }
+        // }
       },
       elements: {
         line: { cubicInterpolationMode: 'monotone' as const }

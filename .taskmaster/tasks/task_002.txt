@@ -1,0 +1,11 @@
+# Task ID: 2
+# Title: Implement Core Data Models and Types
+# Status: done
+# Dependencies: 1
+# Priority: high
+# Description: Define TypeScript interfaces and types for Funscript data structures, video metadata, and application state
+# Details:
+Create types/funscript.ts with interfaces: FunscriptObject { version: string, inverted: boolean, range: number, actions: FunscriptAction[], metadata?: any }, FunscriptAction { id: number, at: number, pos: number }, FunscriptMetadata { version: string, range: number, inverted: boolean }. Create types/video.ts for video metadata. Create types/editor.ts for editor state types including selection, zoom, and playback states.
+
+# Test Strategy:
+Write unit tests to validate type definitions. Test JSON parsing with sample Funscript files. Verify TypeScript compilation with strict type checking.

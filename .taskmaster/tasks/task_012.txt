@@ -1,0 +1,11 @@
+# Task ID: 12
+# Title: Implement State Management with XState and Zustand Integration
+# Status: pending
+# Dependencies: 11
+# Priority: medium
+# Description: Create comprehensive state management system using XState for complex editor states and Zustand for simpler component state with project-based state persistence
+# Details:
+Create stores/fsEditActor.ts with XState machine for editor states: idle, loading, editing, exporting. Implement state transitions and guards for valid operations. Create stores/videoStore.ts with Zustand for video state. Create stores/graphStore.ts for graph interaction state. Create stores/projectStore.ts for project management state. Implement state persistence using project-based storage. Add state debugging tools and dev mode logging. Create custom hooks for state access: useEditorState, useVideoState, useGraphState, useProjectState. Handle state hydration and error recovery with project context.
+
+# Test Strategy:
+Test state transitions and edge cases. Verify state persistence across browser sessions. Test concurrent state updates. Validate state debugging tools in development mode. Test project-based state isolation and switching between projects.

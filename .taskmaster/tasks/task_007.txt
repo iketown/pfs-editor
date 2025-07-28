@@ -1,0 +1,11 @@
+# Task ID: 7
+# Title: Implement Video-Graph Synchronization System
+# Status: pending
+# Dependencies: 6
+# Priority: high
+# Description: Create real-time synchronization between video playback position and graph cursor with frame indicator using project data
+# Details:
+Create lib/synchronization.ts with sync logic. Implement video timeupdate event handler that updates graph cursor position. Add vertical line indicator on graph showing current video time. Create bidirectional sync: video seeks update graph, graph clicks seek video. Use XState for synchronization state machine with states: idle, playing, seeking. Handle edge cases like rapid seeking and playback rate changes. Implement debouncing for smooth performance. Integrate with project system to maintain synchronization state per project.
+
+# Test Strategy:
+Test synchronization accuracy with frame-by-frame video stepping. Verify cursor position updates during playback. Test rapid seeking scenarios. Validate performance during continuous playback. Test project-based synchronization state persistence.

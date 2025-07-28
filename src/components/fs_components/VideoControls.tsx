@@ -1,0 +1,151 @@
+import React from 'react';
+import { useEditActorRef, useEditSelector } from './FsEditActorContext';
+import { useMotionActorRef, useMotionSelector } from './MotionActorContext';
+import { Button } from '@/components/ui/button';
+import {
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
+  ZoomIn,
+  ZoomOut
+} from 'lucide-react';
+
+interface VideoControlsProps {
+  className?: string;
+}
+
+const VideoControls: React.FC<VideoControlsProps> = ({ className = '' }) => {
+  const { send: editSend } = useEditActorRef();
+  const { send: motionSend } = useMotionActorRef();
+
+  // Get current state from contexts
+  const playerRef = useEditSelector(
+    (state) => state.context.playerRef
+  ) as React.RefObject<HTMLVideoElement> | null;
+  const videoTime = useEditSelector((state) => state.context.videoTime);
+  const videoFps = useEditSelector((state) => state.context.videoFps);
+
+  // Local state for play/pause and zoom
+  const [isPlaying, setIsPlaying] = React.useState(false);
+  const [isZoomed, setIsZoomed] = React.useState(false);
+
+  // Handle play/pause
+  const handlePlayPause = () => {
+    const video = playerRef?.current;
+    if (video) {
+      if (isPlaying) {
+        video.pause();
+      } else {
+        video.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  // Handle previous frame (assuming 30fps if not set)
+  const handlePrevious = () => {
+    const video = playerRef?.current;
+    if (video && videoFps) {
+      const frameTime = 1000 / videoFps; // Time per frame in ms
+      const newTime = Math.max(0, videoTime - frameTime);
+      editSend({ type: 'SEEK_VIDEO', time: newTime / 1000 }); // Convert back to seconds
+    }
+  };
+
+  // Handle next frame
+  const handleNext = () => {
+    const video = playerRef?.current;
+    if (video && videoFps) {
+      const frameTime = 1000 / videoFps; // Time per frame in ms
+      const newTime = videoTime + frameTime;
+      editSend({ type: 'SEEK_VIDEO', time: newTime / 1000 }); // Convert back to seconds
+    }
+  };
+
+  // Handle zoom toggle (placeholder for now)
+  const handleZoomToggle = () => {
+    setIsZoomed(!isZoomed);
+    // TODO: Implement zoom functionality
+    console.log('Zoom toggle:', !isZoomed);
+  };
+
+  // Listen for video play/pause events
+  React.useEffect(() => {
+    const video = playerRef?.current;
+    if (!video) return;
+
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('pause', handlePause);
+
+    return () => {
+      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('pause', handlePause);
+    };
+  }, [playerRef]);
+
+  return (
+    <div
+      className={`bg-background flex items-center gap-2 border-b p-2 ${className}`}
+    >
+      {/* Play/Pause Button */}
+      <Button
+        variant='outline'
+        size='sm'
+        onClick={handlePlayPause}
+        className='flex items-center gap-1'
+      >
+        {isPlaying ? (
+          <Pause className='h-4 w-4' />
+        ) : (
+          <Play className='h-4 w-4' />
+        )}
+        {isPlaying ? 'Pause' : 'Play'}
+      </Button>
+
+      {/* Previous Frame Button */}
+      <Button
+        variant='outline'
+        size='sm'
+        onClick={handlePrevious}
+        disabled={!videoFps}
+        className='flex items-center gap-1'
+      >
+        <SkipBack className='h-4 w-4' />
+        Prev
+      </Button>
+
+      {/* Next Frame Button */}
+      <Button
+        variant='outline'
+        size='sm'
+        onClick={handleNext}
+        disabled={!videoFps}
+        className='flex items-center gap-1'
+      >
+        <SkipForward className='h-4 w-4' />
+        Next
+      </Button>
+
+      {/* Zoom Toggle Button */}
+      <Button
+        variant='outline'
+        size='sm'
+        onClick={handleZoomToggle}
+        className='ml-auto flex items-center gap-1'
+      >
+        {isZoomed ? (
+          <ZoomOut className='h-4 w-4' />
+        ) : (
+          <ZoomIn className='h-4 w-4' />
+        )}
+        Zoom
+      </Button>
+    </div>
+  );
+};
+
+export default VideoControls;

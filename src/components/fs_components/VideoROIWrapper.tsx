@@ -39,7 +39,6 @@ export const VideoROIWrapper: React.FC<VideoROIWrapperProps> = ({
   const [frame, setFrame] = useState<ROI>(currentROI);
   const [target, setTarget] = useState<SVGRectElement | null>(null);
   const [svgSize, setSvgSize] = useState({ w: 0, h: 0 });
-  console.log('svgSize', svgSize);
   // Update frame when currentROI changes
   useEffect(() => {
     setFrame(currentROI);

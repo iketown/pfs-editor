@@ -1,0 +1,11 @@
+# Task ID: 1
+# Title: Setup Next.js 15 Project with TypeScript and Core Dependencies
+# Status: done
+# Dependencies: None
+# Priority: high
+# Description: Initialize the Next.js 15 project with React 19, TypeScript, and install core dependencies including Shadcn/ui, Tailwind CSS, XState, Zustand, and Chart.js
+# Details:
+Create new Next.js 15 project using `npx create-next-app@latest pfs-editor --typescript --tailwind --eslint --app`. Install dependencies: `npm install @xstate/react zustand @radix-ui/react-* shadcn-ui chart.js react-chartjs-2 @types/chart.js`. Setup Shadcn/ui with `npx shadcn-ui@latest init`. Configure TypeScript strict mode and ESLint rules. Setup project structure with components/, lib/, types/, and stores/ directories.
+
+# Test Strategy:
+Verify project builds successfully with `npm run build`. Test TypeScript compilation and ESLint passes. Confirm all dependencies are properly installed and importable.

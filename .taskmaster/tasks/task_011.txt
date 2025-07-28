@@ -1,0 +1,11 @@
+# Task ID: 11
+# Title: Build Main Application Layout and Navigation
+# Status: pending
+# Dependencies: 10
+# Priority: medium
+# Description: Create the main application layout with video player, graph editor, and control panels using Shadcn/ui components with project-based workflow
+# Details:
+Create app/page.tsx as main layout. Implement responsive grid layout: video player (top-left), graph editor (bottom), controls (top-right). Use Shadcn/ui components: Button, Card, Separator, Tabs. Add theme provider for dark/light mode support. Implement collapsible panels and resizable sections. Create navigation breadcrumbs and status indicators. Add loading states and error boundaries. Implement keyboard navigation and focus management for accessibility. Add project selector and project management UI elements to the main layout.
+
+# Test Strategy:
+Test layout responsiveness across screen sizes. Verify theme switching functionality. Test keyboard navigation and screen reader compatibility. Validate loading states and error handling. Test project selection and management UI integration.

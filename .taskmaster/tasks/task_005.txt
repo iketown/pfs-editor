@@ -1,0 +1,85 @@
+# Task ID: 5
+# Title: Implement Funscript File Parser and Validator
+# Status: pending
+# Dependencies: 14
+# Priority: high
+# Description: Create system to upload, parse, validate, and store Funscript JSON files with proper error handling and project-based database integration
+# Details:
+Create lib/funscript-parser.ts with project-aware functions: parseFunscript(file: File), validateFunscript(data: any), exportFunscript(data: FunscriptObject), saveFunscriptToProject(data: FunscriptObject, projectId: string), loadFunscriptFromProject(projectId: string), updateFunscriptInProject(data: FunscriptObject, projectId: string). Implement JSON parsing with try-catch error handling. Validate required fields (actions array, version) and store validation results in project data. Sort actions by timestamp. Handle malformed data gracefully. Create components/FunscriptUpload.tsx for file upload UI. Integrate with project-based workflow to automatically associate Funscript files with the current project.
+
+# Test Strategy:
+Test with valid and invalid Funscript files. Verify error messages for malformed JSON. Test large file handling. Validate sorting and data integrity after parsing. Test integration with project-based storage system. Verify versioning system preserves edit history within projects. Test retrieval and update operations. Validate relationships between Funscript files and video projects. Test project-based organization and listing functionality.
+
+# Subtasks:
+## 1. Create core parser functions in lib/funscript-parser.ts [pending]
+### Dependencies: None
+### Description: Implement basic parsing, validation, and export functions with error handling
+### Details:
+Implement parseFunscript(file: File), validateFunscript(data: any), and exportFunscript(data: FunscriptObject) functions with comprehensive error handling for malformed JSON and missing required fields.
+
+## 2. Create database abstraction layer [pending]
+### Dependencies: None
+### Description: Implement localStorage-based database provider with interfaces for all data models
+### Details:
+Create lib/db/ directory with lib/db/localStorage.ts as the initial database provider and lib/db/types.ts with interfaces for FunscriptData, ROIData, MotionCaptureData, EditHistoryEntry, and ProjectSettings. Implement basic CRUD operations for all data types. Define data models: FunscriptData: { id, projectId, content, createdAt, updatedAt }, ROIData: { id, projectId, regions: [{ start, end, name, color }], createdAt, updatedAt }, MotionCaptureData: { id, projectId, data, createdAt, updatedAt }, EditHistoryEntry: { id, projectId, funscriptId, timestamp, changes, snapshot }, ProjectSettings: { id, name, settings, createdAt, updatedAt }.
+
+## 3. Implement database integration functions [pending]
+### Dependencies: 5.2
+### Description: Create database operations for Funscript and related data
+### Details:
+Implement saveFunscriptToDb(data, projectId), loadFunscriptFromDb(projectId), updateFunscriptVersion(data, projectId), saveROIData(roiData, funscriptId), saveMotionCaptureData(motionData, funscriptId), getEditHistory(funscriptId), createProject(name, settings), and listProjects() functions.
+
+## 4. Implement versioning system [pending]
+### Dependencies: 5.2, 5.3
+### Description: Add functionality to track edit history with timestamps and change descriptions
+### Details:
+Create system to track edit history with timestamps, change descriptions, and snapshots. Implement getEditHistory function to retrieve version history for a Funscript.
+
+## 5. Create project association system [pending]
+### Dependencies: 5.2, 5.3
+### Description: Implement linking between Funscript files and video files via project IDs
+### Details:
+Implement project-based organization for all data. Create functions to associate Funscript files with video files via project IDs. Implement createProject and listProjects functions.
+
+## 6. Update FunscriptUpload component [pending]
+### Dependencies: 5.1, 5.2, 5.3
+### Description: Modify UI to work with database layer instead of direct file handling
+### Details:
+Update components/FunscriptUpload.tsx to use the database abstraction layer for file uploads and storage. Implement project selection in the UI.
+
+## 7. Implement version history viewer [pending]
+### Dependencies: 5.4
+### Description: Create UI component to view and restore previous versions of Funscript files
+### Details:
+Create UI component to view and restore previous versions of Funscript files using the edit history data from the database.
+
+## 8. Add export options for database-stored Funscripts [pending]
+### Dependencies: 5.3
+### Description: Implement functionality to export Funscript data from database to file
+### Details:
+Implement functionality to export Funscript data from database to file. Add options for exporting with or without ROI and motion capture data.
+
+## 9. Implement soft delete for version management [pending]
+### Dependencies: 5.4
+### Description: Add functionality to mark versions as deleted without removing them from the database
+### Details:
+Implement soft delete functionality to mark versions as deleted without removing them from the database. Add UI options to show or hide deleted versions.
+
+## 10. Create ROI data management functions [pending]
+### Dependencies: 5.2, 5.3
+### Description: Implement functions to save, load, and update ROI data
+### Details:
+Create functions to manage Regions of Interest (ROI) data associated with Funscript files. Implement saveROIData, loadROIData, and updateROIData functions.
+
+## 11. Implement motion capture data integration [pending]
+### Dependencies: 5.2, 5.3
+### Description: Add support for storing and retrieving motion capture data
+### Details:
+Implement functions to store and retrieve motion capture data associated with Funscript files. Create saveMotionCaptureData and loadMotionCaptureData functions.
+
+## 12. Create migration utilities for Supabase transition [pending]
+### Dependencies: 5.2, 5.3
+### Description: Implement utilities to facilitate future migration to Supabase
+### Details:
+Create utilities to export data from localStorage and import it into Supabase. Design database abstraction layer to make transition seamless.
+
