@@ -7,12 +7,14 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardFooter,
+  CardTitle,
+  CardAction
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Save } from 'lucide-react';
-import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { useEditState } from '@/hooks/use-editstate';
 
 const editModes = [
   { label: 'Play', value: 'playing' },
@@ -27,32 +29,15 @@ const ControlPanel = () => {
   const { send } = useEditActorRef();
 
   // Get the current editing substate
-  const editMode = useEditSelector((state) => {
-    if (state.matches('editing')) {
-      if (state.matches('editing.fsaction_editing')) return 'fsaction_editing';
-      if (state.matches('editing.chapters_editing')) return 'chapters_editing';
-      if (state.matches('editing.zoom_editing')) return 'zoom_editing';
-      if (state.matches('editing.roi_editing')) return 'roi_editing';
-      if (state.matches('editing.motion_editing')) return 'motion_editing';
-      return 'playing';
-    }
-    return 'playing';
-  });
+  const editMode = useEditState();
 
   const fsChapters = useEditSelector((state) => state.context.fsChapters);
-  const params = useParams();
-  const projectId = params.project_id as string;
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSaveChapters = async () => {
-    if (!projectId) {
-      console.error('No project ID available');
-      return;
-    }
-
     setIsSaving(true);
     try {
-      send({ type: 'SAVE_PROJECT', projectId });
+      send({ type: 'SAVE_PROJECT' });
       console.log('Chapters saved successfully');
     } catch (error) {
       console.error('Failed to save chapters:', error);
@@ -86,23 +71,6 @@ const ControlPanel = () => {
 
   return (
     <Card>
-      <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-        <div>
-          <CardTitle className='text-sm font-medium'>Controls</CardTitle>
-          <CardDescription>
-            Switch between different editing modes
-          </CardDescription>
-        </div>
-        <Button
-          onClick={handleSaveChapters}
-          disabled={isSaving}
-          size='sm'
-          variant='outline'
-        >
-          <Save className='mr-2 h-4 w-4' />
-          {isSaving ? 'Saving...' : 'Save'}
-        </Button>
-      </CardHeader>
       <CardContent>
         <Tabs
           value={editMode}
@@ -125,6 +93,17 @@ const ControlPanel = () => {
           ))}
         </Tabs>
       </CardContent>
+      <CardFooter className='flex justify-end'>
+        <Button
+          onClick={handleSaveChapters}
+          disabled={isSaving}
+          size='sm'
+          variant='outline'
+        >
+          <Save className='mr-2 h-4 w-4' />
+          {isSaving ? 'Saving...' : 'Save'}
+        </Button>
+      </CardFooter>
     </Card>
   );
 };

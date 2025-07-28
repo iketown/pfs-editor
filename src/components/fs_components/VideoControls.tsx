@@ -8,7 +8,9 @@ import {
   SkipBack,
   SkipForward,
   ZoomIn,
-  ZoomOut
+  ZoomOut,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 interface VideoControlsProps {
@@ -25,6 +27,7 @@ const VideoControls: React.FC<VideoControlsProps> = ({ className = '' }) => {
   ) as React.RefObject<HTMLVideoElement> | null;
   const videoTime = useEditSelector((state) => state.context.videoTime);
   const videoFps = useEditSelector((state) => state.context.videoFps);
+  const hideVideo = useEditSelector((state) => state.context.hideVideo);
 
   // Local state for play/pause and zoom
   const [isPlaying, setIsPlaying] = React.useState(false);
@@ -68,6 +71,14 @@ const VideoControls: React.FC<VideoControlsProps> = ({ className = '' }) => {
     setIsZoomed(!isZoomed);
     // TODO: Implement zoom functionality
     console.log('Zoom toggle:', !isZoomed);
+  };
+
+  // Handle video visibility toggle
+  const handleVideoVisibilityToggle = () => {
+    editSend({
+      type: 'SHOW_HIDE_VIDEO',
+      hideVideo: !hideVideo
+    });
   };
 
   // Listen for video play/pause events
@@ -130,20 +141,37 @@ const VideoControls: React.FC<VideoControlsProps> = ({ className = '' }) => {
         Next
       </Button>
 
-      {/* Zoom Toggle Button */}
-      <Button
-        variant='outline'
-        size='sm'
-        onClick={handleZoomToggle}
-        className='ml-auto flex items-center gap-1'
-      >
-        {isZoomed ? (
-          <ZoomOut className='h-4 w-4' />
-        ) : (
-          <ZoomIn className='h-4 w-4' />
-        )}
-        Zoom
-      </Button>
+      {/* Right side controls */}
+      <div className='ml-auto flex items-center gap-2'>
+        {/* Video Visibility Toggle */}
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={handleVideoVisibilityToggle}
+          className='flex items-center gap-1'
+        >
+          {hideVideo ? (
+            <EyeOff className='h-4 w-4' />
+          ) : (
+            <Eye className='h-4 w-4' />
+          )}
+        </Button>
+
+        {/* Zoom Toggle Button */}
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={handleZoomToggle}
+          className='flex items-center gap-1'
+        >
+          {isZoomed ? (
+            <ZoomOut className='h-4 w-4' />
+          ) : (
+            <ZoomIn className='h-4 w-4' />
+          )}
+          Zoom
+        </Button>
+      </div>
     </div>
   );
 };

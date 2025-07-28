@@ -43,10 +43,9 @@ export function EditProjectPage() {
 
   useEffect(() => {
     const loadProject = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
         const loadedProject = await db.getProject(projectId);
-
         if (!loadedProject) {
           setError('Project not found');
           return;
@@ -54,7 +53,28 @@ export function EditProjectPage() {
 
         setProject(loadedProject);
 
-        // Load the funscript data into the fsEditMachine
+        // Set the project ID in the machine context
+        editSend({
+          type: 'SET_PROJECT_ID',
+          projectId: projectId
+        });
+
+        // Load video file if it exists
+        if (loadedProject.videoFile?.handle) {
+          try {
+            const file = await loadedProject.videoFile.handle.getFile();
+            const url = URL.createObjectURL(file);
+            editSend({
+              type: 'LOAD_VIDEO',
+              url,
+              file
+            });
+          } catch (err) {
+            console.error('Failed to load video file:', err);
+          }
+        }
+
+        // Load funscript data if it exists
         if (loadedProject.funscriptData) {
           editSend({
             type: 'LOAD_FUNSCRIPT',
@@ -70,6 +90,14 @@ export function EditProjectPage() {
           editSend({
             type: 'LOAD_FS_CHAPTERS',
             fsChapters: loadedProject.fsChapters
+          });
+        }
+
+        // Load project settings including hideVideo preference
+        if (loadedProject.settings) {
+          editSend({
+            type: 'LOAD_PROJECT_SETTINGS',
+            settings: loadedProject.settings
           });
         }
       } catch (err) {
@@ -160,12 +188,6 @@ export function EditProjectPage() {
           <div className='p-4'>
             <VideoTimeSliders />
           </div>
-          {/* Full Width Funscript Editor */}
-          <Card>
-            <CardContent>
-              <FSGraph />
-            </CardContent>
-          </Card>
         </div>
       </div>
       <ContextView />

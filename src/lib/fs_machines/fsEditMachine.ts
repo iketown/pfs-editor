@@ -22,6 +22,8 @@ export type FSEditContext = {
     videoFps: number | null;
     loopStart: number | null;
     loopEnd: number | null;
+    hideVideo: boolean;
+    projectId: string | null;
 };
 
 export type FSEditEvent =
@@ -30,15 +32,18 @@ export type FSEditEvent =
     | { type: 'SET_VIDEO_PROMPT'; prompt: string | null }
     | { type: 'RESTORE_VIDEO_FILE'; projectId: string }
     | { type: 'SELECT_VIDEO_FILE' }
+    | { type: 'SHOW_HIDE_VIDEO', hideVideo: boolean }
+    | { type: 'LOAD_PROJECT_SETTINGS'; settings: any }
+    | { type: 'SET_PROJECT_ID'; projectId: string }
     | { type: 'SET_PLAYER_REF'; playerRef: React.RefObject<HTMLVideoElement> }
     | { type: 'SET_CHART_REF'; chartRef: React.RefObject<ChartJSOrUndefined<'line', { x: number; y: number }[], unknown>> }
     | { type: 'SEEK_VIDEO'; time: number }
     | { type: 'LOAD_FUNSCRIPT'; funscript: FunscriptObject }
     | { type: 'LOAD_FS_CHAPTERS'; fsChapters: { [chapter_id: string]: { startTime: number; endTime: number; title: string; color: string; id: string; } } }
     | { type: 'UPDATE_CHAPTER'; chapterId: string; startTime?: number; endTime?: number; title?: string }
-    | { type: 'UPDATE_CHAPTER_AND_SAVE'; chapterId: string; startTime?: number; endTime?: number; title?: string; projectId: string }
+    | { type: 'UPDATE_CHAPTER_AND_SAVE'; chapterId: string; startTime?: number; endTime?: number; title?: string }
     | { type: 'SELECT_CHAPTER'; chapterId: string | null }
-    | { type: 'SAVE_PROJECT'; projectId: string }
+    | { type: 'SAVE_PROJECT' }
     | { type: 'TEST_ACTION' }
     | { type: 'SELECT_NODE'; actionId: string }
     | { type: 'SET_NODE_IDX'; nodeIdx: number }
@@ -77,7 +82,9 @@ export const fsEditMachine = createMachine({
         chartRef: null,
         videoFps: null,
         loopStart: null,
-        loopEnd: null
+        loopEnd: null,
+        hideVideo: false,
+        projectId: null
     },
     on: {
         LOAD_FUNSCRIPT: {
@@ -85,6 +92,12 @@ export const fsEditMachine = createMachine({
         },
         LOAD_FS_CHAPTERS: {
             actions: 'loadFsChapters'
+        },
+        LOAD_PROJECT_SETTINGS: {
+            actions: 'loadProjectSettings'
+        },
+        SET_PROJECT_ID: {
+            actions: 'setProjectId'
         },
         UPDATE_CHAPTER: {
             actions: ['updateChapter']
@@ -133,6 +146,9 @@ export const fsEditMachine = createMachine({
         },
         RESET_RANGE: {
             actions: 'resetRange'
+        },
+        SHOW_HIDE_VIDEO: {
+            actions: ['showHideVideo', 'saveProject']
         }
     },
     states: {

@@ -42,27 +42,28 @@ const setVideoDuration = assign(({ event }: any) => {
 })
 
 const saveProject = async ({ event, context }: any) => {
-    if (
-        event &&
-        typeof event === 'object' &&
-        'type' in event &&
-        event.type === 'SAVE_PROJECT' &&
-        'projectId' in event
-    ) {
-        try {
-            const project = await db.getProject(event.projectId);
-            if (project) {
-                const updatedProject = {
-                    ...project,
-                    fsChapters: context.fsChapters,
-                    updatedAt: Date.now()
-                };
-                await db.saveProject(updatedProject);
-                console.log('Project auto-saved successfully');
-            }
-        } catch (error) {
-            console.error('Failed to auto-save project:', error);
+    if (!context.projectId) {
+        console.error('No project ID available in context');
+        return;
+    }
+
+    try {
+        const project = await db.getProject(context.projectId);
+        if (project) {
+            const updatedProject = {
+                ...project,
+                fsChapters: context.fsChapters,
+                settings: {
+                    ...project.settings,
+                    hideVideo: context.hideVideo
+                },
+                updatedAt: Date.now()
+            };
+            await db.saveProject(updatedProject);
+            console.log('Project auto-saved successfully');
         }
+    } catch (error) {
+        console.error('Failed to auto-save project:', error);
     }
 };
 
@@ -185,11 +186,10 @@ const updateChapterAndSave = async ({ context, event }: any) => {
         typeof event === 'object' &&
         'type' in event &&
         event.type === 'UPDATE_CHAPTER_AND_SAVE' &&
-        'chapterId' in event &&
-        'projectId' in event
+        'chapterId' in event
     ) {
         // First update the chapter
-        const { chapterId, startTime, endTime, title, projectId } = event;
+        const { chapterId, startTime, endTime, title } = event;
         const updatedChapters = { ...context.fsChapters };
 
         if (updatedChapters[chapterId]) {
@@ -198,13 +198,22 @@ const updateChapterAndSave = async ({ context, event }: any) => {
             if (title !== undefined) updatedChapters[chapterId].title = title;
         }
 
-        // Then save to database
+        // Then save to database using projectId from context
+        if (!context.projectId) {
+            console.error('No project ID available in context');
+            return;
+        }
+
         try {
-            const project = await db.getProject(projectId);
+            const project = await db.getProject(context.projectId);
             if (project) {
                 const updatedProject = {
                     ...project,
                     fsChapters: updatedChapters,
+                    settings: {
+                        ...project.settings,
+                        hideVideo: context.hideVideo
+                    },
                     updatedAt: Date.now()
                 };
                 await db.saveProject(updatedProject);
@@ -382,6 +391,35 @@ const seekToChapterStart = assign(({ context, event }: any) => {
     return {};
 });
 
+const showHideVideo = assign(({ context, event }: any) => {
+    invariant(event.type === 'SHOW_HIDE_VIDEO', 'showHideVideo must be called with a SHOW_HIDE_VIDEO event');
+    return { hideVideo: event.hideVideo };
+});
+
+
+
+
+const loadProjectSettings = assign(({ event }: any) => {
+    if (
+        event &&
+        typeof event === 'object' &&
+        'type' in event &&
+        event.type === 'LOAD_PROJECT_SETTINGS' &&
+        'settings' in event
+    ) {
+        const settings = event.settings || {};
+        return {
+            hideVideo: settings.hideVideo ?? false // Default to false if not set
+        };
+    }
+    return {};
+});
+
+const setProjectId = assign(({ event }: any) => {
+    invariant(event.type === 'SET_PROJECT_ID', 'setProjectId must be called with a SET_PROJECT_ID event');
+    return { projectId: event.projectId };
+});
+
 export const fsEditActions = {
     updateVideoTime,
     loadVideo,
@@ -409,5 +447,8 @@ export const fsEditActions = {
     selectChapter,
     switchEditMode,
     seekToChapterStart,
-    saveProject
+    saveProject,
+    showHideVideo,
+    loadProjectSettings,
+    setProjectId
 }; 

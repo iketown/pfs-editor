@@ -2,28 +2,12 @@
 
 import React, { useMemo, useCallback, useState } from 'react';
 import * as SliderPrimitive from '@radix-ui/react-slider';
-import * as Popover from '@radix-ui/react-popover';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { ChevronDown } from 'lucide-react';
 import { useEditActorRef, useEditSelector } from './FsEditActorContext';
-import { cn } from '@/lib/utils';
-import { useParams } from 'next/navigation';
+import VideoChapterEditButtons from './VideoChapterEditButtons';
 
-interface VideoChapterSliderProps {
-  onChaptersChange?: (chapters: any[]) => void;
-}
+interface VideoChapterSliderProps {}
 
-interface ChapterFormData {
-  title: string;
-  startTime: number;
-  endTime: number;
-}
-
-const VideoChapterSlider: React.FC<VideoChapterSliderProps> = ({
-  onChaptersChange
-}) => {
+const VideoChapterSlider: React.FC<VideoChapterSliderProps> = ({}) => {
   const { send } = useEditActorRef();
   const fsChapters = useEditSelector((state) => state.context.fsChapters);
   const rangeStart = useEditSelector((state) => state.context.rangeStart);
@@ -31,20 +15,6 @@ const VideoChapterSlider: React.FC<VideoChapterSliderProps> = ({
   const selectedChapterId = useEditSelector(
     (state) => state.context.selectedChapterId
   );
-  const params = useParams();
-  const projectId = params.project_id as string;
-
-  // State for popover
-  const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<ChapterFormData>({
-    title: '',
-    startTime: 0,
-    endTime: 0
-  });
-  const [validationErrors, setValidationErrors] = useState<{
-    startTime?: string;
-    endTime?: string;
-  }>({});
 
   // Get all chapters (not filtered by range for the buttons)
   const allChapters = useMemo(() => {
@@ -88,17 +58,20 @@ const VideoChapterSlider: React.FC<VideoChapterSliderProps> = ({
           return false;
         }
 
-        // Check if chapter overlaps with the range (start time in range OR end time in range OR chapter spans the range)
+        // Only include times that are actually within the range
+        // Don't render thumbs for out-of-range times
         const startInRange =
           chapter.startTime >= rangeStart && chapter.startTime < rangeEnd;
         const endInRange =
           chapter.endTime > rangeStart && chapter.endTime <= rangeEnd;
-        const spansRange =
-          chapter.startTime <= rangeStart && chapter.endTime >= rangeEnd;
 
-        return startInRange || endInRange || spansRange;
+        // Only include this chapter if both times are in range
+        return startInRange && endInRange;
       })
-      .map((chapter) => [chapter.startTime, chapter.endTime])
+      .map((chapter) => {
+        // Use the actual times since we know they're in range
+        return [chapter.startTime, chapter.endTime];
+      })
       .flat();
   }, [memoizedChapters, rangeStart, rangeEnd, selectedChapterId]);
 
@@ -112,15 +85,13 @@ const VideoChapterSlider: React.FC<VideoChapterSliderProps> = ({
         return false;
       }
 
-      // Check if chapter overlaps with the range (start time in range OR end time in range OR chapter spans the range)
+      // Only show chapters where both start and end times are in range
       const startInRange =
         chapter.startTime >= rangeStart && chapter.startTime < rangeEnd;
       const endInRange =
         chapter.endTime > rangeStart && chapter.endTime <= rangeEnd;
-      const spansRange =
-        chapter.startTime <= rangeStart && chapter.endTime >= rangeEnd;
 
-      return startInRange || endInRange || spansRange;
+      return startInRange && endInRange;
     });
   }, [memoizedChapters, rangeStart, rangeEnd, selectedChapterId]);
 
@@ -129,14 +100,14 @@ const VideoChapterSlider: React.FC<VideoChapterSliderProps> = ({
     (values: number[]) => {
       if (rangeEnd <= rangeStart) return;
 
-      // Get visible chapters for this update
+      // Get visible chapters for this update (same filtering as above)
       const visibleChapters = allChapters.filter((chapter) => {
-        return (
-          chapter.startTime < rangeEnd &&
-          chapter.startTime >= rangeStart &&
-          chapter.endTime >= rangeStart &&
-          chapter.endTime < rangeEnd
-        );
+        const startInRange =
+          chapter.startTime >= rangeStart && chapter.startTime < rangeEnd;
+        const endInRange =
+          chapter.endTime > rangeStart && chapter.endTime <= rangeEnd;
+        // Only include chapters where both times are in range
+        return startInRange && endInRange;
       });
 
       // Find which chapter changed by comparing values
@@ -146,10 +117,17 @@ const VideoChapterSlider: React.FC<VideoChapterSliderProps> = ({
           const chapter = visibleChapters[chapterIndex];
           const newStartTime = values[i];
           const newEndTime = values[i + 1];
+
+          // Only update if the new values are within the original chapter's bounds
+          // and represent a meaningful change
           const startChanged =
             Math.abs(newStartTime - chapter.startTime) > 0.01;
           const endChanged = Math.abs(newEndTime - chapter.endTime) > 0.01;
-          // Only update if values actually changed
+
+          // Ensure the new times are valid (start < end)
+          if (newStartTime >= newEndTime) continue;
+
+          // Only update if values actually changed and are meaningful
           if (startChanged) {
             send({ type: 'SEEK_VIDEO', time: newStartTime });
           }
@@ -175,82 +153,9 @@ const VideoChapterSlider: React.FC<VideoChapterSliderProps> = ({
   const handleChapterCommit = useCallback(
     (values: number[]) => {
       handleChapterChange(values);
-
-      // Auto-save to backend after chapter changes are committed
-      if (projectId) {
-        send({ type: 'SAVE_PROJECT', projectId });
-      }
     },
-    [handleChapterChange, projectId, send]
+    [handleChapterChange]
   );
-
-  // Format time for display
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  // Parse time input (accepts MM:SS format)
-  const parseTimeInput = (timeString: string): number => {
-    const parts = timeString.split(':');
-    if (parts.length === 2) {
-      const minutes = parseInt(parts[0]) || 0;
-      const seconds = parseInt(parts[1]) || 0;
-      return minutes * 60 + seconds;
-    }
-    return 0;
-  };
-
-  // Validate form data
-  const validateForm = (
-    data: ChapterFormData,
-    chapterId: string
-  ): { startTime?: string; endTime?: string } => {
-    const errors: { startTime?: string; endTime?: string } = {};
-    const currentChapterIndex = memoizedChapters.findIndex(
-      (c) => c.id === chapterId
-    );
-
-    if (currentChapterIndex === -1) return errors;
-
-    // Check start time against previous chapter
-    if (currentChapterIndex > 0) {
-      const previousChapter = memoizedChapters[currentChapterIndex - 1];
-      if (data.startTime <= previousChapter.endTime) {
-        errors.startTime = `start time must be after the previous chapter's (${previousChapter.title}) end time`;
-      }
-    }
-
-    // Check end time against next chapter
-    if (currentChapterIndex < memoizedChapters.length - 1) {
-      const nextChapter = memoizedChapters[currentChapterIndex + 1];
-      if (data.endTime >= nextChapter.startTime) {
-        errors.endTime = `end time must be before the next chapter's (${nextChapter.title}) start time`;
-      }
-    }
-
-    // Check that start time is before end time
-    if (data.startTime >= data.endTime) {
-      errors.endTime = 'end time must be after start time';
-    }
-
-    return errors;
-  };
-
-  // Handle form input changes
-  const handleFormChange = (
-    field: keyof ChapterFormData,
-    value: string | number
-  ) => {
-    const newFormData = { ...formData, [field]: value };
-    setFormData(newFormData);
-
-    if (openPopoverId) {
-      const errors = validateForm(newFormData, openPopoverId);
-      setValidationErrors(errors);
-    }
-  };
 
   // Handle chapter button click (main area) - select chapter and set range
   const handleChapterClick = (chapter: (typeof memoizedChapters)[0]) => {
@@ -260,38 +165,6 @@ const VideoChapterSlider: React.FC<VideoChapterSliderProps> = ({
       type: 'SELECT_CHAPTER',
       chapterId: newChapterId
     });
-  };
-
-  // Handle popover open (caret area)
-  const handlePopoverOpen = (chapter: (typeof memoizedChapters)[0]) => {
-    setFormData({
-      title: chapter.title,
-      startTime: chapter.startTime,
-      endTime: chapter.endTime
-    });
-    setValidationErrors({});
-    setOpenPopoverId(chapter.id);
-  };
-
-  // Handle form save
-  const handleSave = () => {
-    if (openPopoverId && Object.keys(validationErrors).length === 0) {
-      send({
-        type: 'UPDATE_CHAPTER_AND_SAVE',
-        chapterId: openPopoverId,
-        title: formData.title,
-        startTime: formData.startTime,
-        endTime: formData.endTime,
-        projectId: projectId
-      });
-      setOpenPopoverId(null);
-    }
-  };
-
-  // Handle form cancel
-  const handleCancel = () => {
-    setOpenPopoverId(null);
-    setValidationErrors({});
   };
 
   // Don't render if no chapters or invalid range
@@ -313,15 +186,23 @@ const VideoChapterSlider: React.FC<VideoChapterSliderProps> = ({
       <div className='text-muted-foreground mb-2 text-sm'>
         Chapters in Range (
         {
-          allChapters.filter(
-            (chapter) =>
-              chapter.startTime < rangeEnd &&
-              chapter.startTime >= rangeStart &&
-              chapter.endTime >= rangeStart &&
-              chapter.endTime < rangeEnd
-          ).length
+          allChapters.filter((chapter) => {
+            const startInRange =
+              chapter.startTime >= rangeStart && chapter.startTime < rangeEnd;
+            const endInRange =
+              chapter.endTime > rangeStart && chapter.endTime <= rangeEnd;
+            // Only count chapters where both times are in range
+            return startInRange && endInRange;
+          }).length
         }
-        ): {formatTime(rangeStart)} - {formatTime(rangeEnd)}
+        ): {Math.floor(rangeStart / 60)}:
+        {Math.floor(rangeStart % 60)
+          .toString()
+          .padStart(2, '0')}{' '}
+        - {Math.floor(rangeEnd / 60)}:
+        {Math.floor(rangeEnd % 60)
+          .toString()
+          .padStart(2, '0')}
       </div>
       <SliderPrimitive.Root
         className='relative flex w-full touch-none items-center select-none'
@@ -377,135 +258,12 @@ const VideoChapterSlider: React.FC<VideoChapterSliderProps> = ({
         })}
       </SliderPrimitive.Root>
 
-      {/* Chapter buttons in horizontally scrollable container */}
-      <div className='mt-4'>
-        <div className='text-muted-foreground mb-2 text-sm font-medium'>
-          All Chapters ({allChapters.length})
-        </div>
-        <div className='scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent flex gap-2 overflow-x-auto pb-2'>
-          {memoizedChapters.map((chapter) => (
-            <Popover.Root
-              key={chapter.id}
-              open={openPopoverId === chapter.id}
-              onOpenChange={(open) => {
-                if (!open) setOpenPopoverId(null);
-              }}
-            >
-              <div className='flex items-center'>
-                <Button
-                  variant={
-                    selectedChapterId === chapter.id ? 'default' : 'outline'
-                  }
-                  size='sm'
-                  className='shrink-0 rounded-r-none whitespace-nowrap'
-                  onClick={() => handleChapterClick(chapter)}
-                >
-                  {chapter.title} ({formatTime(chapter.startTime)} -{' '}
-                  {formatTime(chapter.endTime)})
-                </Button>
-                <Popover.Trigger asChild>
-                  <Button
-                    variant={
-                      selectedChapterId === chapter.id ? 'default' : 'outline'
-                    }
-                    size='sm'
-                    className='shrink-0 rounded-l-none border-l-0 px-2'
-                    onClick={() => handlePopoverOpen(chapter)}
-                  >
-                    <ChevronDown className='h-4 w-4' />
-                  </Button>
-                </Popover.Trigger>
-              </div>
-              <Popover.Content
-                className='bg-background w-80 rounded-md border p-4 shadow-lg'
-                align='start'
-              >
-                <div className='space-y-4'>
-                  <div className='space-y-2'>
-                    <h4 className='leading-none font-medium'>Edit Chapter</h4>
-                    <p className='text-muted-foreground text-sm'>
-                      Update chapter properties
-                    </p>
-                  </div>
-                  <div className='space-y-3'>
-                    <div className='space-y-2'>
-                      <Label htmlFor='title'>Title</Label>
-                      <Input
-                        id='title'
-                        value={formData.title}
-                        onChange={(e) =>
-                          handleFormChange('title', e.target.value)
-                        }
-                        placeholder='Chapter title'
-                      />
-                    </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='startTime'>Start Time (MM:SS)</Label>
-                      <Input
-                        id='startTime'
-                        value={formatTime(formData.startTime)}
-                        onChange={(e) =>
-                          handleFormChange(
-                            'startTime',
-                            parseTimeInput(e.target.value)
-                          )
-                        }
-                        placeholder='0:00'
-                        className={cn(
-                          validationErrors.startTime && 'border-red-500'
-                        )}
-                      />
-                      {validationErrors.startTime && (
-                        <p className='text-sm text-red-500'>
-                          {validationErrors.startTime}
-                        </p>
-                      )}
-                    </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='endTime'>End Time (MM:SS)</Label>
-                      <Input
-                        id='endTime'
-                        value={formatTime(formData.endTime)}
-                        onChange={(e) =>
-                          handleFormChange(
-                            'endTime',
-                            parseTimeInput(e.target.value)
-                          )
-                        }
-                        placeholder='0:00'
-                        className={cn(
-                          validationErrors.endTime && 'border-red-500'
-                        )}
-                      />
-                      {validationErrors.endTime && (
-                        <p className='text-sm text-red-500'>
-                          {validationErrors.endTime}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className='flex gap-2 pt-2'>
-                    <Button
-                      variant='outline'
-                      onClick={handleCancel}
-                      className='flex-1'
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleSave}
-                      disabled={Object.keys(validationErrors).length > 0}
-                      className='flex-1'
-                    >
-                      Save
-                    </Button>
-                  </div>
-                </div>
-              </Popover.Content>
-            </Popover.Root>
-          ))}
-        </div>
-      </div>
+      {/* Chapter edit buttons */}
+      <VideoChapterEditButtons
+        chapters={memoizedChapters}
+        selectedChapterId={selectedChapterId}
+        onChapterClick={handleChapterClick}
+      />
     </div>
   );
 };

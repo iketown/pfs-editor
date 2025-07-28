@@ -14,6 +14,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 }) => {
   const playerRef = useRef<HTMLVideoElement>(null);
   const videoUrl = useEditSelector((state) => state.context.videoUrl);
+  const hideVideo = useEditSelector((state) => state.context.hideVideo);
   const { send: editSend } = useEditActorRef();
   const { send: motionSend } = useMotionActorRef();
 
@@ -54,6 +55,20 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   };
 
   if (!videoUrl) return null;
+
+  // If video is hidden, show a placeholder
+  if (hideVideo) {
+    return (
+      <div className='bg-muted flex h-64 w-full items-center justify-center rounded'>
+        <div className='text-center'>
+          <div className='text-muted-foreground mb-2 text-sm'>Video Hidden</div>
+          <div className='text-muted-foreground text-xs'>
+            Toggle visibility in controls
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <VideoROIWrapper>
