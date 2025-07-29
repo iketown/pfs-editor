@@ -24,7 +24,7 @@ export const VideoROIWrapper: React.FC<VideoROIWrapperProps> = ({
   const playerRef = useMotionSelector(
     (state) => state.context.playerRef
   ) as React.RefObject<HTMLVideoElement> | null;
-  const currentROI = useMotionSelector((state) => state.context.currentROI);
+  const activeROI = useMotionSelector((state) => state.context.activeROI);
 
   const selectedROIid = useMotionSelector(
     (state) => state.context.selectedROIid
@@ -36,13 +36,13 @@ export const VideoROIWrapper: React.FC<VideoROIWrapperProps> = ({
   // todo: frames can be on timeline too.   prevFrame and nextFrame buttons to move frame on timeline
   // todo: frames can be adjusted or dragged in X space on the timeline.
   // todo: selectedFrame in ctx.
-  const [frame, setFrame] = useState<ROI>(currentROI);
+  const [frame, setFrame] = useState<ROI>(activeROI);
   const [target, setTarget] = useState<SVGRectElement | null>(null);
   const [svgSize, setSvgSize] = useState({ w: 0, h: 0 });
   // Update frame when currentROI changes
   useEffect(() => {
-    setFrame(currentROI);
-  }, [currentROI]);
+    setFrame(activeROI);
+  }, [activeROI]);
 
   // Update SVG overlay size when video metadata loads
   useEffect(() => {

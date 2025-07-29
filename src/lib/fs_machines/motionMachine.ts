@@ -5,8 +5,8 @@ import type { ROI } from '@/types/roi-types';
 export type MotionContext = {
     playerRef: React.RefObject<HTMLVideoElement> | null;
     chartRef: React.RefObject<ChartJSOrUndefined<'line', { x: number; y: number }[], unknown>> | null;
-    currentROI: ROI;
-    selectedROIid: string | null;
+    selectedROIid: string | null; // the currently selected ROI (for editing)
+    activeROI: ROI; // at this time of video, which ROI is active (not necessarily selected)
     rois: ROI[];
     videoFps: number | null;
 };
@@ -32,7 +32,7 @@ export const motionMachine = createMachine({
     context: {
         playerRef: null,
         chartRef: null,
-        currentROI: initialROI,
+        activeROI: initialROI,
         selectedROIid: null,
         rois: [initialROI, test5s, test10s],
         videoFps: null
@@ -40,16 +40,16 @@ export const motionMachine = createMachine({
     on: {
         VIDEO_TIME_UPDATE: {
             actions: assign({
-                currentROI: ({ context, event }) => {
-                    const { rois, currentROI } = context;
+                activeROI: ({ context, event }) => {
+                    const { rois, activeROI } = context;
                     const currentTime = event.time;
                     const sorted = rois
                         .filter((roi) => roi.timeStart <= currentTime)
                         .sort((a, b) => b.timeStart - a.timeStart);
-                    const newROI = sorted[0] || currentROI;
+                    const newROI = sorted[0] || activeROI;
                     // Only update if different
-                    if (currentROI && newROI && currentROI.id === newROI.id) {
-                        return currentROI;
+                    if (activeROI && newROI && activeROI.id === newROI.id) {
+                        return activeROI;
                     }
                     return newROI;
 
@@ -70,7 +70,7 @@ export const motionMachine = createMachine({
                     on: {
                         SET_CURRENT_ROI: {
                             actions: assign({
-                                currentROI: (_args, event: any) => event?.roi ?? initialROI
+                                activeROI: (_args, event: any) => event?.roi ?? initialROI
                             })
                         },
                         SELECT_ROI: {
@@ -88,15 +88,15 @@ export const motionMachine = createMachine({
                                 rois: ({ context }, event: any) => context.rois.map((roi: ROI) =>
                                     roi.id === event?.roi?.id ? event.roi : roi
                                 ),
-                                currentROI: ({ context }, event: any) =>
-                                    context.currentROI.id === event?.roi?.id ? event.roi : context.currentROI
+                                activeROI: ({ context }, event: any) =>
+                                    context.activeROI.id === event?.roi?.id ? event.roi : context.activeROI
                             })
                         },
                         REMOVE_ROI: {
                             actions: assign({
                                 rois: ({ context }, event: any) => context.rois.filter((roi: ROI) => roi.id !== event?.roiId),
-                                currentROI: ({ context }, event: any) =>
-                                    context.currentROI.id === event?.roiId ? initialROI : context.currentROI,
+                                activeROI: ({ context }, event: any) =>
+                                    context.activeROI.id === event?.roiId ? initialROI : context.activeROI,
                                 selectedROIid: ({ context }, event: any) =>
                                     context.selectedROIid === event?.roiId ? null : context.selectedROIid
                             })

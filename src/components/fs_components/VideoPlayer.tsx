@@ -30,13 +30,19 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   }, [playerRef, motionSend, editSend]);
 
   const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
-    const timeMs = Math.round(e.currentTarget.currentTime * 1000);
+    const video = e.currentTarget;
+    const timeMs = Math.round(video.currentTime * 1000);
 
     if (onTimeUpdate) {
       onTimeUpdate(timeMs);
     }
 
     motionSend({
+      type: 'VIDEO_TIME_UPDATE',
+      time: timeMs
+    });
+
+    editSend({
       type: 'VIDEO_TIME_UPDATE',
       time: timeMs
     });
@@ -56,20 +62,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   if (!videoUrl) return null;
 
-  // If video is hidden, show a placeholder
-  if (hideVideo) {
-    return (
-      <div className='bg-muted flex h-64 w-full items-center justify-center rounded'>
-        <div className='text-center'>
-          <div className='text-muted-foreground mb-2 text-sm'>Video Hidden</div>
-          <div className='text-muted-foreground text-xs'>
-            Toggle visibility in controls
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <VideoROIWrapper>
       <video
@@ -79,6 +71,16 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         onTimeUpdate={handleTimeUpdate}
         {...props}
       />
+      {hideVideo && (
+        <div className='pointer-events-none absolute inset-0 flex items-center justify-center rounded bg-black/80'>
+          <div className='text-center'>
+            <div className='mb-2 text-sm text-white'>Video Hidden</div>
+            <div className='text-xs text-white/70'>
+              Toggle visibility in controls
+            </div>
+          </div>
+        </div>
+      )}
     </VideoROIWrapper>
   );
 };

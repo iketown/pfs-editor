@@ -164,7 +164,7 @@ const loadFunScript = assign(({ event, context }: any) => {
 })
 
 const updateChapter = assign(({ context, event }: any) => {
-    invariant(event.type === 'UPDATE_CHAPTER', 'updateChapter must be called with a UPDATE_CHAPTER event');
+    invariant(['UPDATE_CHAPTER', "UPDATE_CHAPTER_AND_SAVE"].includes(event.type), 'updateChapter must be called with a UPDATE_CHAPTER event');
 
     const { chapterId, startTime, endTime, title } = event;
     const updatedChapters = { ...context.fsChapters };

@@ -140,6 +140,12 @@ const VideoChapterEditButtons: React.FC<VideoChapterEditButtonsProps> = ({
     }
   };
 
+  // Handle form submission (Enter key)
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSave();
+  };
+
   // Handle form cancel
   const handleCancel = () => {
     setOpenPopoverId(null);
@@ -189,7 +195,7 @@ const VideoChapterEditButtons: React.FC<VideoChapterEditButtonsProps> = ({
               className='bg-background z-50 w-80 rounded-md border p-4 shadow-lg'
               align='start'
             >
-              <div className='space-y-4'>
+              <form onSubmit={handleFormSubmit} className='space-y-4'>
                 <div className='space-y-2'>
                   <h4 className='leading-none font-medium'>Edit Chapter</h4>
                   <p className='text-muted-foreground text-sm'>
@@ -258,6 +264,7 @@ const VideoChapterEditButtons: React.FC<VideoChapterEditButtonsProps> = ({
                     variant='outline'
                     onClick={handleCancel}
                     className='flex-1'
+                    type='button'
                   >
                     Cancel
                   </Button>
@@ -265,11 +272,12 @@ const VideoChapterEditButtons: React.FC<VideoChapterEditButtonsProps> = ({
                     onClick={handleSave}
                     disabled={Object.keys(validationErrors).length > 0}
                     className='flex-1'
+                    type='submit'
                   >
                     Save
                   </Button>
                 </div>
-              </div>
+              </form>
             </Popover.Content>
           </Popover.Root>
         ))}

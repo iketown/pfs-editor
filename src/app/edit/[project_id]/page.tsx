@@ -22,6 +22,7 @@ import {
 import { useVideoFileManager } from '@/hooks/useVideoFileManager';
 import { db } from '@/lib/db';
 import type { Project } from '@/lib/db/types';
+import VideoPlayhead from '@/components/fs_components/VideoPlayhead';
 
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
@@ -145,7 +146,7 @@ export function EditProjectPage() {
 
   return (
     <div className='bg-background min-h-screen'>
-      <div className='container mx-auto p-6'>
+      <div className='container mx-auto flex flex-col p-6'>
         {/* Header */}
         <div className='mb-6 flex items-center justify-between'>
           <div>
@@ -168,6 +169,7 @@ export function EditProjectPage() {
                   <div>
                     <VideoControls />
                     <VideoPlayer className='h-64 w-full object-cover' />
+                    <VideoPlayhead />
                   </div>
                 ) : (
                   <div className='bg-muted flex h-64 flex-col items-center justify-center rounded'>

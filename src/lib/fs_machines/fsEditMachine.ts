@@ -38,6 +38,7 @@ export type FSEditEvent =
     | { type: 'SET_PLAYER_REF'; playerRef: React.RefObject<HTMLVideoElement> }
     | { type: 'SET_CHART_REF'; chartRef: React.RefObject<ChartJSOrUndefined<'line', { x: number; y: number }[], unknown>> }
     | { type: 'SEEK_VIDEO'; time: number }
+    | { type: 'VIDEO_TIME_UPDATE'; time: number }
     | { type: 'LOAD_FUNSCRIPT'; funscript: FunscriptObject }
     | { type: 'LOAD_FS_CHAPTERS'; fsChapters: { [chapter_id: string]: { startTime: number; endTime: number; title: string; color: string; id: string; } } }
     | { type: 'UPDATE_CHAPTER'; chapterId: string; startTime?: number; endTime?: number; title?: string }
@@ -180,6 +181,9 @@ export const fsEditMachine = createMachine({
                 },
                 SEEK_VIDEO: {
                     actions: 'seekVideo'
+                },
+                VIDEO_TIME_UPDATE: {
+                    actions: 'updateVideoTime'
                 },
                 SWITCH_TO_FSACTIONS_EDITING: {
                     target: '.fsaction_editing'
