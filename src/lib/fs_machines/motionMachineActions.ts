@@ -2,7 +2,7 @@ import { ROI } from '@/types/roi-types';
 import { MotionContext, MotionEvent } from './motionMachine'
 import { assign, AssignAction } from 'xstate';
 import invariant from 'tiny-invariant';
-import { isEqual } from 'lodash';
+
 type MotionAssignAction = AssignAction<MotionContext, MotionEvent, any, any, any>
 
 const updateRoi: MotionAssignAction = assign({
@@ -16,16 +16,22 @@ const updateRoi: MotionAssignAction = assign({
     },
 })
 
-const updateActiveROIs: MotionAssignAction = assign({
-    activeROIs: ({ context, event }) => {
-        invariant(event.type === 'VIDEO_TIME_UPDATE', 'updateActiveROIs action must be called with a VIDEO_TIME_UPDATE event');
-        const currentTimeMs = event.time * 1000; // Convert video time from seconds to milliseconds
-        const { rois, activeROIs } = context;
-        const newActiveROIs = Object.entries(rois).filter(([_, roi]) => {
-            return roi.timeStart <= currentTimeMs && roi.timeEnd >= currentTimeMs;
-        }).map(([id]) => id);
+const updateActiveROI: MotionAssignAction = assign({
+    activeROIid: ({ context, event }) => {
+        invariant(event.type === 'VIDEO_TIME_UPDATE', 'updateActiveROI action must be called with a VIDEO_TIME_UPDATE event');
+        const currentTime = event.time; // Video time is already in seconds
+        const { rois } = context;
 
-        return isEqual(newActiveROIs, activeROIs) ? activeROIs : newActiveROIs;
+        // Find the ROI with the closest timeStart that is before or equal to current time
+        const roiEntries = Object.entries(rois);
+        if (roiEntries.length === 0) return null;
+
+        // Filter ROIs that start before or at current time, then find the latest one
+        const validROIs = roiEntries
+            .filter(([_, roi]) => (roi as ROI).timeStart <= currentTime)
+            .sort(([_, a], [__, b]) => (b as ROI).timeStart - (a as ROI).timeStart); // Sort by timeStart descending
+
+        return validROIs.length > 0 ? validROIs[0][0] : null;
     }
 })
 
@@ -37,5 +43,5 @@ const selectRoi: MotionAssignAction = assign({
 })
 
 export const motionActions = {
-    updateRoi, updateActiveROIs, selectRoi
+    updateRoi, updateActiveROI, selectRoi
 }

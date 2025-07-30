@@ -8,15 +8,15 @@ interface FrameIndicatorProps {
     unknown
   > | null>;
   fps: number;
-  currentTimeMs?: number;
-  onFrameClick: (timeMs: number) => void;
+  currentTime?: number; // in seconds
+  onFrameClick: (timeSeconds: number) => void;
   height?: number;
 }
 
 const FrameIndicator: React.FC<FrameIndicatorProps> = ({
   chartRef,
   fps,
-  currentTimeMs,
+  currentTime,
   onFrameClick,
   height = 30
 }) => {
@@ -88,13 +88,13 @@ const FrameIndicator: React.FC<FrameIndicatorProps> = ({
 
       {frames.map((frame) => {
         const isCurrentFrame =
-          currentTimeMs !== undefined &&
-          Math.abs(frame.timeMs - currentTimeMs) < 1000 / fps / 2;
+          currentTime !== undefined &&
+          Math.abs(frame.timeMs / 1000 - currentTime) < 1 / fps / 2;
 
         return (
           <button
             key={frame.frameNumber}
-            onClick={() => onFrameClick(frame.timeMs)}
+            onClick={() => onFrameClick(frame.timeMs / 1000)}
             style={{
               position: 'absolute',
               left: `${frame.position}%`,

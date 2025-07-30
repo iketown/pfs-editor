@@ -46,13 +46,13 @@ const VideoControls: React.FC<VideoControlsProps> = ({ className = '' }) => {
     }
   };
 
-  // Handle previous frame (assuming 30fps if not set)
+  // Handle previous frame
   const handlePrevious = () => {
     const video = playerRef?.current;
     if (video && videoFps) {
-      const frameTime = 1000 / videoFps; // Time per frame in ms
+      const frameTime = 1 / videoFps; // Time per frame in seconds
       const newTime = Math.max(0, videoTime - frameTime);
-      editSend({ type: 'SEEK_VIDEO', time: newTime / 1000 }); // Convert back to seconds
+      editSend({ type: 'SEEK_VIDEO', time: newTime });
     }
   };
 
@@ -60,9 +60,9 @@ const VideoControls: React.FC<VideoControlsProps> = ({ className = '' }) => {
   const handleNext = () => {
     const video = playerRef?.current;
     if (video && videoFps) {
-      const frameTime = 1000 / videoFps; // Time per frame in ms
+      const frameTime = 1 / videoFps; // Time per frame in seconds
       const newTime = videoTime + frameTime;
-      editSend({ type: 'SEEK_VIDEO', time: newTime / 1000 }); // Convert back to seconds
+      editSend({ type: 'SEEK_VIDEO', time: newTime });
     }
   };
 

@@ -20,8 +20,8 @@ const VideoTimeline: React.FC<VideoTimelineProps> = ({ className = '' }) => {
   const loopStart = useEditSelector((state) => state.context.loopStart);
   const loopEnd = useEditSelector((state) => state.context.loopEnd);
 
-  // Convert video time to milliseconds for the timeline
-  const currentTimeMs = videoTime;
+  // Video time is already in seconds, but timeline library expects milliseconds
+  const currentTimeMs = videoTime * 1000;
 
   // Calculate video duration from funscript or use a default
   const videoDuration = useMemo(() => {

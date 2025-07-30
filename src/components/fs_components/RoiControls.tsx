@@ -38,21 +38,21 @@ const RoiControls: React.FC = () => {
     (a, b) => a.timeStart - b.timeStart
   );
 
-  // Format time from milliseconds to MM:SS (for display purposes)
-  const formatTime = (timeMs: number): string => {
-    const totalSeconds = Math.floor(timeMs / 1000);
+  // Format time from seconds to MM:SS (for display purposes)
+  const formatTime = (timeSeconds: number): string => {
+    const totalSeconds = Math.floor(timeSeconds);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  // Parse MM:SS format to milliseconds
+  // Parse MM:SS format to seconds
   const parseTime = (timeString: string): number => {
     const parts = timeString.split(':');
     if (parts.length === 2) {
       const minutes = parseInt(parts[0]) || 0;
       const seconds = parseInt(parts[1]) || 0;
-      return (minutes * 60 + seconds) * 1000;
+      return minutes * 60 + seconds;
     }
     return 0;
   };
@@ -99,7 +99,7 @@ const RoiControls: React.FC = () => {
 
   // Handle creating a new ROI at current time
   const handleAddROI = useCallback(() => {
-    const currentTimeMs = videoTime * 1000; // Convert to milliseconds
+    const currentTime = videoTime; // Video time is already in seconds
     const newROI: ROI = {
       id: nanoid(8),
       title: `ROI ${rois.length + 1}`,
@@ -107,8 +107,7 @@ const RoiControls: React.FC = () => {
       y: 0,
       w: 100,
       h: 100,
-      timeStart: currentTimeMs,
-      timeEnd: currentTimeMs + 5000 // 5 seconds duration
+      timeStart: currentTime
     };
     motionSend({ type: 'ADD_ROI', roi: newROI });
   }, [videoTime, rois.length, motionSend]);
@@ -121,7 +120,7 @@ const RoiControls: React.FC = () => {
       let parsedValue: number | string = value;
 
       // Parse time fields
-      if (field === 'timeStart' || field === 'timeEnd') {
+      if (field === 'timeStart') {
         parsedValue = parseTime(value);
       } else if (
         field === 'x' ||
@@ -192,8 +191,7 @@ const RoiControls: React.FC = () => {
                           {roi.title || `ROI ${roi.id}`}
                         </span>
                         <span className='text-muted-foreground text-sm'>
-                          {formatTime(roi.timeStart)} -{' '}
-                          {formatTime(roi.timeEnd)}
+                          Starts at {formatTime(roi.timeStart)}
                         </span>
                       </div>
                     </AccordionTrigger>
@@ -262,42 +260,24 @@ const RoiControls: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Time Range */}
-                      <div className='grid grid-cols-2 gap-2'>
-                        <div>
-                          <Label htmlFor={`timeStart-${roi.id}`}>
-                            Start Time
-                          </Label>
-                          <Input
-                            id={`timeStart-${roi.id}`}
-                            value={formatTime(
-                              isCurrentlyEditing
-                                ? (editingROI?.timeStart ?? roi.timeStart)
-                                : roi.timeStart
-                            )}
-                            onChange={(e) =>
-                              handleInputChange('timeStart', e.target.value)
-                            }
-                            disabled={!isCurrentlyEditing}
-                            placeholder='MM:SS'
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor={`timeEnd-${roi.id}`}>End Time</Label>
-                          <Input
-                            id={`timeEnd-${roi.id}`}
-                            value={formatTime(
-                              isCurrentlyEditing
-                                ? (editingROI?.timeEnd ?? roi.timeEnd)
-                                : roi.timeEnd
-                            )}
-                            onChange={(e) =>
-                              handleInputChange('timeEnd', e.target.value)
-                            }
-                            disabled={!isCurrentlyEditing}
-                            placeholder='MM:SS'
-                          />
-                        </div>
+                      {/* Start Time */}
+                      <div>
+                        <Label htmlFor={`timeStart-${roi.id}`}>
+                          Start Time
+                        </Label>
+                        <Input
+                          id={`timeStart-${roi.id}`}
+                          value={formatTime(
+                            isCurrentlyEditing
+                              ? (editingROI?.timeStart ?? roi.timeStart)
+                              : roi.timeStart
+                          )}
+                          onChange={(e) =>
+                            handleInputChange('timeStart', e.target.value)
+                          }
+                          disabled={!isCurrentlyEditing}
+                          placeholder='MM:SS'
+                        />
                       </div>
 
                       {/* Action Buttons */}
@@ -350,7 +330,7 @@ const RoiControls: React.FC = () => {
       {/* Add ROI Button */}
       <Button onClick={handleAddROI} className='w-full' variant='outline'>
         <Plus className='mr-2 h-4 w-4' />
-        ADD ROI at {formatTime(videoTime * 1000)}
+        ADD ROI at {formatTime(videoTime)}
       </Button>
     </div>
   );

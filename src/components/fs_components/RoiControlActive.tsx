@@ -17,21 +17,21 @@ interface RoiControlActiveProps {
   onDelete: (roiId: string) => void;
 }
 
-// Format time from milliseconds to MM:SS
-const formatTime = (timeMs: number): string => {
-  const totalSeconds = Math.floor(timeMs / 1000);
+// Format time from seconds to MM:SS
+const formatTime = (timeSeconds: number): string => {
+  const totalSeconds = Math.floor(timeSeconds);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
-// Parse MM:SS format to milliseconds
+// Parse MM:SS format to seconds
 const parseTime = (timeString: string): number => {
   const parts = timeString.split(':');
   if (parts.length === 2) {
     const minutes = parseInt(parts[0]) || 0;
     const seconds = parseInt(parts[1]) || 0;
-    return (minutes * 60 + seconds) * 1000;
+    return minutes * 60 + seconds;
   }
   return 0;
 };
@@ -63,7 +63,7 @@ const RoiControlActive: React.FC<RoiControlActiveProps> = ({
       let parsedValue: number | string = value;
 
       // Parse time fields
-      if (field === 'timeStart' || field === 'timeEnd') {
+      if (field === 'timeStart') {
         parsedValue = parseTime(value);
       } else if (
         field === 'x' ||
@@ -153,27 +153,15 @@ const RoiControlActive: React.FC<RoiControlActiveProps> = ({
         </div>
 
         {/* Time Range */}
-        <div className='grid grid-cols-2 gap-2'>
-          <div>
-            <Label htmlFor='timeStart'>Start Time</Label>
-            <Input
-              id='timeStart'
-              value={formatTime(editingROI?.timeStart ?? roi.timeStart)}
-              onChange={(e) => handleInputChange('timeStart', e.target.value)}
-              disabled={!isEditing}
-              placeholder='MM:SS'
-            />
-          </div>
-          <div>
-            <Label htmlFor='timeEnd'>End Time</Label>
-            <Input
-              id='timeEnd'
-              value={formatTime(editingROI?.timeEnd ?? roi.timeEnd)}
-              onChange={(e) => handleInputChange('timeEnd', e.target.value)}
-              disabled={!isEditing}
-              placeholder='MM:SS'
-            />
-          </div>
+        <div>
+          <Label htmlFor='timeStart'>Start Time</Label>
+          <Input
+            id='timeStart'
+            value={formatTime(editingROI?.timeStart ?? roi.timeStart)}
+            onChange={(e) => handleInputChange('timeStart', e.target.value)}
+            disabled={!isEditing}
+            placeholder='MM:SS'
+          />
         </div>
 
         {/* Action Buttons */}

@@ -91,7 +91,7 @@ export function FSGraph() {
       const idx = points[0].index;
       const action = funscript.actions[idx];
       const { id, at, pos } = action;
-      send({ type: 'SEEK_VIDEO', time: at / 1000 });
+      send({ type: 'SEEK_VIDEO', time: at / 1000 }); // Convert funscript ms to seconds
       const actionId = id;
       if (event.metaKey) {
         send({ type: 'TOGGLE_SELECTED_NODE', actionId });
@@ -102,14 +102,14 @@ export function FSGraph() {
     } else if (clickedTime !== undefined) {
       // Clicked on empty space - seek to the clicked time
       console.log('Clicked at time:', clickedTime, 'ms');
-      send({ type: 'SEEK_VIDEO', time: clickedTime / 1000 });
+      send({ type: 'SEEK_VIDEO', time: clickedTime / 1000 }); // Convert chart ms to seconds
       send({ type: 'CLEAR_SELECTED_NODES' });
     }
   };
 
-  const handleFrameClick = (timeMs: number) => {
-    console.log('Frame clicked at:', timeMs, 'ms');
-    send({ type: 'SEEK_VIDEO', time: timeMs / 1000 });
+  const handleFrameClick = (timeSeconds: number) => {
+    console.log('Frame clicked at:', timeSeconds, 's');
+    send({ type: 'SEEK_VIDEO', time: timeSeconds });
     send({ type: 'CLEAR_SELECTED_NODES' });
   };
 
@@ -142,9 +142,9 @@ export function FSGraph() {
       scales: {
         x: {
           type: 'linear' as const,
-          title: { display: true, text: 'Time (ms)' },
+          title: { display: true, text: 'Time (s)' },
           min: 0,
-          max: 5000,
+          max: 5,
           ticks: { autoSkip: true, maxTicksLimit: 20 }
         },
         y: {

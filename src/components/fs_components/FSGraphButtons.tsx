@@ -57,7 +57,7 @@ export default function ButtonRow({}: {}) {
     chart.zoomScale('x', { min, max });
     send({ type: 'SET_NODE_IDX', nodeIdx: idx });
     send({ type: 'SELECT_NODE', actionId: thisAction.id });
-    send({ type: 'SEEK_VIDEO', time: targetAt / 1000 });
+    send({ type: 'SEEK_VIDEO', time: targetAt / 1000 }); // Convert funscript ms to seconds
   }
 
   // Handlers for next/prev

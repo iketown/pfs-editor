@@ -29,35 +29,18 @@ export const VideoROIWrapper: React.FC<VideoROIWrapperProps> = ({
 
   // Get the raw data from the motion machine
   const rois = useMotionSelector(({ context }) => context.rois);
-  const activeROIIds = useMotionSelector(({ context }) => context.activeROIs);
-
-  // Memoize the activeROIs array to prevent infinite re-renders
-  const activeROIs = useMemo(() => {
-    return Object.values(rois).filter((roi) => activeROIIds.includes(roi.id));
-  }, [rois, activeROIIds]);
-
+  const activeROIid = useMotionSelector(({ context }) => context.activeROIid);
   const selectedROIid = useMotionSelector(
     (state) => state.context.selectedROIid
   );
   const motionActorRef = useMotionActorRef();
 
-  // Local state for frames - maps ROI ID to ROI object
-  const [frames, setFrames] = useState<{ [roi_id: string]: ROI }>({});
-  const framesRef = useRef(frames);
+  // Get the single active ROI
+  const activeROI = useMemo(() => {
+    return activeROIid ? rois[activeROIid] : null;
+  }, [rois, activeROIid]);
 
-  // Keep framesRef in sync with frames state
-  useEffect(() => {
-    framesRef.current = frames;
-  }, [frames]);
-
-  // Track initial positions for drag operations
-  const initialPositionsRef = useRef<{
-    [roi_id: string]: { x: number; y: number };
-  }>({});
-
-  const [targets, setTargets] = useState<{
-    [roi_id: string]: SVGRectElement | null;
-  }>({});
+  const [target, setTarget] = useState<SVGRectElement | null>(null);
   const [svgSize, setSvgSize] = useState({ w: 0, h: 0 });
   const [containerElement, setContainerElement] =
     useState<HTMLDivElement | null>(null);
@@ -67,15 +50,6 @@ export const VideoROIWrapper: React.FC<VideoROIWrapperProps> = ({
     containerRef.current = element;
     setContainerElement(element);
   }, []);
-
-  // Update frames when activeROIs changes
-  useEffect(() => {
-    const newFrames: { [roi_id: string]: ROI } = {};
-    activeROIs.forEach((roi) => {
-      newFrames[roi.id] = roi;
-    });
-    setFrames(newFrames);
-  }, [activeROIs]);
 
   // Update SVG overlay size when video metadata loads
   useEffect(() => {
@@ -95,116 +69,67 @@ export const VideoROIWrapper: React.FC<VideoROIWrapperProps> = ({
   }, [playerRef]);
 
   const onUpdateROI = useCallback(
-    (updatedFrame: ROI) => {
+    (updatedROI: ROI) => {
       motionActorRef.send({
         type: 'UPDATE_ROI',
-        roi: updatedFrame
+        roi: updatedROI
       });
     },
     [motionActorRef]
   );
 
-  // Create stable ref callbacks for each ROI to prevent infinite loops
-  const createRefCallback = useCallback((roiId: string) => {
-    return (element: SVGRectElement | null) => {
-      setTargets((prev) => {
-        // Only update if the value actually changed
-        if (prev[roiId] === element) {
-          return prev;
-        }
-        return {
-          ...prev,
-          [roiId]: element
-        };
-      });
-    };
-  }, []);
-
-  // Use a ref to store ref callbacks to prevent recreation
-  const refCallbacksRef = useRef<{
-    [roiId: string]: (element: SVGRectElement | null) => void;
-  }>({});
-
-  // Get or create ref callback for a specific ROI
-  const getRefCallback = useCallback(
-    (roiId: string) => {
-      if (!refCallbacksRef.current[roiId]) {
-        refCallbacksRef.current[roiId] = createRefCallback(roiId);
-      }
-      return refCallbacksRef.current[roiId];
-    },
-    [createRefCallback]
-  );
+  // Track initial position for drag operations
+  const initialPositionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const handleDrag = useCallback(
-    (roiId: string) =>
-      ({ beforeTranslate }: OnDrag) => {
-        setFrames((prev) => {
-          const currentFrame = prev[roiId];
-          if (!currentFrame) return prev;
+    ({ beforeTranslate }: OnDrag) => {
+      if (!activeROI) return;
 
-          // Get the initial position for this drag operation
-          const initialPos = initialPositionsRef.current[roiId];
-          if (!initialPos) return prev;
+      const updatedROI: ROI = {
+        ...activeROI,
+        x: initialPositionRef.current.x + beforeTranslate[0],
+        y: initialPositionRef.current.y + beforeTranslate[1]
+      };
 
-          return {
-            ...prev,
-            [roiId]: {
-              ...currentFrame,
-              x: initialPos.x + beforeTranslate[0],
-              y: initialPos.y + beforeTranslate[1]
-            }
-          };
-        });
-      },
-    []
+      onUpdateROI(updatedROI);
+    },
+    [activeROI, onUpdateROI]
   );
 
   const handleResize = useCallback(
-    (roiId: string) =>
-      ({ width, height, drag }: OnResize) => {
-        setFrames((prev) => {
-          const currentFrame = prev[roiId];
-          if (!currentFrame) return prev;
+    ({ width, height, drag }: OnResize) => {
+      if (!activeROI) return;
 
-          // Get the initial position for this resize operation
-          const initialPos = initialPositionsRef.current[roiId];
-          if (!initialPos) return prev;
+      const updatedROI: ROI = {
+        ...activeROI,
+        x: initialPositionRef.current.x + drag.beforeTranslate[0],
+        y: initialPositionRef.current.y + drag.beforeTranslate[1],
+        w: width,
+        h: height
+      };
 
-          return {
-            ...prev,
-            [roiId]: {
-              ...currentFrame,
-              x: initialPos.x + drag.beforeTranslate[0],
-              y: initialPos.y + drag.beforeTranslate[1],
-              w: width,
-              h: height
-            }
-          };
-        });
-      },
-    []
-  );
-
-  const handleDragEnd = useCallback(
-    (roiId: string) => () => {
-      const frame = framesRef.current[roiId];
-      if (frame) {
-        onUpdateROI(frame);
-      }
+      onUpdateROI(updatedROI);
     },
-    [onUpdateROI]
+    [activeROI, onUpdateROI]
   );
 
-  const handleResizeEnd = useCallback(
-    (roiId: string) => () => {
-      const frame = framesRef.current[roiId];
-      if (frame) {
-        onUpdateROI(frame);
-      }
-    },
-    [onUpdateROI]
-  );
+  const handleDragStart = useCallback(() => {
+    if (activeROI) {
+      initialPositionRef.current = {
+        x: activeROI.x,
+        y: activeROI.y
+      };
+    }
+  }, [activeROI]);
+
+  const handleResizeStart = useCallback(() => {
+    if (activeROI) {
+      initialPositionRef.current = {
+        x: activeROI.x,
+        y: activeROI.y
+      };
+    }
+  }, [activeROI]);
 
   return (
     <div
@@ -214,75 +139,50 @@ export const VideoROIWrapper: React.FC<VideoROIWrapperProps> = ({
     >
       {children}
 
-      <svg
-        width={svgSize.w}
-        height={svgSize.h}
-        style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}
-      >
-        {activeROIs.map((roi) => {
-          const frame = frames[roi.id];
-          if (!frame) return null;
-
-          const isSelected = selectedROIid === roi.id;
-
-          return (
+      {/* Only render SVG and Moveable if there's an active ROI */}
+      {activeROI && (
+        <>
+          <svg
+            width={svgSize.w}
+            height={svgSize.h}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              pointerEvents: 'none'
+            }}
+          >
             <rect
-              key={roi.id}
-              ref={getRefCallback(roi.id)}
-              x={frame.x}
-              y={frame.y}
-              width={frame.w}
-              height={frame.h}
+              ref={setTarget}
+              x={activeROI.x}
+              y={activeROI.y}
+              width={activeROI.w}
+              height={activeROI.h}
               fill='rgba(0,255,0,0.1)'
-              stroke={isSelected ? 'red' : 'lime'}
-              strokeWidth={isSelected ? 3 : 2}
+              stroke={selectedROIid === activeROI.id ? 'red' : 'lime'}
+              strokeWidth={selectedROIid === activeROI.id ? 3 : 2}
               style={{ pointerEvents: 'all', cursor: 'move' }}
             />
-          );
-        })}
-      </svg>
+          </svg>
 
-      {activeROIs.map((roi) => {
-        const target = targets[roi.id];
-        if (!target) return null;
-
-        return (
-          <Moveable
-            key={roi.id}
-            target={target}
-            container={containerElement}
-            draggable
-            resizable
-            throttleDrag={1}
-            throttleResize={1}
-            keepRatio={false}
-            origin={false}
-            onDragStart={() => {
-              const currentFrame = frames[roi.id];
-              if (currentFrame) {
-                initialPositionsRef.current[roi.id] = {
-                  x: currentFrame.x,
-                  y: currentFrame.y
-                };
-              }
-            }}
-            onResizeStart={() => {
-              const currentFrame = frames[roi.id];
-              if (currentFrame) {
-                initialPositionsRef.current[roi.id] = {
-                  x: currentFrame.x,
-                  y: currentFrame.y
-                };
-              }
-            }}
-            onDrag={handleDrag(roi.id)}
-            onResize={handleResize(roi.id)}
-            onDragEnd={handleDragEnd(roi.id)}
-            onResizeEnd={handleResizeEnd(roi.id)}
-          />
-        );
-      })}
-      {/* <pre>{JSON.stringify(frames, null, 2)}</pre> */}
+          {target && (
+            <Moveable
+              target={target}
+              container={containerElement}
+              draggable
+              resizable
+              throttleDrag={1}
+              throttleResize={1}
+              keepRatio={false}
+              origin={false}
+              onDragStart={handleDragStart}
+              onResizeStart={handleResizeStart}
+              onDrag={handleDrag}
+              onResize={handleResize}
+            />
+          )}
+        </>
+      )}
     </div>
   );
 };

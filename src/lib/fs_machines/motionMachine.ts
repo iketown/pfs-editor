@@ -7,7 +7,7 @@ export type MotionContext = {
     playerRef: React.RefObject<HTMLVideoElement> | null;
     chartRef: React.RefObject<ChartJSOrUndefined<'line', { x: number; y: number }[], unknown>> | null;
     selectedROIid: string | null; // the currently selected ROI (for editing)
-    activeROIs: string[]; // at this time of video, which ROIs are active (not necessarily selected)
+    activeROIid: string | null; // the currently active ROI at this time
     rois: { [roi_id: string]: ROI };
     videoFps: number | null;
 };
@@ -16,16 +16,16 @@ export type MotionEvent =
     | { type: 'SET_PLAYER_REF'; playerRef: React.RefObject<HTMLVideoElement> }
     | { type: 'SET_CHART_REF'; chartRef: React.RefObject<ChartJSOrUndefined<'line', { x: number; y: number }[], unknown>> }
     | { type: 'SET_CURRENT_ROI'; roi: ROI }
-    | { type: 'SELECT_ROI'; roiId: string }
+    | { type: 'SELECT_ROI'; roiId: string | null }
     | { type: 'ADD_ROI'; roi: ROI }
     | { type: 'UPDATE_ROI'; roi: ROI }
     | { type: 'REMOVE_ROI'; roiId: string }
     | { type: 'VIDEO_TIME_UPDATE'; time: number }
     | { type: 'SET_VIDEO_FPS'; fps: number }
 
-const initialROI: ROI = { x: 0, y: 0, w: 100, h: 100, id: 'default', timeStart: 0, timeEnd: 5000 };
-const test5s = { ...initialROI, id: 'test5s', timeStart: 5000, timeEnd: 10000 }
-const test10s = { ...initialROI, id: 'test10s', timeStart: 10000, timeEnd: 15000 }
+const initialROI: ROI = { x: 0, y: 0, w: 100, h: 100, id: 'default', timeStart: 0 };
+const test5s = { ...initialROI, id: 'test5s', timeStart: 5 }
+const test10s = { ...initialROI, id: 'test10s', timeStart: 10 }
 
 export const motionMachine = createMachine({
     id: 'motion',
@@ -33,7 +33,7 @@ export const motionMachine = createMachine({
     context: {
         playerRef: null,
         chartRef: null,
-        activeROIs: [] as string[],
+        activeROIid: null,
         selectedROIid: null,
         rois: {
             [initialROI.id]: initialROI,
@@ -44,7 +44,7 @@ export const motionMachine = createMachine({
     },
     on: {
         VIDEO_TIME_UPDATE: {
-            actions: ['updateActiveROIs']
+            actions: ['updateActiveROI']
         },
         SET_VIDEO_FPS: {
             actions: assign({

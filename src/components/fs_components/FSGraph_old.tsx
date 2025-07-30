@@ -87,7 +87,7 @@ export default function FSGraph({ funscript }: { funscript: FunscriptObject }) {
       const idx = points[0].index;
       const action = funscript.actions[idx];
       const { id, at, pos } = action;
-      send({ type: 'SEEK_VIDEO', time: at / 1000 });
+      send({ type: 'SEEK_VIDEO', time: at / 1000 }); // Convert funscript ms to seconds
       const actionId = id;
       if (event.metaKey) {
         send({ type: 'TOGGLE_SELECTED_NODE', actionId });
@@ -98,14 +98,14 @@ export default function FSGraph({ funscript }: { funscript: FunscriptObject }) {
     } else if (clickedTime !== undefined) {
       // Clicked on empty space - seek to the clicked time
       console.log('Clicked at time:', clickedTime, 'ms');
-      send({ type: 'SEEK_VIDEO', time: clickedTime / 1000 });
+      send({ type: 'SEEK_VIDEO', time: clickedTime / 1000 }); // Convert chart ms to seconds
       send({ type: 'CLEAR_SELECTED_NODES' });
     }
   };
 
-  const handleFrameClick = (timeMs: number) => {
-    console.log('Frame clicked at:', timeMs, 'ms');
-    send({ type: 'SEEK_VIDEO', time: timeMs / 1000 });
+  const handleFrameClick = (timeSeconds: number) => {
+    console.log('Frame clicked at:', timeSeconds, 's');
+    send({ type: 'SEEK_VIDEO', time: timeSeconds });
     send({ type: 'CLEAR_SELECTED_NODES' });
   };
   // Track current node index for navigation
@@ -215,7 +215,7 @@ export default function FSGraph({ funscript }: { funscript: FunscriptObject }) {
           <FrameIndicator
             chartRef={chartRef}
             fps={videoFps}
-            currentTimeMs={videoTime}
+            currentTime={videoTime}
             onFrameClick={handleFrameClick}
             height={30}
           />
