@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useEditActorRef, useEditSelector } from './FsEditActorContext';
 import { useMotionActorRef } from './MotionActorContext';
 import { VideoROIWrapper } from './VideoROIWrapper';
@@ -13,10 +13,17 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   ...props
 }) => {
   const playerRef = useRef<HTMLVideoElement>(null);
+  const isSeekingRef = useRef(false);
+  const [mounted, setMounted] = useState(false);
   const videoUrl = useEditSelector((state) => state.context.videoUrl);
   const hideVideo = useEditSelector((state) => state.context.hideVideo);
   const { send: editSend } = useEditActorRef();
   const { send: motionSend } = useMotionActorRef();
+
+  // Ensure component only renders on client side to prevent hydration mismatches
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     motionSend({
@@ -29,22 +36,51 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     });
   }, [playerRef, motionSend, editSend]);
 
+  // Listen for seek events to prevent time update loops
+  useEffect(() => {
+    const video = playerRef.current;
+    if (!video) return;
+
+    const handleSeeking = () => {
+      isSeekingRef.current = true;
+    };
+
+    const handleSeeked = () => {
+      // Small delay to ensure the seek is complete
+      setTimeout(() => {
+        isSeekingRef.current = false;
+      }, 50);
+    };
+
+    video.addEventListener('seeking', handleSeeking);
+    video.addEventListener('seeked', handleSeeked);
+
+    return () => {
+      video.removeEventListener('seeking', handleSeeking);
+      video.removeEventListener('seeked', handleSeeked);
+    };
+  }, []);
+
   const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
     const video = e.currentTarget;
-    const timeMs = Math.round(video.currentTime * 1000);
+
+    // Skip time update events if we're currently seeking
+    if (isSeekingRef.current) {
+      return;
+    }
 
     if (onTimeUpdate) {
-      onTimeUpdate(timeMs);
+      onTimeUpdate(video.currentTime);
     }
 
     motionSend({
       type: 'VIDEO_TIME_UPDATE',
-      time: timeMs
+      time: video.currentTime
     });
 
     editSend({
       type: 'VIDEO_TIME_UPDATE',
-      time: timeMs
+      time: video.currentTime
     });
   };
 
@@ -60,7 +96,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     editSend({ type: 'SET_VIDEO_DURATION', duration: video.duration });
   };
 
-  if (!videoUrl) return null;
+  if (!videoUrl || !mounted) return null;
 
   return (
     <VideoROIWrapper>

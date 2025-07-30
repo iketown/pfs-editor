@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Save } from 'lucide-react';
 import { useState } from 'react';
 import { useEditState } from '@/hooks/use-editstate';
+import RoiControls from './RoiControls';
 
 const editModes = [
   { label: 'Play', value: 'playing' },
@@ -86,14 +87,18 @@ const ControlPanel = () => {
           </TabsList>
           {editModes.map((mode) => (
             <TabsContent key={mode.value} value={mode.value}>
-              <div className='text-muted-foreground text-center text-sm'>
-                {mode.label} mode active
-              </div>
+              {mode.value === 'roi_editing' ? (
+                <RoiControls />
+              ) : (
+                <div className='text-muted-foreground text-center text-sm'>
+                  {mode.label} mode active
+                </div>
+              )}
             </TabsContent>
           ))}
         </Tabs>
       </CardContent>
-      <CardFooter className='flex justify-end'>
+      {/* <CardFooter className='flex justify-end'>
         <Button
           onClick={handleSaveChapters}
           disabled={isSaving}
@@ -103,7 +108,7 @@ const ControlPanel = () => {
           <Save className='mr-2 h-4 w-4' />
           {isSaving ? 'Saving...' : 'Save'}
         </Button>
-      </CardFooter>
+      </CardFooter> */}
     </Card>
   );
 };

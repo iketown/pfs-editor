@@ -17,9 +17,7 @@ export default function ContextView() {
   const editContext = FsEditActorContext.useSelector((state) => state.context);
   const editState = useEditSelector((state) => state);
   const motionContext = useMotionSelector((s) => s?.context);
-  const motionState = useMotionSelector((state) =>
-    state?.value ? String(state.value) : 'no state'
-  );
+  const motionState = useMotionSelector((state) => state);
 
   return (
     <div>
@@ -55,7 +53,7 @@ export default function ContextView() {
               <TabsContent value='motion'>
                 <div className='mb-2'>
                   <span className='bg-accent text-accent-foreground inline-block rounded px-3 py-1 text-xs font-semibold'>
-                    state: {motionState}
+                    state: {JSON.stringify(motionState.value) as string}
                   </span>
                 </div>
                 <div className='bg-muted max-h-[60vh] overflow-auto rounded p-2'>

@@ -526,7 +526,7 @@
       {
         "id": 16,
         "title": "Implement Multi-ROI Management System for Video Editing",
-        "description": "Create a comprehensive system for managing multiple Regions of Interest (ROIs) throughout a video timeline with CRUD operations, visual editing, and time-based activation using a hybrid XState + Zustand architecture that leverages the strengths of both state management systems.",
+        "description": "Create a simple CRUD (Create, Read, Update, Delete) system for ROIs that integrates with the existing motionMachine context. This system provides basic ROI management functionality without complex state management architectures.",
         "status": "pending",
         "dependencies": [
           2,
@@ -535,107 +535,103 @@
           14
         ],
         "priority": "high",
-        "details": "1. **Hybrid State Management Architecture**:\n   - **XState handles**: ROI persistence, time-based activation, project integration, complex state transitions\n   - **Zustand handles**: UI interactions, temporary states, drag operations, hover states, edit modes\n   - Clear separation of concerns with custom hooks for integration\n\n2. **Extend Existing ROI Data Models and Types**:\n   - Build upon existing ROI structure in `types/editor.ts`:\n   ```typescript\n   export interface ROI {\n     id: string; // Generated using nanoid(5) - maintain existing pattern\n     title: string;\n     x: number;\n     y: number;\n     w: number;\n     h: number;\n     startTime: number;\n     endTime: number;\n     isSelected: boolean;\n     isActive: boolean;\n   }\n   \n   export interface ROIState {\n     rois: ROI[]; // Extend existing single ROI to array\n     selectedROIId: string | null; // Build upon existing selectedROIid\n     activeROIIds: string[];\n   }\n   \n   export interface ROIUIState {\n     dragState: ROIDragState | null;\n     hoverROIId: string | null;\n     editMode: 'select' | 'create' | 'edit';\n     tempROI: Partial<ROI> | null;\n   }\n   ```\n\n3. **Extend Existing MotionMachine ROI State (XState)**:\n   - Modify existing `motionMachine.rois` array to support multiple ROIs\n   - Extend existing `selectedROIid` state to work with new multi-ROI selection\n   - Maintain backward compatibility with current XState architecture\n   - Add new ROI-specific events while preserving existing state transitions\n   - Integrate with existing project storage schema for ROI persistence\n   - Handle complex ROI lifecycle and time-based activation logic\n\n4. **Create ROI UI Store (Zustand)**:\n   - Handle temporary UI states like drag operations and hover effects\n   - Manage edit modes and temporary ROI creation states\n   - Provide fast, reactive updates for smooth user interactions\n   - Integrate with XState through custom hooks for state synchronization\n\n5. **Enhance Existing VideoROIWrapper Component**:\n   - Extend current VideoROIWrapper draggable functionality for multiple ROIs\n   - Build upon existing ROI rendering and interaction patterns\n   - Maintain compatibility with current drag-and-drop implementation\n   - Add multi-ROI selection and bulk editing capabilities\n   - Preserve existing visual feedback systems while adding new states\n   - Use hybrid state approach: XState for persistence, Zustand for interactions\n\n6. **Build Control Panel ROI Tab Using Existing Infrastructure**:\n   - Create `components/ControlPanel/ROITab.tsx` using established Shadcn/ui patterns\n   - Leverage existing Popover, AlertDialog, and form components\n   - Maintain consistency with current Control Panel design language\n   - Integrate with existing validation patterns and error handling\n   - Use established project-based workflow patterns\n   - Connect to both XState (persistence) and Zustand (UI state) stores\n\n7. **Implement Custom Integration Hooks**:\n   - Create `hooks/useROIState.ts` for unified access to both state systems\n   - Implement `hooks/useROIActions.ts` for coordinated actions across stores\n   - Provide clear patterns for future motion tracking implementation\n   - Document hybrid architecture patterns and best practices\n\n8. **Enhance Time-based Activation System (XState)**:\n   - Build upon existing video synchronization infrastructure\n   - Integrate with current video timeupdate event handling\n   - Maintain compatibility with existing frame-by-frame stepping\n   - Use established debouncing patterns for performance\n   - Leverage existing project data integration\n   - Handle complex activation logic in XState machine\n\n9. **Extend Visual Feedback System (Zustand)**:\n   - Build upon existing ROI visual states and styling\n   - Maintain current Tailwind CSS patterns and theme integration\n   - Extend existing hover effects and interaction feedback\n   - Preserve current accessibility and keyboard navigation support\n   - Add smooth transitions using established animation patterns\n   - Use Zustand for fast UI state updates during interactions",
-        "testStrategy": "1. **Hybrid State Management Testing**:\n   - Test XState and Zustand integration through custom hooks\n   - Verify state synchronization between both systems\n   - Test performance of hybrid approach with large numbers of ROIs\n   - Validate clear separation of concerns between persistence and UI state\n\n2. **ROI CRUD Operations Testing (XState)**:\n   - Test creating ROIs with valid and invalid properties using existing validation patterns\n   - Verify ROI updates persist correctly in XState and storage with current project system\n   - Test delete functionality with confirmation dialog using existing Shadcn/ui patterns\n   - Validate form validation prevents invalid ROI properties with established error handling\n\n3. **Visual Editing Testing (Zustand + XState)**:\n   - Test dragging ROIs within video bounds using Zustand for smooth interactions\n   - Verify resize operations maintain existing interaction patterns with fast UI updates\n   - Test visual feedback for different ROI states building on current design system\n   - Validate ROI positioning accuracy with existing video synchronization\n   - Test state synchronization between UI interactions (Zustand) and persistence (XState)\n\n4. **Time-based Activation Testing (XState)**:\n   - Test ROI activation/deactivation with existing video playback synchronization\n   - Verify multiple overlapping ROIs activate correctly with current timing system\n   - Test edge cases using established video player integration patterns\n   - Validate performance with large numbers of ROIs using existing optimization approaches\n\n5. **Integration Testing**:\n   - Test ROI state persistence with existing project-based storage system\n   - Verify integration with current video player synchronization infrastructure\n   - Test ROI data export/import with established project system workflows\n   - Validate XState integration maintains existing functionality and state transitions\n   - Test custom hooks provide unified access to both state systems\n\n6. **Backward Compatibility Testing**:\n   - Verify existing single ROI functionality continues to work\n   - Test migration of existing projects with ROI data\n   - Validate current VideoROIWrapper interactions remain functional\n   - Test existing motionMachine state transitions with new ROI extensions\n\n7. **User Experience Testing**:\n   - Test popover editing workflow follows existing Control Panel patterns\n   - Verify keyboard navigation maintains current accessibility standards\n   - Test responsive behavior with established layout system\n   - Validate error messages follow current user feedback patterns\n   - Test smooth UI interactions powered by Zustand with XState persistence",
+        "details": "1. **Simple ROI CRUD System**:\n   - Create basic CRUD operations for ROIs integrated with existing motionMachine context\n   - No separate Zustand store or dedicated state machine - keep it simple\n   - Use existing ROI type structure from src/types/roi-types.ts\n\n2. **ROI List in Control Panel**:\n   - Add \"ROIs\" tab to existing ControlPanel component\n   - Display list of all ROIs with basic information (title, time range, coordinates)\n   - Show ROI details in a clean, organized format\n\n3. **Create ROI Button**:\n   - Add \"Create ROI at [current time]\" button at bottom of ROI list\n   - Display current video time in MM:SS format\n   - Button creates new ROI at current video playback position\n\n4. **MotionMachine Integration**:\n   - Store all ROIs in existing motionMachine context (no separate store)\n   - Add ROIs array to motionMachine state\n   - Add ROI events: CREATE_ROI, UPDATE_ROI, DELETE_ROI\n   - Maintain existing motionMachine architecture patterns\n\n5. **Basic CRUD Operations**:\n   - **Create**: Button creates ROI at current video time with default properties\n   - **Read**: List displays all ROIs with title, time range, and coordinates\n   - **Update**: Click ROI to edit properties (title, coordinates, time range)\n   - **Delete**: Delete button for each ROI with confirmation\n\n6. **Simple ROI Structure**:\n   - Use existing ROI type from src/types/roi-types.ts\n   - Maintain current ROI properties: id, title, coordinates, time range\n   - No complex state management or hybrid architectures\n\n7. **Files to Modify**:\n   - src/lib/fs_machines/motionMachine.ts (add ROI state and events)\n   - src/components/fs_components/ControlPanel.tsx (add ROIs tab)\n   - src/types/roi-types.ts (use existing ROI type)\n\n8. **Integration with Existing Systems**:\n   - Connect with existing video player for current time retrieval\n   - Use existing project system for ROI persistence\n   - Maintain compatibility with current UI patterns and components",
+        "testStrategy": "1. **Basic CRUD Testing**:\n   - Test ROI creation at current video time\n   - Verify ROI list displays correctly with all properties\n   - Test ROI editing functionality for all properties\n   - Validate ROI deletion with confirmation dialog\n\n2. **MotionMachine Integration Testing**:\n   - Test ROI state persistence in motionMachine context\n   - Verify ROI events (CREATE_ROI, UPDATE_ROI, DELETE_ROI) work correctly\n   - Test ROI state updates through motionMachine transitions\n   - Validate existing motionMachine functionality remains intact\n\n3. **Control Panel Integration Testing**:\n   - Test ROIs tab integration with existing ControlPanel component\n   - Verify ROI list rendering and interaction\n   - Test \"Create ROI at [time]\" button functionality\n   - Validate current time display in MM:SS format\n\n4. **Video Integration Testing**:\n   - Test ROI creation uses correct current video time\n   - Verify time format display matches video playback time\n   - Test ROI time range validation against video duration\n   - Validate ROI coordinates stay within video bounds\n\n5. **Project System Integration Testing**:\n   - Test ROI data persistence with existing project system\n   - Verify ROI state restoration when loading projects\n   - Test ROI data export/import with project functionality\n   - Validate ROI data integrity across project operations\n\n6. **User Interface Testing**:\n   - Test ROI list UI follows existing design patterns\n   - Verify edit forms use consistent validation patterns\n   - Test delete confirmation follows existing dialog patterns\n   - Validate keyboard navigation and accessibility compliance\n\n7. **Error Handling Testing**:\n   - Test invalid ROI property handling\n   - Verify error messages follow existing patterns\n   - Test edge cases like duplicate ROI names\n   - Validate graceful handling of corrupted ROI data",
         "subtasks": [
           {
             "id": 1,
-            "title": "Create ROI Data Models and Type Definitions",
-            "description": "Extend types/editor.ts with comprehensive ROI interfaces including ROI, ROIState, ROIUIState, and related utility types with proper TypeScript definitions for hybrid state management",
+            "title": "Add ROI State and Events to MotionMachine",
+            "description": "Extend the existing motionMachine in src/lib/fs_machines/motionMachine.ts to include ROI array state and basic CRUD events",
             "status": "pending",
             "dependencies": [],
-            "details": "Define ROI interface with id (nanoid(5)), title, x/y/w/h coordinates (0-100%), startTime/endTime, isSelected/isActive booleans. Create ROIState interface for XState with rois array, selectedROIId, and activeROIIds array. Create ROIUIState interface for Zustand with dragState, hoverROIId, editMode, and tempROI. Add utility types for ROI creation, updates, and validation. Include proper JSDoc comments for all interfaces. Define clear boundaries between persistent state (XState) and UI state (Zustand).",
-            "testStrategy": "Create unit tests for type validation, interface compatibility, and utility type functions. Test ROI coordinate bounds validation and time range validation. Verify type separation between XState and Zustand interfaces."
+            "details": "Add rois array to motionMachine context to store all ROI data. Implement ROI events: CREATE_ROI (adds new ROI at current time), UPDATE_ROI (updates existing ROI properties), DELETE_ROI (removes ROI by ID). Extend existing motionMachine state to include selectedROIId for tracking current selection. Use existing ROI type from src/types/roi-types.ts. Maintain backward compatibility with existing motionMachine functionality. Add proper TypeScript types for ROI events and context updates.",
+            "testStrategy": "Test ROI state initialization in motionMachine context. Verify CREATE_ROI event creates ROI with correct properties. Test UPDATE_ROI event modifies existing ROI data. Validate DELETE_ROI event removes correct ROI. Test selectedROIId state management. Verify existing motionMachine functionality remains intact."
           },
           {
             "id": 2,
-            "title": "Implement ROI UI Store with Zustand for Interaction States",
-            "description": "Create stores/roiUIStore.ts using Zustand for fast UI state management including drag operations, hover states, edit modes, and temporary ROI creation",
+            "title": "Create ROI List Component for Control Panel",
+            "description": "Build a simple ROI list component that displays all ROIs with basic information and integrates with the ControlPanel tabs",
             "status": "pending",
             "dependencies": [
               1
             ],
-            "details": "Implement Zustand store for UI-specific ROI state: drag operations (startDrag, updateDrag, endDrag), hover states (setHoverROI, clearHover), edit modes (setEditMode), and temporary ROI creation (setTempROI, clearTempROI). Add optimistic updates for smooth UI interactions. Include validation for drag boundaries and coordinate constraints. Implement debounced updates to prevent excessive re-renders. Design store to work seamlessly with XState through custom hooks.",
-            "testStrategy": "Test all UI state operations with rapid user interactions. Verify drag state management with boundary constraints. Test hover state updates and cleanup. Validate edit mode transitions and temporary ROI handling. Test performance with frequent state updates."
+            "details": "Create ROIList component that displays all ROIs from motionMachine context. Show ROI title, time range (MM:SS format), and coordinates for each ROI. Add edit button for each ROI that opens simple edit form. Add delete button with confirmation dialog using existing Shadcn/ui patterns. Implement ROI selection highlighting. Use existing ControlPanel design patterns and Shadcn/ui components. Connect to motionMachine through existing context patterns.",
+            "testStrategy": "Test ROI list renders all ROIs correctly. Verify time format displays as MM:SS. Test edit button opens ROI editing interface. Validate delete button shows confirmation dialog. Test ROI selection highlighting. Verify component follows existing ControlPanel design patterns."
           },
           {
             "id": 3,
-            "title": "Extend Existing MotionMachine for Multi-ROI Support with XState",
-            "description": "Modify the existing motionMachine in stores/fsEditActor.ts to extend current ROI functionality for multiple ROIs while maintaining backward compatibility, handling persistence and complex state logic",
+            "title": "Add ROIs Tab to Control Panel",
+            "description": "Integrate the ROI list component into the existing ControlPanel by adding a new 'ROIs' tab",
+            "status": "pending",
+            "dependencies": [
+              2
+            ],
+            "details": "Modify src/components/fs_components/ControlPanel.tsx to add new 'ROIs' tab alongside existing tabs. Integrate ROIList component into the tab content. Maintain existing tab styling and behavior patterns. Ensure ROIs tab follows same layout and spacing as other tabs. Add proper tab navigation and accessibility support. Use existing Shadcn/ui Tabs component patterns.",
+            "testStrategy": "Test ROIs tab appears correctly in ControlPanel. Verify tab switching works with existing tabs. Test ROI list displays properly within tab content. Validate tab accessibility and keyboard navigation. Test responsive behavior matches other tabs."
+          },
+          {
+            "id": 4,
+            "title": "Implement Create ROI Button with Current Time Display",
+            "description": "Add 'Create ROI at [current time]' button at bottom of ROI list that shows current video time in MM:SS format",
+            "status": "pending",
+            "dependencies": [
+              3
+            ],
+            "details": "Create button component that displays current video time in MM:SS format. Connect to existing video player to get current playback time. Update button text dynamically as video plays. Implement click handler that dispatches CREATE_ROI event to motionMachine with current time. Add default ROI properties (title, coordinates) for new ROIs. Use existing button styling patterns from Shadcn/ui. Position button at bottom of ROI list with proper spacing.",
+            "testStrategy": "Test button displays current video time correctly in MM:SS format. Verify time updates as video plays. Test button click creates ROI at correct current time. Validate default ROI properties are set correctly. Test button styling matches existing patterns."
+          },
+          {
+            "id": 5,
+            "title": "Create ROI Edit Form Component",
+            "description": "Build simple form component for editing ROI properties (title, coordinates, time range) with validation",
             "status": "pending",
             "dependencies": [
               1
             ],
-            "details": "Extend existing motionMachine.rois array to handle multiple ROIs instead of single ROI. Modify existing selectedROIid state to work with new selectedROIId pattern. Add new ROI-specific events (ROI_CREATED, ROI_UPDATED, ROI_DELETED, ROI_SELECTED, ROI_ACTIVATED) while preserving existing state transitions. Ensure backward compatibility with current XState architecture. Integrate multi-ROI persistence with existing project storage system. Handle complex ROI lifecycle management and time-based activation logic. Design clear integration points with Zustand UI store.",
-            "testStrategy": "Test state machine transitions with new ROI events while ensuring existing functionality remains intact. Verify ROI context updates correctly with current project system. Test backward compatibility with existing single ROI projects. Validate state machine integrity with concurrent ROI and editor operations. Test integration with Zustand UI store through custom hooks."
-          },
-          {
-            "id": 4,
-            "title": "Build Time-based ROI Activation System with XState Integration",
-            "description": "Create lib/roiActivation.ts with efficient logic to determine and update active ROIs based on current video playback time, integrating with XState for complex activation logic",
-            "status": "pending",
-            "dependencies": [
-              3
-            ],
-            "details": "Implement activateROIsAtTime function that efficiently determines which ROIs should be active at given timestamp. Integrate with existing video timeupdate event handling from Task 7's synchronization system. Add debouncing using established patterns to prevent excessive activation updates. Implement binary search or interval tree for efficient time-based lookups when dealing with many ROIs. Leverage existing project data integration patterns. Connect with XState machine for complex activation state management and persistence. Design to work independently of Zustand UI state.",
-            "testStrategy": "Test activation accuracy at various timestamps with existing video synchronization. Verify performance with large numbers of ROIs using current optimization patterns. Test edge cases like overlapping time ranges and boundary conditions. Validate debouncing prevents excessive updates while maintaining sync accuracy. Test XState integration for activation state persistence."
-          },
-          {
-            "id": 5,
-            "title": "Create Custom Integration Hooks for Hybrid State Management",
-            "description": "Build hooks/useROIState.ts and hooks/useROIActions.ts to provide unified access to both XState and Zustand stores with clear integration patterns",
-            "status": "pending",
-            "dependencies": [
-              2,
-              3
-            ],
-            "details": "Create useROIState hook that provides unified access to both XState (persistence, activation) and Zustand (UI interactions) state. Implement useROIActions hook that coordinates actions across both stores, ensuring proper state synchronization. Add useROIDrag hook for drag operation management. Create useROISelection hook for selection state management. Include proper TypeScript types and JSDoc documentation. Design hooks to serve as the primary interface for components, abstracting the hybrid architecture complexity. Document patterns for future motion tracking implementation.",
-            "testStrategy": "Test hook integration between XState and Zustand stores. Verify state synchronization through hook actions. Test hook performance with frequent updates. Validate TypeScript types and error handling. Test hooks provide consistent interface regardless of underlying state system complexity."
+            "details": "Create ROIEditForm component with form fields for ROI title, x/y coordinates, width/height, start time, and end time. Implement form validation for coordinate bounds (0-100%) and time ranges. Use existing Shadcn/ui form components (Input, Label, Button). Add save and cancel buttons with proper event handling. Connect form to motionMachine UPDATE_ROI event. Include real-time validation feedback. Support both inline editing and modal/popover editing modes.",
+            "testStrategy": "Test form displays current ROI values correctly. Verify validation prevents invalid coordinates and time ranges. Test save button dispatches UPDATE_ROI event with correct data. Validate cancel button discards changes. Test form validation feedback displays properly."
           },
           {
             "id": 6,
-            "title": "Create Control Panel ROI Tab Interface with Hybrid State Integration",
-            "description": "Build components/ControlPanel/ROITab.tsx with comprehensive CRUD interface using existing Shadcn/ui components and hybrid state management through custom hooks",
+            "title": "Implement ROI Delete Functionality with Confirmation",
+            "description": "Add delete functionality for ROIs with confirmation dialog using existing Shadcn/ui patterns",
             "status": "pending",
             "dependencies": [
-              5
+              2
             ],
-            "details": "Create ROI list display following existing Control Panel design patterns. Implement Shadcn/ui Popover components for editing ROI properties using established form patterns. Add form validation for all ROI properties with real-time feedback following current validation approach. Include Shadcn/ui AlertDialog for delete confirmations using existing dialog patterns. Add bulk selection and operations consistent with current UI patterns. Implement search and filter functionality using established component library. Use custom hooks to access both XState (persistence) and Zustand (UI state) seamlessly.",
-            "testStrategy": "Test all form validations with edge cases using existing validation patterns. Verify popover interactions and form submissions follow established UX patterns. Test delete confirmation flows with current dialog system. Validate bulk operations and filtering functionality. Test keyboard navigation and accessibility compliance with existing standards. Test integration with hybrid state management through custom hooks."
+            "details": "Implement delete button for each ROI in the list. Create confirmation dialog using existing Shadcn/ui AlertDialog component. Show ROI title in confirmation message for clarity. Connect delete confirmation to motionMachine DELETE_ROI event. Handle ROI selection state when deleting selected ROI. Add proper error handling for delete operations. Follow existing deletion patterns used in other parts of the application.",
+            "testStrategy": "Test delete button shows confirmation dialog. Verify confirmation dialog displays ROI title correctly. Test confirmed deletion removes ROI from list. Validate cancelled deletion keeps ROI intact. Test deleting selected ROI updates selection state properly."
           },
           {
             "id": 7,
-            "title": "Enhance Existing VideoROIWrapper for Multi-ROI Display with Hybrid State",
-            "description": "Extend the existing VideoROIWrapper component to support multiple ROI visualization using hybrid state management for optimal performance and persistence",
+            "title": "Add Time Formatting Utilities",
+            "description": "Create utility functions for converting between seconds and MM:SS format for consistent time display throughout ROI system",
             "status": "pending",
-            "dependencies": [
-              5
-            ],
-            "details": "Build upon existing VideoROIWrapper absolute-positioned overlay to render multiple ROI rectangles. Extend current visual states (inactive, active, selected) to support multi-ROI scenarios. Add new combined state (active+selected) while preserving existing styling patterns. Enhance existing hover effects and tooltips to work with multiple ROIs using Zustand for fast UI updates. Ensure proper z-index management maintains current video player integration. Preserve backward compatibility with existing single ROI rendering. Use custom hooks to seamlessly integrate XState (persistence, activation) and Zustand (hover, drag states).",
-            "testStrategy": "Test visual rendering accuracy across different video sizes with existing responsive patterns. Verify all visual states display correctly with current styling system. Test overlay positioning with existing video player integration. Validate performance with multiple simultaneous ROIs using hybrid state approach. Test backward compatibility with existing single ROI functionality. Test smooth UI interactions powered by Zustand with XState persistence."
+            "dependencies": [],
+            "details": "Create utility functions in lib/timeUtils.ts for time formatting: secondsToMMSS (converts seconds to MM:SS string), mmssToSeconds (converts MM:SS string to seconds), validateTimeFormat (validates MM:SS format). Handle edge cases like negative times and invalid formats. Add proper TypeScript types and JSDoc documentation. Ensure functions work with existing video player time values. Design for reuse across ROI components and future features.",
+            "testStrategy": "Test secondsToMMSS converts various time values correctly. Verify mmssToSeconds parses MM:SS format accurately. Test validateTimeFormat catches invalid formats. Validate edge cases like 0 seconds, large values, and negative times. Test integration with video player time values."
           },
           {
             "id": 8,
-            "title": "Extend Interactive ROI Editing with Hybrid State Management",
-            "description": "Enhance existing VideoROIWrapper drag-and-drop functionality to support multiple ROI editing using Zustand for smooth interactions and XState for persistence",
+            "title": "Integrate ROI System with Project Persistence",
+            "description": "Extend existing project system to save and load ROI data with projects, ensuring ROI state persists across sessions",
             "status": "pending",
             "dependencies": [
-              7
+              1
             ],
-            "details": "Extend existing mouse event handlers for ROI dragging and resizing to work with multiple ROIs using Zustand for immediate UI feedback. Build upon current drag handles on ROI corners and edges for resizing. Maintain existing boundary constraints (0-100%) while adding multi-ROI selection support. Enhance existing visual feedback during drag operations using fast Zustand updates. Implement real-time state synchronization between Zustand (drag state) and XState (persistence) through custom hooks. Add bulk editing capabilities while preserving individual ROI interaction patterns. Use debouncing to sync UI state changes to XState for persistence.",
-            "testStrategy": "Test drag and resize operations with existing boundary enforcement for multiple ROIs. Verify real-time state synchronization between Zustand UI updates and XState persistence. Test edge cases like rapid mouse movements and boundary collisions with multiple ROIs. Validate undo/redo functionality extends to multi-ROI operations through XState. Test backward compatibility with existing single ROI editing. Test performance of hybrid state approach during intensive drag operations."
+            "details": "Extend existing project data structure to include ROIs array. Modify project save functionality to include ROI data from motionMachine. Update project load functionality to restore ROI state to motionMachine. Ensure ROI data is included in project export/import operations. Add ROI data validation during project loading. Handle migration of projects without ROI data. Maintain backward compatibility with existing projects. Use existing project persistence patterns and error handling.",
+            "testStrategy": "Test ROI data saves correctly with projects. Verify ROI state restores when loading projects. Test project export includes ROI data. Validate project import restores ROI state correctly. Test backward compatibility with projects created before ROI system. Verify error handling for corrupted ROI data in projects."
           },
           {
             "id": 9,
-            "title": "Integrate Multi-ROI with Existing Project System and Document Hybrid Architecture",
-            "description": "Extend existing project storage system to support multi-ROI data through XState while documenting the hybrid architecture patterns for future motion tracking implementation",
+            "title": "Add ROI System Documentation and Testing",
+            "description": "Create comprehensive documentation for the ROI CRUD system and implement thorough testing coverage",
             "status": "pending",
             "dependencies": [
-              3,
               8
             ],
-            "details": "Extend existing project schema to support multi-ROI data structure while maintaining backward compatibility. Implement ROI array serialization/deserialization for existing project save/load operations through XState. Add multi-ROI data to current project export/import functionality. Ensure ROI state is properly restored when switching between projects using existing patterns. Implement ROI data migration for existing single ROI projects to multi-ROI format. Add multi-ROI validation to existing project validation system. Document hybrid XState + Zustand architecture patterns, integration hooks usage, and best practices for future motion tracking implementation. Create architectural decision records (ADRs) explaining state management choices.",
-            "testStrategy": "Test ROI persistence across browser sessions with existing project system through XState. Verify project export/import includes multi-ROI data using current patterns. Test schema migration with existing single ROI projects. Validate multi-ROI data integrity after save/load cycles with current storage system. Test error handling for corrupted ROI data using established error patterns. Test backward compatibility with existing single ROI projects. Validate documentation completeness and accuracy for future development."
+            "details": "Document ROI system architecture and integration with motionMachine. Create usage examples for ROI CRUD operations. Document ROI data structure and validation rules. Add JSDoc comments to all ROI-related functions and components. Create unit tests for ROI utilities and components. Add integration tests for motionMachine ROI events. Test ROI system with various edge cases and error conditions. Document troubleshooting guide for common ROI issues.",
+            "testStrategy": "Verify documentation covers all ROI functionality comprehensively. Test all documented examples work correctly. Validate JSDoc comments are complete and accurate. Test unit tests cover all ROI utilities and edge cases. Verify integration tests validate motionMachine ROI functionality. Test error handling documentation matches actual behavior."
           }
         ]
       }

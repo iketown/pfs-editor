@@ -258,7 +258,10 @@ const seekVideo = assign(({ context, event }: { context: FSEditContext, event: {
     invariant(event.type === 'SEEK_VIDEO', 'seekVideo must be called with a SEEK_VIDEO event');
     const { playerRef } = context;
     if (playerRef && playerRef.current) {
+        // Set the video time directly without updating context to prevent infinite loops
         playerRef.current.currentTime = event.time;
+        // Return the new time to update context, but this won't trigger another seek
+        return { videoTime: event.time };
     }
     return {};
 });

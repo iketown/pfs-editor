@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import * as SliderPrimitive from '@radix-ui/react-slider';
 import { useEditActorRef, useEditSelector } from './FsEditActorContext';
 import { cn } from '@/lib/utils';
@@ -10,6 +10,7 @@ interface VideoPlayheadProps {
 }
 
 export default function VideoPlayhead({ className = '' }: VideoPlayheadProps) {
+  const [mounted, setMounted] = useState(false);
   const { send } = useEditActorRef();
 
   // Get video state from the machine context
@@ -18,8 +19,13 @@ export default function VideoPlayhead({ className = '' }: VideoPlayheadProps) {
   const rangeStart = useEditSelector((state) => state.context.rangeStart);
   const rangeEnd = useEditSelector((state) => state.context.rangeEnd);
 
+  // Ensure component only renders on client side to prevent hydration mismatches
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Convert videoTime from milliseconds to seconds for display
-  const currentTime = videoTime / 1000;
+  const currentTime = videoTime;
   const duration = videoDuration;
 
   const formatTime = (time: number): string => {
@@ -52,6 +58,28 @@ export default function VideoPlayhead({ className = '' }: VideoPlayheadProps) {
     },
     [send]
   );
+
+  // Don't render until mounted to prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <div className={`w-full p-4 ${className}`}>
+        <div className='flex items-center gap-4'>
+          <span className='text-muted-foreground min-w-[40px] text-sm'>
+            0:00
+          </span>
+          <div className='relative flex-1'>
+            <div className='bg-muted relative h-2 grow overflow-hidden rounded-full' />
+          </div>
+          <span className='text-muted-foreground min-w-[40px] text-sm'>
+            0:00
+          </span>
+        </div>
+        <div className='mt-2 flex justify-center'>
+          <div className='text-sm font-bold'>0:00</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`w-full p-4 ${className}`}>

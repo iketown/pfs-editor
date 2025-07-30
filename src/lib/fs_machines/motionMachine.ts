@@ -1,13 +1,14 @@
 import { createMachine, assign } from 'xstate';
 import { ChartJSOrUndefined } from 'react-chartjs-2/dist/types';
 import type { ROI } from '@/types/roi-types';
+import { motionActions } from './motionMachineActions';
 
 export type MotionContext = {
     playerRef: React.RefObject<HTMLVideoElement> | null;
     chartRef: React.RefObject<ChartJSOrUndefined<'line', { x: number; y: number }[], unknown>> | null;
     selectedROIid: string | null; // the currently selected ROI (for editing)
-    activeROI: ROI; // at this time of video, which ROI is active (not necessarily selected)
-    rois: ROI[];
+    activeROIs: string[]; // at this time of video, which ROIs are active (not necessarily selected)
+    rois: { [roi_id: string]: ROI };
     videoFps: number | null;
 };
 
@@ -22,9 +23,9 @@ export type MotionEvent =
     | { type: 'VIDEO_TIME_UPDATE'; time: number }
     | { type: 'SET_VIDEO_FPS'; fps: number }
 
-const initialROI: ROI = { x: 0, y: 0, w: 100, h: 100, id: 'default', timeStart: 0, timeEnd: 10000 };
-const test5s = { ...initialROI, id: 'test5s', timeStart: 5000, timeEnd: 15000 }
-const test10s = { ...initialROI, id: 'test10s', timeStart: 10000, timeEnd: 20000 }
+const initialROI: ROI = { x: 0, y: 0, w: 100, h: 100, id: 'default', timeStart: 0, timeEnd: 5000 };
+const test5s = { ...initialROI, id: 'test5s', timeStart: 5000, timeEnd: 10000 }
+const test10s = { ...initialROI, id: 'test10s', timeStart: 10000, timeEnd: 15000 }
 
 export const motionMachine = createMachine({
     id: 'motion',
@@ -32,97 +33,92 @@ export const motionMachine = createMachine({
     context: {
         playerRef: null,
         chartRef: null,
-        activeROI: initialROI,
+        activeROIs: [] as string[],
         selectedROIid: null,
-        rois: [initialROI, test5s, test10s],
+        rois: {
+            [initialROI.id]: initialROI,
+            [test5s.id]: test5s,
+            [test10s.id]: test10s
+        },
         videoFps: null
     },
     on: {
         VIDEO_TIME_UPDATE: {
-            actions: assign({
-                activeROI: ({ context, event }) => {
-                    const { rois, activeROI } = context;
-                    const currentTime = event.time;
-                    const sorted = rois
-                        .filter((roi) => roi.timeStart <= currentTime)
-                        .sort((a, b) => b.timeStart - a.timeStart);
-                    const newROI = sorted[0] || activeROI;
-                    // Only update if different
-                    if (activeROI && newROI && activeROI.id === newROI.id) {
-                        return activeROI;
-                    }
-                    return newROI;
-
-                }
-            })
+            actions: ['updateActiveROIs']
         },
         SET_VIDEO_FPS: {
             actions: assign({
                 videoFps: ({ event }) => event.fps
             })
         },
+        SET_PLAYER_REF: {
+            actions: assign({
+                playerRef: ({ event }) => event?.playerRef ?? null
+            })
+        },
+        SET_CHART_REF: {
+            actions: assign(({ event }) => {
+                return {
+                    chartRef: event?.chartRef ?? null
+                }
+            })
+        },
     },
     states: {
         ready: {
-            initial: 'playing',
+            initial: 'editingROI',
             states: {
                 playing: {
                     on: {
+
+                    }
+                },
+                editingROI: {
+                    on: {
                         SET_CURRENT_ROI: {
                             actions: assign({
-                                activeROI: (_args, event: any) => event?.roi ?? initialROI
+                                selectedROIid: (_args: any, event: any) => event?.roi?.id ?? null
                             })
                         },
                         SELECT_ROI: {
                             actions: assign({
-                                selectedROIid: (_args, event: any) => event?.roiId ?? null
+                                selectedROIid: (_args: any, event: any) => event?.roiId ?? null
                             })
                         },
                         ADD_ROI: {
                             actions: assign({
-                                rois: ({ context }, event: any) => [...context.rois, event?.roi]
+                                rois: ({ context }, event: any) => ({
+                                    ...context.rois,
+                                    [event?.roi?.id]: event?.roi
+                                })
                             })
                         },
                         UPDATE_ROI: {
-                            actions: assign({
-                                rois: ({ context }, event: any) => context.rois.map((roi: ROI) =>
-                                    roi.id === event?.roi?.id ? event.roi : roi
-                                ),
-                                activeROI: ({ context }, event: any) =>
-                                    context.activeROI.id === event?.roi?.id ? event.roi : context.activeROI
-                            })
+                            actions: ['updateRoi']
                         },
                         REMOVE_ROI: {
                             actions: assign({
-                                rois: ({ context }, event: any) => context.rois.filter((roi: ROI) => roi.id !== event?.roiId),
-                                activeROI: ({ context }, event: any) =>
-                                    context.activeROI.id === event?.roiId ? initialROI : context.activeROI,
+                                rois: ({ context }, event: any) => {
+                                    const { [event?.roiId]: removed, ...remaining } = context.rois;
+                                    return remaining;
+                                },
                                 selectedROIid: ({ context }, event: any) =>
                                     context.selectedROIid === event?.roiId ? null : context.selectedROIid
                             })
                         },
                     }
                 },
-                editingROI: {},
             }
         },
         idle: {
-            always: [{ target: 'ready', guard: ({ context }) => Boolean(context.playerRef && context.chartRef) }],
-            on: {
-                SET_PLAYER_REF: {
-                    actions: assign({
-                        playerRef: ({ event }) => event?.playerRef ?? null
-                    })
-                },
-                SET_CHART_REF: {
-                    actions: assign(({ event }) => {
-                        return {
-                            chartRef: event?.chartRef ?? null
-                        }
-                    })
-                },
+            always: {
+                target: 'ready',
+                guard: ({ context }) => !!context.playerRef
             }
-        }
-
+        },
     }
+}, {
+    actions: {
+        ...motionActions
+    } as any
 });
