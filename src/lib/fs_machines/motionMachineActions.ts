@@ -29,6 +29,13 @@ const updateActiveROIs: MotionAssignAction = assign({
     }
 })
 
+const selectRoi: MotionAssignAction = assign({
+    selectedROIid: ({ context, event }) => {
+        invariant(event.type === 'SELECT_ROI', 'selectRoi action must be called with a SELECT_ROI event');
+        return event.roiId;
+    }
+})
+
 export const motionActions = {
-    updateRoi, updateActiveROIs
+    updateRoi, updateActiveROIs, selectRoi
 }

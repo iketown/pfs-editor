@@ -6,9 +6,16 @@ import { useEditSelector } from './FsEditActorContext';
 import { ROI } from '@/types/roi-types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Edit, Plus, ChevronDown, ChevronRight } from 'lucide-react';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger
+} from '@/components/ui/accordion';
+import { Edit, Plus, Save, X, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { nanoid } from 'nanoid';
-import RoiControlActive from './RoiControlActive';
 
 const RoiControls: React.FC = () => {
   const { send: motionSend } = useMotionActorRef();
@@ -18,7 +25,6 @@ const RoiControls: React.FC = () => {
   const selectedROIid = useMotionSelector(
     (state) => state.context.selectedROIid
   );
-  const activeROI = useMotionSelector((state) => state.context.activeROI);
 
   // Get current video time from edit machine
   const videoTime = useEditSelector((state) => state.context.videoTime);
@@ -26,12 +32,11 @@ const RoiControls: React.FC = () => {
   // Local state for editing
   const [editingROI, setEditingROI] = useState<ROI | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [expandedInactive, setExpandedInactive] = useState<Set<string>>(
-    new Set()
-  );
 
-  // Convert rois object to array for easier manipulation
-  const rois = Object.values(roisObject);
+  // Convert rois object to array and sort by start time
+  const rois = Object.values(roisObject).sort(
+    (a, b) => a.timeStart - b.timeStart
+  );
 
   // Format time from milliseconds to MM:SS (for display purposes)
   const formatTime = (timeMs: number): string => {
@@ -39,6 +44,17 @@ const RoiControls: React.FC = () => {
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  // Parse MM:SS format to milliseconds
+  const parseTime = (timeString: string): number => {
+    const parts = timeString.split(':');
+    if (parts.length === 2) {
+      const minutes = parseInt(parts[0]) || 0;
+      const seconds = parseInt(parts[1]) || 0;
+      return (minutes * 60 + seconds) * 1000;
+    }
+    return 0;
   };
 
   // Handle selecting an ROI for editing
@@ -97,95 +113,236 @@ const RoiControls: React.FC = () => {
     motionSend({ type: 'ADD_ROI', roi: newROI });
   }, [videoTime, rois.length, motionSend]);
 
-  // Toggle expanded state for inactive ROIs
-  const toggleExpanded = useCallback((roiId: string) => {
-    setExpandedInactive((prev) => {
-      const newExpanded = new Set(prev);
-      if (newExpanded.has(roiId)) {
-        newExpanded.delete(roiId);
-      } else {
-        newExpanded.add(roiId);
+  // Handle input changes during editing
+  const handleInputChange = useCallback(
+    (field: keyof ROI, value: string) => {
+      if (!editingROI) return;
+
+      let parsedValue: number | string = value;
+
+      // Parse time fields
+      if (field === 'timeStart' || field === 'timeEnd') {
+        parsedValue = parseTime(value);
+      } else if (
+        field === 'x' ||
+        field === 'y' ||
+        field === 'w' ||
+        field === 'h'
+      ) {
+        parsedValue = parseFloat(value) || 0;
       }
-      return newExpanded;
-    });
-  }, []);
 
-  // Separate active and inactive ROIs
-  const currentTimeMs = videoTime * 1000; // Convert video time to milliseconds
-  const activeROIs = rois.filter(
-    (roi) => roi.timeStart <= currentTimeMs && roi.timeEnd >= currentTimeMs
-  );
-  const inactiveROIs = rois.filter(
-    (roi) => roi.timeStart > currentTimeMs || roi.timeEnd < currentTimeMs
+      setEditingROI({
+        ...editingROI,
+        [field]: parsedValue
+      });
+    },
+    [editingROI]
   );
 
-  // Get the ROI to display (selected ROI if editing, otherwise first active ROI)
-  const displayROI =
-    editingROI ||
-    (selectedROIid ? roisObject[selectedROIid] : null) ||
-    activeROIs[0];
+  // Handle ROI accordion trigger click
+  const handleROIAccordionClick = useCallback(
+    (roi: ROI, event: React.MouseEvent) => {
+      const trigger = event.currentTarget as HTMLElement;
+      const isExpanded = trigger.getAttribute('data-state') === 'open';
+
+      if (isExpanded) {
+        // If it's currently expanded, clicking will close it - deselect the ROI
+        console.log('Closing accordion, deselecting ROI');
+        motionSend({ type: 'SELECT_ROI', roiId: null });
+      } else {
+        // If it's currently closed, clicking will open it - select the ROI
+        console.log('Opening accordion, selecting ROI', roi);
+        motionSend({ type: 'SELECT_ROI', roiId: roi.id });
+      }
+    },
+    [motionSend]
+  );
 
   return (
     <div className='space-y-4'>
-      {/* Active ROI Section */}
-      {displayROI && (
-        <RoiControlActive
-          roi={displayROI}
-          isEditing={isEditing}
-          onEdit={handleSelectROI}
-          onSave={handleSaveROI}
-          onCancel={handleCancelEdit}
-          onDelete={handleDeleteROI}
-        />
-      )}
-
-      {/* Inactive ROIs Section */}
-      {inactiveROIs.length > 0 && (
+      {/* ROIs List */}
+      {rois.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className='text-lg'>Inactive ROIs</CardTitle>
+            <CardTitle className='text-lg'>ROIs</CardTitle>
           </CardHeader>
-          <CardContent className='space-y-2'>
-            {inactiveROIs.map((roi, index) => (
-              <div key={roi.id}>
-                <div className='flex items-center justify-between rounded border p-2'>
-                  <div className='flex items-center space-x-2'>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => toggleExpanded(roi.id)}
-                    >
-                      {expandedInactive.has(roi.id) ? (
-                        <ChevronDown className='h-4 w-4' />
-                      ) : (
-                        <ChevronRight className='h-4 w-4' />
-                      )}
-                    </Button>
-                    <span className='font-medium'> {roi.title || roi.id}</span>
-                  </div>
-                  <Button
-                    size='sm'
-                    variant='outline'
-                    onClick={() => handleSelectROI(roi)}
-                  >
-                    <Edit className='h-4 w-4' />
-                  </Button>
-                </div>
+          <CardContent>
+            <Accordion
+              type='single'
+              value={selectedROIid || undefined}
+              className='space-y-2'
+            >
+              {rois.map((roi) => {
+                const isCurrentlyEditing =
+                  isEditing && editingROI?.id === roi.id;
 
-                {expandedInactive.has(roi.id) && (
-                  <div className='bg-muted mt-2 ml-6 space-y-2 rounded p-2'>
-                    <div className='text-sm'>
-                      <span className='font-medium'>Time:</span>{' '}
-                      {formatTime(roi.timeStart)} - {formatTime(roi.timeEnd)}
-                    </div>
-                    <div className='text-sm'>
-                      <span className='font-medium'>Position:</span> x: {roi.x},
-                      y: {roi.y}, w: {roi.w}, h: {roi.h}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
+                return (
+                  <AccordionItem
+                    key={roi.id}
+                    value={roi.id}
+                    className='rounded-lg border'
+                  >
+                    <AccordionTrigger
+                      className='px-4 py-3 hover:no-underline'
+                      onClick={(event) => handleROIAccordionClick(roi, event)}
+                    >
+                      <div className='flex w-full items-center justify-between pr-4'>
+                        <span className='font-medium'>
+                          {roi.title || `ROI ${roi.id}`}
+                        </span>
+                        <span className='text-muted-foreground text-sm'>
+                          {formatTime(roi.timeStart)} -{' '}
+                          {formatTime(roi.timeEnd)}
+                        </span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className='space-y-4 px-4 pb-4'>
+                      {/* Coordinates and Dimensions */}
+                      <div className='grid grid-cols-4 gap-2'>
+                        <div>
+                          <Label htmlFor={`x-${roi.id}`}>x</Label>
+                          <Input
+                            id={`x-${roi.id}`}
+                            value={
+                              isCurrentlyEditing
+                                ? (editingROI?.x ?? roi.x)
+                                : roi.x
+                            }
+                            onChange={(e) =>
+                              handleInputChange('x', e.target.value)
+                            }
+                            disabled={!isCurrentlyEditing}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor={`y-${roi.id}`}>y</Label>
+                          <Input
+                            id={`y-${roi.id}`}
+                            value={
+                              isCurrentlyEditing
+                                ? (editingROI?.y ?? roi.y)
+                                : roi.y
+                            }
+                            onChange={(e) =>
+                              handleInputChange('y', e.target.value)
+                            }
+                            disabled={!isCurrentlyEditing}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor={`w-${roi.id}`}>w</Label>
+                          <Input
+                            id={`w-${roi.id}`}
+                            value={
+                              isCurrentlyEditing
+                                ? (editingROI?.w ?? roi.w)
+                                : roi.w
+                            }
+                            onChange={(e) =>
+                              handleInputChange('w', e.target.value)
+                            }
+                            disabled={!isCurrentlyEditing}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor={`h-${roi.id}`}>h</Label>
+                          <Input
+                            id={`h-${roi.id}`}
+                            value={
+                              isCurrentlyEditing
+                                ? (editingROI?.h ?? roi.h)
+                                : roi.h
+                            }
+                            onChange={(e) =>
+                              handleInputChange('h', e.target.value)
+                            }
+                            disabled={!isCurrentlyEditing}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Time Range */}
+                      <div className='grid grid-cols-2 gap-2'>
+                        <div>
+                          <Label htmlFor={`timeStart-${roi.id}`}>
+                            Start Time
+                          </Label>
+                          <Input
+                            id={`timeStart-${roi.id}`}
+                            value={formatTime(
+                              isCurrentlyEditing
+                                ? (editingROI?.timeStart ?? roi.timeStart)
+                                : roi.timeStart
+                            )}
+                            onChange={(e) =>
+                              handleInputChange('timeStart', e.target.value)
+                            }
+                            disabled={!isCurrentlyEditing}
+                            placeholder='MM:SS'
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor={`timeEnd-${roi.id}`}>End Time</Label>
+                          <Input
+                            id={`timeEnd-${roi.id}`}
+                            value={formatTime(
+                              isCurrentlyEditing
+                                ? (editingROI?.timeEnd ?? roi.timeEnd)
+                                : roi.timeEnd
+                            )}
+                            onChange={(e) =>
+                              handleInputChange('timeEnd', e.target.value)
+                            }
+                            disabled={!isCurrentlyEditing}
+                            placeholder='MM:SS'
+                          />
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className='flex justify-end space-x-2'>
+                        {!isCurrentlyEditing ? (
+                          <>
+                            <Button
+                              size='sm'
+                              variant='outline'
+                              onClick={() => handleSelectROI(roi)}
+                            >
+                              <Edit className='h-4 w-4' />
+                            </Button>
+                            <Button
+                              size='sm'
+                              variant='outline'
+                              onClick={() => handleDeleteROI(roi.id)}
+                            >
+                              <Trash2 className='h-4 w-4' />
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              size='sm'
+                              variant='outline'
+                              onClick={() => handleSaveROI(editingROI!)}
+                            >
+                              <Save className='h-4 w-4' />
+                            </Button>
+                            <Button
+                              size='sm'
+                              variant='outline'
+                              onClick={handleCancelEdit}
+                            >
+                              <X className='h-4 w-4' />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
           </CardContent>
         </Card>
       )}

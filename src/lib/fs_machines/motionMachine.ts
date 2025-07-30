@@ -81,9 +81,7 @@ export const motionMachine = createMachine({
                             })
                         },
                         SELECT_ROI: {
-                            actions: assign({
-                                selectedROIid: (_args: any, event: any) => event?.roiId ?? null
-                            })
+                            actions: ['selectRoi']
                         },
                         ADD_ROI: {
                             actions: assign({

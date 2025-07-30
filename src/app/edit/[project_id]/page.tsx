@@ -27,6 +27,7 @@ import VideoPlayhead from '@/components/fs_components/VideoPlayhead';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import VideoCustomControls from '@/components/fs_components/VideoCustomControls';
 
 export function EditProjectPage() {
   const params = useParams();
@@ -170,6 +171,7 @@ export function EditProjectPage() {
                     <VideoControls />
                     <VideoPlayer className='h-64 w-full object-cover' />
                     <VideoPlayhead />
+                    <VideoCustomControls />
                   </div>
                 ) : (
                   <div className='bg-muted flex h-64 flex-col items-center justify-center rounded'>

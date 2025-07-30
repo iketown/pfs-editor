@@ -6,5 +6,5 @@ export type ROI = {
     id: string;
     title?: string;
     timeStart: number; // start time in ms
-    timeEnd: number; // end time in ms
+    // timeEnd: number; // end time in ms
 };
