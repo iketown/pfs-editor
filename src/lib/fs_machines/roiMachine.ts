@@ -1,9 +1,9 @@
 import { createMachine, assign } from 'xstate';
 import { ChartJSOrUndefined } from 'react-chartjs-2/dist/types';
 import type { ROI } from '@/types/roi-types';
-import { motionActions } from './motionMachineActions';
+import { roiActions } from './roiMachineActions';
 
-export type MotionContext = {
+export type RoiContext = {
     playerRef: React.RefObject<HTMLVideoElement> | null;
     chartRef: React.RefObject<ChartJSOrUndefined<'line', { x: number; y: number }[], unknown>> | null;
     selectedROIid: string | null; // the currently selected ROI (for editing)
@@ -13,7 +13,7 @@ export type MotionContext = {
     projectId: string | null; // Add project ID for saving ROIs
 };
 
-export type MotionEvent =
+export type RoiEvent =
     | { type: 'SET_PLAYER_REF'; playerRef: React.RefObject<HTMLVideoElement> }
     | { type: 'SET_CHART_REF'; chartRef: React.RefObject<ChartJSOrUndefined<'line', { x: number; y: number }[], unknown>> }
     | { type: 'SET_ACTIVE_ROI'; roiId: string | null }
@@ -30,8 +30,8 @@ export type MotionEvent =
 const initialROI: ROI = { x: 0, y: 0, w: 100, h: 100, id: 'default', timeStart: 0 };
 
 
-export const motionMachine = createMachine({
-    id: 'motion',
+export const roiMachine = createMachine({
+    id: 'roi',
     initial: 'idle',
     context: {
         playerRef: null,
@@ -122,6 +122,6 @@ export const motionMachine = createMachine({
     }
 }, {
     actions: {
-        ...motionActions
+        ...roiActions
     } as any
 });

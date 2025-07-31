@@ -8,7 +8,7 @@ import React, {
   useCallback
 } from 'react';
 import Moveable, { OnDrag, OnResize } from 'react-moveable';
-import { useMotionSelector, useMotionActorRef } from './MotionActorContext';
+import { useRoiSelector, useRoiActorRef } from './RoiActorContext';
 import { ROI } from '@/types/roi-types';
 
 interface VideoROIWrapperProps {
@@ -23,19 +23,17 @@ export const VideoROIWrapper: React.FC<VideoROIWrapperProps> = ({
   children
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const playerRef = useMotionSelector(
+  const playerRef = useRoiSelector(
     (state) => state.context.playerRef
   ) as React.RefObject<HTMLVideoElement> | null;
 
-  // Get the raw data from the motion machine
-  const rois = useMotionSelector(({ context }) => context.rois);
-  const activeROI = useMotionSelector(({ context }) =>
+  // Get the raw data from the roi machine
+  const rois = useRoiSelector(({ context }) => context.rois);
+  const activeROI = useRoiSelector(({ context }) =>
     context.activeROIid ? rois[context.activeROIid] : null
   );
-  const selectedROIid = useMotionSelector(
-    (state) => state.context.selectedROIid
-  );
-  const motionActorRef = useMotionActorRef();
+  const selectedROIid = useRoiSelector((state) => state.context.selectedROIid);
+  const roiActorRef = useRoiActorRef();
 
   const [target, setTarget] = useState<SVGRectElement | null>(null);
   const [svgSize, setSvgSize] = useState({ w: 0, h: 0 });
@@ -67,12 +65,12 @@ export const VideoROIWrapper: React.FC<VideoROIWrapperProps> = ({
 
   const onUpdateROI = useCallback(
     (updatedROI: ROI, save: boolean = false) => {
-      motionActorRef.send({
+      roiActorRef.send({
         type: save ? 'UPDATE_ROI_AND_SAVE' : 'UPDATE_ROI',
         roi: updatedROI
       });
     },
-    [motionActorRef]
+    [roiActorRef]
   );
 
   const handleResizeEnd = useCallback(() => {

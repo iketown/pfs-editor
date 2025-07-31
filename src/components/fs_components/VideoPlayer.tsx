@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useEditActorRef, useEditSelector } from './FsEditActorContext';
-import { useMotionActorRef } from './MotionActorContext';
+import { useRoiActorRef } from './RoiActorContext';
 import { VideoROIWrapper } from './VideoROIWrapper';
 
 interface VideoPlayerProps
@@ -18,7 +18,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const videoUrl = useEditSelector((state) => state.context.videoUrl);
   const hideVideo = useEditSelector((state) => state.context.hideVideo);
   const { send: editSend } = useEditActorRef();
-  const { send: motionSend } = useMotionActorRef();
+  const { send: roiSend } = useRoiActorRef();
 
   // Ensure component only renders on client side to prevent hydration mismatches
   useEffect(() => {
@@ -26,7 +26,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   }, []);
 
   useEffect(() => {
-    motionSend({
+    roiSend({
       type: 'SET_PLAYER_REF',
       playerRef: playerRef as React.RefObject<HTMLVideoElement>
     });
@@ -34,7 +34,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       type: 'SET_PLAYER_REF',
       playerRef: playerRef as React.RefObject<HTMLVideoElement>
     });
-  }, [playerRef, motionSend, editSend]);
+  }, [playerRef, roiSend, editSend]);
 
   // Listen for seek events to prevent time update loops
   useEffect(() => {
@@ -73,7 +73,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       onTimeUpdate(video.currentTime);
     }
 
-    motionSend({
+    roiSend({
       type: 'VIDEO_TIME_UPDATE',
       time: video.currentTime
     });
@@ -91,7 +91,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     // For now, use a default FPS of 30 as it's most common
     // In a real implementation, you might want to analyze the video stream
     console.log('Using default FPS: 30');
-    motionSend({ type: 'SET_VIDEO_FPS', fps: 30 });
+    roiSend({ type: 'SET_VIDEO_FPS', fps: 30 });
     editSend({ type: 'SET_VIDEO_FPS', fps: 30 });
     editSend({ type: 'SET_VIDEO_DURATION', duration: video.duration });
   };

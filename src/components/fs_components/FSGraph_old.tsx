@@ -24,7 +24,7 @@ import {
   useEditActorRef,
   useEditSelector
 } from './FsEditActorContext';
-import { useMotionActorRef } from './MotionActorContext';
+import { useRoiActorRef } from './RoiActorContext';
 
 ChartJS.register(
   CategoryScale,
@@ -50,16 +50,16 @@ export default function FSGraph({ funscript }: { funscript: FunscriptObject }) {
   const videoTime = useEditSelector(
     (state) => state.context.videoTime
   ) as number;
-  const { send: motionSend } = useMotionActorRef();
+  const { send: roiSend } = useRoiActorRef();
   const { send: editSend } = useEditActorRef();
   const chartRef =
     useRef<ChartJSOrUndefined<'line', { x: number; y: number }[], unknown>>(
       null
     );
   useEffect(() => {
-    motionSend({ type: 'SET_CHART_REF', chartRef });
+    roiSend({ type: 'SET_CHART_REF', chartRef });
     editSend({ type: 'SET_CHART_REF', chartRef });
-  }, [chartRef, motionSend, editSend]);
+  }, [chartRef, roiSend, editSend]);
 
   const handleChartClick = (event: any) => {
     const chart = chartRef?.current;

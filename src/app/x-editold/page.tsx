@@ -21,7 +21,7 @@ import {
   FsEditActorContext,
   useEditActorRef
 } from '@/components/fs_components/FsEditActorContext';
-import { MotionActorContext } from '@/components/fs_components/MotionActorContext';
+import { MotionActorContext } from '@/components/fs_components/RoiActorContext';
 
 const FSGraph = dynamic(
   () => import('@/components/fs_components/FSGraph.client'),

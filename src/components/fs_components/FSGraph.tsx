@@ -5,7 +5,7 @@ import {
   useEditActorRef,
   useEditSelector
 } from '@/components/fs_components/FsEditActorContext';
-import { MotionActorContext } from '@/components/fs_components/MotionActorContext';
+import { RoiActorContext } from '@/components/fs_components/RoiActorContext';
 import type { FunscriptObject } from '@/types/funscript-types';
 import {
   CategoryScale,
@@ -51,7 +51,7 @@ export function FSGraph() {
   const videoTime = useEditSelector(
     (state) => state.context.videoTime
   ) as number;
-  const { send: motionSend } = MotionActorContext.useActorRef();
+  const { send: roiSend } = RoiActorContext.useActorRef();
   const { send: editSend } = useEditActorRef();
   const chartRef =
     useRef<ChartJSOrUndefined<'line', { x: number; y: number }[], unknown>>(
@@ -59,9 +59,9 @@ export function FSGraph() {
     );
 
   useReactEffect(() => {
-    motionSend({ type: 'SET_CHART_REF', chartRef });
+    roiSend({ type: 'SET_CHART_REF', chartRef });
     editSend({ type: 'SET_CHART_REF', chartRef });
-  }, [chartRef, motionSend, editSend]);
+  }, [chartRef, roiSend, editSend]);
 
   const handleChartClick = (event: any) => {
     if (!funscript) return;

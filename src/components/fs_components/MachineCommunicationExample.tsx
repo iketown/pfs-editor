@@ -1,19 +1,19 @@
 import React, { useEffect } from 'react';
 import { useSharedMachineContext } from './SharedMachineContext';
 import { useEditActorRef } from './FsEditActorContext';
-import { useMotionActorRef } from './MotionActorContext';
+import { useRoiActorRef } from './RoiActorContext';
 
 export const MachineCommunicationExample: React.FC = () => {
   const shared = useSharedMachineContext();
-  const fsEditActor = useEditActorRef();
-  const motionActor = useMotionActorRef();
+  const projectActor = useEditActorRef();
+  const motionActor = useRoiActorRef();
 
-  // Listen for events from fsEdit machine
+  // Listen for events from project machine
   useEffect(() => {
     const unsubscribe = shared.addFsEditListener((event, data) => {
-      console.log('Motion machine received fsEdit event:', event, data);
+      console.log('roi machine received project event:', event, data);
 
-      // Handle specific events from fsEdit machine
+      // Handle specific events from project machine
       switch (event) {
         case 'VIDEO_TIME_UPDATE':
           motionActor.send({ type: 'VIDEO_TIME_UPDATE', time: data.time });
@@ -39,28 +39,28 @@ export const MachineCommunicationExample: React.FC = () => {
     return unsubscribe;
   }, [shared, motionActor]);
 
-  // Listen for events from motion machine
+  // Listen for events from roi machine
   useEffect(() => {
     const unsubscribe = shared.addMotionListener((event, data) => {
       console.log('FsEdit machine received motion event:', event, data);
 
-      // Handle specific events from motion machine
+      // Handle specific events from roi machine
       switch (event) {
         case 'ROI_SELECTED':
-          // Update fsEdit machine when ROI is selected
-          fsEditActor.send({ type: 'SELECT_NODE', actionId: data.roiId });
+          // Update project machine when ROI is selected
+          projectActor.send({ type: 'SELECT_NODE', actionId: data.roiId });
           break;
         case 'ROI_UPDATED':
-          // Notify fsEdit machine of ROI changes
+          // Notify project machine of ROI changes
           console.log('ROI updated:', data);
           break;
       }
     });
 
     return unsubscribe;
-  }, [shared, fsEditActor]);
+  }, [shared, projectActor]);
 
-  // Example: Send event from fsEdit to motion machine
+  // Example: Send event from project to roi machine
   const handleFsEditToMotion = () => {
     shared.notifyMotion('FS_EDIT_EVENT', {
       type: 'VIDEO_TIME_UPDATE',
@@ -68,7 +68,7 @@ export const MachineCommunicationExample: React.FC = () => {
     });
   };
 
-  // Example: Send event from motion to fsEdit machine
+  // Example: Send event from motion to project machine
   const handleMotionToFsEdit = () => {
     shared.notifyFsEdit('MOTION_EVENT', {
       type: 'ROI_SELECTED',

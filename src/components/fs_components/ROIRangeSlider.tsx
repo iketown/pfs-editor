@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useCallback, useMemo } from 'react';
-import { useMotionSelector, useMotionActorRef } from './MotionActorContext';
+import { useRoiSelector, useRoiActorRef } from './RoiActorContext';
 import { useEditSelector, useEditActorRef } from './FsEditActorContext';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { ROI } from '@/types/roi-types';
 
 const ROIRangeSlider: React.FC = () => {
-  const { send: motionSend } = useMotionActorRef();
+  const { send: roiSend } = useRoiActorRef();
   const { send: editSend } = useEditActorRef();
   const rangeStart = useEditSelector((state) => state.context.rangeStart);
   const rangeEnd = useEditSelector((state) => state.context.rangeEnd);
@@ -16,8 +16,8 @@ const ROIRangeSlider: React.FC = () => {
   const videoTime = useEditSelector((state) => state.context.videoTime);
   const videoDuration = useEditSelector((state) => state.context.videoDuration);
 
-  // Get all ROIs from motion machine
-  const roisObject = useMotionSelector((state) => state.context.rois);
+  // Get all ROIs from roi machine
+  const roisObject = useRoiSelector((state) => state.context.rois);
   const rois = Object.values(roisObject).sort(
     (a, b) => a.timeStart - b.timeStart
   );
@@ -45,15 +45,15 @@ const ROIRangeSlider: React.FC = () => {
       h: 100,
       timeStart: currentTime
     };
-    motionSend({ type: 'ADD_ROI', roi: newROI });
-  }, [currentTimeSeconds, rois.length, motionSend]);
+    roiSend({ type: 'ADD_ROI', roi: newROI });
+  }, [currentTimeSeconds, rois.length, roiSend]);
 
   // Handle removing an ROI
   const handleRemoveROI = useCallback(
     (roiId: string) => {
-      motionSend({ type: 'REMOVE_ROI', roiId });
+      roiSend({ type: 'REMOVE_ROI', roiId });
     },
-    [motionSend]
+    [roiSend]
   );
 
   // Handle seeking to a specific ROI

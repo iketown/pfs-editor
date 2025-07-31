@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { useMotionSelector, useMotionActorRef } from './MotionActorContext';
+import { useRoiSelector, useRoiActorRef } from './RoiActorContext';
 import { useEditActorRef, useEditSelector } from './FsEditActorContext';
 import { ROI } from '@/types/roi-types';
 import { Button } from '@/components/ui/button';
@@ -40,14 +40,12 @@ const roiFormSchema = z.object({
 type RoiFormData = z.infer<typeof roiFormSchema>;
 
 const RoiControls: React.FC = () => {
-  const { send: motionSend } = useMotionActorRef();
+  const { send: roiSend } = useRoiActorRef();
   const { send: editSend } = useEditActorRef();
 
-  // Get state from motion machine
-  const roisObject = useMotionSelector((state) => state.context.rois);
-  const selectedROIid = useMotionSelector(
-    (state) => state.context.selectedROIid
-  );
+  // Get state from roi machine
+  const roisObject = useRoiSelector((state) => state.context.rois);
+  const selectedROIid = useRoiSelector((state) => state.context.selectedROIid);
 
   // Get current video time from edit machine
   const videoTime = useEditSelector((state) => state.context.videoTime);
@@ -124,10 +122,10 @@ const RoiControls: React.FC = () => {
       setOriginalValues(formData);
       setEditingROI(roi);
       setIsEditing(true);
-      motionSend({ type: 'SELECT_ROI', roiId: roi.id });
+      roiSend({ type: 'SELECT_ROI', roiId: roi.id });
       editSend({ type: 'SEEK_VIDEO', time: roi.timeStart });
     },
-    [form, motionSend, editSend]
+    [form, roiSend, editSend]
   );
 
   // Handle saving ROI changes
@@ -146,12 +144,12 @@ const RoiControls: React.FC = () => {
       };
 
       console.log('handleSaveROI', updatedROI);
-      motionSend({ type: 'UPDATE_ROI', roi: updatedROI });
+      roiSend({ type: 'UPDATE_ROI', roi: updatedROI });
       setIsEditing(false);
       setEditingROI(null);
       setOriginalValues(null);
     },
-    [motionSend, editingROI]
+    [roiSend, editingROI]
   );
 
   // Handle canceling edits
@@ -162,20 +160,20 @@ const RoiControls: React.FC = () => {
     setIsEditing(false);
     setEditingROI(null);
     setOriginalValues(null);
-    motionSend({ type: 'SELECT_ROI', roiId: null });
-  }, [motionSend, form, originalValues]);
+    roiSend({ type: 'SELECT_ROI', roiId: null });
+  }, [roiSend, form, originalValues]);
 
   // Handle deleting an ROI
   const handleDeleteROI = useCallback(
     (roiId: string) => {
-      motionSend({ type: 'REMOVE_ROI', roiId });
+      roiSend({ type: 'REMOVE_ROI', roiId });
       if (editingROI?.id === roiId) {
         setIsEditing(false);
         setEditingROI(null);
         setOriginalValues(null);
       }
     },
-    [motionSend, editingROI?.id]
+    [roiSend, editingROI?.id]
   );
 
   // Handle creating a new ROI at current time
@@ -190,15 +188,15 @@ const RoiControls: React.FC = () => {
       h: 100,
       timeStart: currentTime
     };
-    motionSend({ type: 'ADD_ROI', roi: newROI });
-  }, [videoTime, rois.length, motionSend]);
+    roiSend({ type: 'ADD_ROI', roi: newROI });
+  }, [videoTime, rois.length, roiSend]);
 
   // Handle ROI accordion trigger click
   const handleClickROIListItem = useCallback(
     (value: string) => {
-      motionSend({ type: 'SELECT_ROI', roiId: value });
+      roiSend({ type: 'SELECT_ROI', roiId: value });
       if (!!value) {
-        // send a VIDEO_TIME_UPDATE event to the motion machine
+        // send a VIDEO_TIME_UPDATE event to the roi machine
         const roi = roisObject[value];
         console.log('selected roi', roi);
 
@@ -207,7 +205,7 @@ const RoiControls: React.FC = () => {
         }
       }
     },
-    [motionSend, roisObject, editSend]
+    [roiSend, roisObject, editSend]
   );
 
   // Handle setting start time to current video time

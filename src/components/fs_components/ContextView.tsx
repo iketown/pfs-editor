@@ -9,15 +9,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useState } from 'react';
 import { JSONTree } from 'react-json-tree';
 import { FsEditActorContext, useEditSelector } from './FsEditActorContext';
-import { useMotionSelector } from './MotionActorContext';
+import { useRoiSelector } from './RoiActorContext';
 
 export default function ContextView() {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState('edit');
   const editContext = FsEditActorContext.useSelector((state) => state.context);
   const editState = useEditSelector((state) => state);
-  const motionContext = useMotionSelector((s) => s?.context);
-  const motionState = useMotionSelector((state) => state);
+  const roiContext = useRoiSelector((s) => s?.context);
+  const roiState = useRoiSelector((state) => state);
 
   return (
     <div>
@@ -37,7 +37,7 @@ export default function ContextView() {
                 {/* <DialogTitle>XState Context</DialogTitle> */}
                 <TabsList>
                   <TabsTrigger value='edit'>Edit Context</TabsTrigger>
-                  <TabsTrigger value='motion'>Motion Context</TabsTrigger>
+                  <TabsTrigger value='roi'>Roi Context</TabsTrigger>
                 </TabsList>
               </DialogHeader>
               <TabsContent value='edit'>
@@ -50,14 +50,14 @@ export default function ContextView() {
                   <JSONTree data={editContext} hideRoot={true} />
                 </div>
               </TabsContent>
-              <TabsContent value='motion'>
+              <TabsContent value='roi'>
                 <div className='mb-2'>
                   <span className='bg-accent text-accent-foreground inline-block rounded px-3 py-1 text-xs font-semibold'>
-                    state: {JSON.stringify(motionState.value) as string}
+                    state: {JSON.stringify(roiState.value) as string}
                   </span>
                 </div>
                 <div className='bg-muted max-h-[60vh] overflow-auto rounded p-2'>
-                  <JSONTree data={motionContext} hideRoot={true} />
+                  <JSONTree data={roiContext} hideRoot={true} />
                 </div>
               </TabsContent>
             </Tabs>

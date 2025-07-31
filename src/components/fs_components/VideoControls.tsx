@@ -1,6 +1,6 @@
 import React from 'react';
 import { useEditActorRef, useEditSelector } from './FsEditActorContext';
-import { useMotionActorRef, useMotionSelector } from './MotionActorContext';
+import { useRoiActorRef, useRoiSelector } from './RoiActorContext';
 import { Button } from '@/components/ui/button';
 import {
   Play,
@@ -19,7 +19,7 @@ interface VideoControlsProps {
 
 const VideoControls: React.FC<VideoControlsProps> = ({ className = '' }) => {
   const { send: editSend } = useEditActorRef();
-  const { send: motionSend } = useMotionActorRef();
+  const { send: roiSend } = useRoiActorRef();
 
   // Get current state from contexts
   const playerRef = useEditSelector(

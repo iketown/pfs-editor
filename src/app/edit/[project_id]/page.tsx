@@ -8,9 +8,9 @@ import {
 } from '@/components/fs_components/FsEditActorContext';
 import { FSGraph } from '@/components/fs_components/FSGraph';
 import {
-  MotionActorContext,
-  useMotionActorRef
-} from '@/components/fs_components/MotionActorContext';
+  RoiActorContext,
+  useRoiActorRef
+} from '@/components/fs_components/RoiActorContext';
 import VideoControls from '@/components/fs_components/VideoControls';
 import VideoPlayer from '@/components/fs_components/VideoPlayer';
 import VideoTimeSliders from '@/components/fs_components/VideoTimeSliders';
@@ -41,7 +41,7 @@ export function EditProjectPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { send: editSend } = useEditActorRef();
-  const { send: motionSend } = useMotionActorRef();
+  const { send: roiSend } = useRoiActorRef();
 
   // Use the video file manager hook
   const { videoUrl, videoPrompt, handleSelectVideo } =
@@ -65,7 +65,7 @@ export function EditProjectPage() {
           projectId: projectId
         });
 
-        motionSend({
+        roiSend({
           type: 'SET_PROJECT_ID',
           projectId: projectId
         });
@@ -116,13 +116,13 @@ export function EditProjectPage() {
         try {
           const savedROIs = await db.getProjectROIs(projectId);
           if (savedROIs && Object.keys(savedROIs.rois).length > 0) {
-            motionSend({
+            roiSend({
               type: 'LOAD_ROIS',
               rois: savedROIs.rois
             });
           } else {
             // If no saved ROIs, clear the default ROI to start fresh
-            motionSend({
+            roiSend({
               type: 'LOAD_ROIS',
               rois: {}
             });
@@ -130,7 +130,7 @@ export function EditProjectPage() {
         } catch (err) {
           console.error('Failed to load ROIs:', err);
           // On error, start with empty ROIs
-          motionSend({
+          roiSend({
             type: 'LOAD_ROIS',
             rois: {}
           });
@@ -146,7 +146,7 @@ export function EditProjectPage() {
     if (projectId) {
       loadProject();
     }
-  }, [projectId, editSend, motionSend]);
+  }, [projectId, editSend, roiSend]);
 
   if (loading) {
     return (
@@ -235,9 +235,9 @@ export function EditProjectPage() {
 export default function WrappedEditProjectPage() {
   return (
     <FsEditActorContext.Provider>
-      <MotionActorContext.Provider>
+      <RoiActorContext.Provider>
         <EditProjectPage />
-      </MotionActorContext.Provider>
+      </RoiActorContext.Provider>
     </FsEditActorContext.Provider>
   );
 }

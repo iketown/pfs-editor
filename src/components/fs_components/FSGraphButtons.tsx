@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useEditActorRef, useEditSelector } from './FsEditActorContext';
-import { useMotionSelector } from './MotionActorContext';
+import { useRoiSelector } from './RoiActorContext';
 import { useState } from 'react';
 
 // ButtonRow component for graph controls
@@ -16,7 +16,7 @@ export default function ButtonRow({}: {}) {
   const videoFps = useEditSelector((state) => state.context.videoFps) as
     | number
     | null;
-  const chartRef = useMotionSelector(
+  const chartRef = useRoiSelector(
     (state) => state.context.chartRef
   ) as React.RefObject<any> | null;
   const [fpsInput, setFpsInput] = useState(videoFps?.toString() || '30');

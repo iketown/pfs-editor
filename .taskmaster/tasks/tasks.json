@@ -19,9 +19,7 @@
         "details": "Create types/funscript.ts with interfaces: FunscriptObject { version: string, inverted: boolean, range: number, actions: FunscriptAction[], metadata?: any }, FunscriptAction { id: number, at: number, pos: number }, FunscriptMetadata { version: string, range: number, inverted: boolean }. Create types/video.ts for video metadata. Create types/editor.ts for editor state types including selection, zoom, and playback states.",
         "testStrategy": "Write unit tests to validate type definitions. Test JSON parsing with sample Funscript files. Verify TypeScript compilation with strict type checking.",
         "priority": "high",
-        "dependencies": [
-          1
-        ],
+        "dependencies": [1],
         "status": "done",
         "subtasks": []
       },
@@ -30,9 +28,7 @@
         "title": "Build Video Upload and File Handling System",
         "description": "Implement project-based workflow with video file handling, funscript management, and browser-specific persistence for development workflow",
         "status": "done",
-        "dependencies": [
-          2
-        ],
+        "dependencies": [2],
         "priority": "high",
         "details": "Create a project-based system where users can create projects with names, upload/select video files, and manage funscript files. Implement browser-specific file persistence: use File System Access API with IndexedDB for Chromium browsers, and traditional file input with session storage for Firefox/Safari. Projects should store video file references and funscript data, allowing users to reopen projects and automatically reload video and funscript content. Support MP4, WebM, OGV formats with file validation.",
         "testStrategy": "Test project creation, saving, and loading across different browsers. Verify video file persistence in Chromium browsers across sessions. Test funscript file handling and project state restoration. Validate graceful degradation for non-Chromium browsers. Test error handling for unsupported formats and missing files.",
@@ -78,11 +74,7 @@
             "title": "Create project workflow hook",
             "description": "Implement useProject hook for managing project state, video files, and funscript data",
             "status": "done",
-            "dependencies": [
-              1,
-              3,
-              4
-            ],
+            "dependencies": [1, 3, 4],
             "details": "Create hooks/useProject.ts that manages current project state, handles video file loading, funscript data, and project persistence. Provide methods for creating, saving, and loading projects. Handle browser-specific file access and error states.",
             "testStrategy": "Test project state management, file loading, and persistence. Verify error handling for missing files or unsupported browsers."
           },
@@ -91,9 +83,7 @@
             "title": "Implement project loading and restoration",
             "description": "Build system to automatically restore video and funscript content when reopening projects",
             "status": "done",
-            "dependencies": [
-              5
-            ],
+            "dependencies": [5],
             "details": "Implement project restoration logic that loads video files (using stored handles or prompting for re-selection) and funscript data. Handle cases where video files are no longer accessible. Provide user feedback about restoration status.",
             "testStrategy": "Test project restoration across browser sessions. Verify handling of missing or inaccessible video files. Test user feedback and error recovery."
           },
@@ -111,9 +101,7 @@
             "title": "Create project-aware video player component",
             "description": "Build video player component that integrates with project system and handles blob URLs from all file access methods",
             "status": "done",
-            "dependencies": [
-              5
-            ],
+            "dependencies": [5],
             "details": "Create components/ProjectVideoPlayer.tsx that works with project-managed video files. Handle blob URL creation from file handles or file objects. Integrate with project state for automatic video loading and cleanup.",
             "testStrategy": "Test video playback with files from different access methods. Verify proper cleanup of blob URLs and memory management."
           },
@@ -122,9 +110,7 @@
             "title": "Integrate video file handler with EditProjectPage",
             "description": "Update EditProjectPage to use the new video file handling system for seamless project continuation",
             "status": "done",
-            "dependencies": [
-              3
-            ],
+            "dependencies": [3],
             "details": "Update EditProjectPage component to integrate with the video file handler system. Implement automatic video file restoration on project load, handle file re-linking for inaccessible files, and display videos using blob URLs from the unified file access system. Ensure proper error handling and user feedback for file access issues.",
             "testStrategy": "Test project loading with existing video files. Verify file restoration works across browser sessions in Chromium. Test file re-linking functionality when files are missing or inaccessible."
           }
@@ -135,9 +121,7 @@
         "title": "Create HTML5 Video Player Component",
         "description": "Build custom video player with standard controls and programmatic seek functionality for graph synchronization, integrating with MotionActorContext and FsEditActorContext",
         "status": "in-progress",
-        "dependencies": [
-          14
-        ],
+        "dependencies": [14],
         "priority": "high",
         "details": "Create components/VideoPlayer.tsx using HTML5 video element or video.js library for advanced features. Integrate with MotionActorContext and FsEditActorContext for state management and synchronization. Implement custom controls: play/pause button, progress bar, volume control, fullscreen toggle. Add programmatic seek functionality via context and refs. Implement video event handlers (timeupdate, loadedmetadata, ended). Expose control APIs through context providers for external synchronization. Style with Tailwind CSS to match application theme. Ensure responsive design for different screen sizes. Integrate with project-based video file system to load video files from project data. Use video.js library where appropriate for advanced playback features while maintaining compatibility with existing context system.",
         "testStrategy": "Test video playbook across different browsers with both HTML5 and video.js implementations. Verify all controls function correctly and integrate properly with MotionActorContext and FsEditActorContext. Test programmatic seeking accuracy via context APIs. Validate responsive behavior on mobile devices. Test integration with project-based file loading system. Verify context synchronization works correctly with other components.",
@@ -157,7 +141,7 @@
             "description": "Connect VideoPlayer component to existing context providers for state management and synchronization",
             "status": "done",
             "dependencies": [],
-            "details": "<info added on 2025-07-22T16:34:36.806Z>\nRefactored video file handling architecture to follow better separation of concerns. Moved video file handling logic from EditProjectPage into a dedicated useVideoFileManager hook. Updated fsEditMachine to include videoPrompt in context and added new events for video file management (SET_VIDEO_URL, SET_VIDEO_PROMPT, RESTORE_VIDEO_FILE, SELECT_VIDEO_FILE). Modified VideoPlayer component to get videoUrl from XState context instead of props, eliminating prop drilling. The videoUrl and videoPrompt state now live in the fsEditMachine context, providing centralized state management for video-related functionality.\n</info added on 2025-07-22T16:34:36.806Z>",
+            "details": "<info added on 2025-07-22T16:34:36.806Z>\nRefactored video file handling architecture to follow better separation of concerns. Moved video file handling logic from EditProjectPage into a dedicated useVideoFileManager hook. Updated projectMachine to include videoPrompt in context and added new events for video file management (SET_VIDEO_URL, SET_VIDEO_PROMPT, RESTORE_VIDEO_FILE, SELECT_VIDEO_FILE). Modified VideoPlayer component to get videoUrl from XState context instead of props, eliminating prop drilling. The videoUrl and videoPrompt state now live in the projectMachine context, providing centralized state management for video-related functionality.\n</info added on 2025-07-22T16:34:36.806Z>",
             "testStrategy": ""
           },
           {
@@ -166,7 +150,7 @@
             "description": "Create custom play/pause, progress bar, volume control, and fullscreen toggle using video.js API",
             "status": "done",
             "dependencies": [],
-            "details": "<info added on 2025-07-22T16:56:18.434Z>\nImplemented VideoTimeline component using react-video-timelines-slider library. Created comprehensive timeline with chapter markers from funscript metadata.chapters and loop point controls. Added loopStart and loopEnd to fsEditMachine context with SET_LOOP_POINTS event and action. Timeline displays chapter boundaries as disabled intervals and allows setting loop ranges via selectedInterval. Added clickable chapter labels below timeline for quick navigation. Integrated timeline under VideoPlayer in EditProjectPage with proper styling and padding.\n</info added on 2025-07-22T16:56:18.434Z>\n<info added on 2025-07-22T17:04:33.944Z>\nFixed timeline display issues based on user feedback: 1) Reduced tick density from 60 to max 20 ticks (every 5 seconds) to eliminate smudged overlapping time labels, 2) Removed chapter disabledIntervals as requested for different handling approach, 3) Added custom CSS styling to make timeline background grey (#6b7280) with green selected area (#22c55e) for loop points, 4) Added white handles with green borders for better visibility on green background. Timeline now has clean, readable time labels and proper color scheme.\n</info added on 2025-07-22T17:04:33.944Z>",
+            "details": "<info added on 2025-07-22T16:56:18.434Z>\nImplemented VideoTimeline component using react-video-timelines-slider library. Created comprehensive timeline with chapter markers from funscript metadata.chapters and loop point controls. Added loopStart and loopEnd to projectMachine context with SET_LOOP_POINTS event and action. Timeline displays chapter boundaries as disabled intervals and allows setting loop ranges via selectedInterval. Added clickable chapter labels below timeline for quick navigation. Integrated timeline under VideoPlayer in EditProjectPage with proper styling and padding.\n</info added on 2025-07-22T16:56:18.434Z>\n<info added on 2025-07-22T17:04:33.944Z>\nFixed timeline display issues based on user feedback: 1) Reduced tick density from 60 to max 20 ticks (every 5 seconds) to eliminate smudged overlapping time labels, 2) Removed chapter disabledIntervals as requested for different handling approach, 3) Added custom CSS styling to make timeline background grey (#6b7280) with green selected area (#22c55e) for loop points, 4) Added white handles with green borders for better visibility on green background. Timeline now has clean, readable time labels and proper color scheme.\n</info added on 2025-07-22T17:04:33.944Z>",
             "testStrategy": ""
           },
           {
@@ -209,16 +193,16 @@
             "id": 8,
             "title": "Implement stacked range sliders for video time control",
             "description": "Create dual-slider system with bottom range selector and top chapter editor",
-            "details": "Implement VideoTimeSlider component with two stacked sliders:\n\n1. **Bottom Slider (Range Selector)**:\n   - Range: 0 → ctx.videoDuration (full video length)\n   - Two handles: ctx.rangeStart and ctx.rangeEnd\n   - Sets the working range for the top slider\n   - Uses nouislider-react with simple range configuration\n\n2. **Top Slider (Chapter Editor)**:\n   - Range: ctx.rangeStart → ctx.rangeEnd (dynamic based on bottom slider)\n   - Multiple handles for chapter startTime and endTime\n   - Only shows chapters within the selected range\n   - Filters out chapters outside range to reduce visual clutter\n\n**State Management**:\n- Add rangeStart and rangeEnd to fsEditMachine context\n- Add SET_RANGE_START and SET_RANGE_END events\n- Filter chapters based on range selection\n- Update chapter handles when range changes\n\n**Visual Design**:\n- Bottom slider: Full width, clear handle distinction\n- Top slider: Positioned above, chapter labels overlaid\n- Responsive design for different screen sizes\n- Clear visual separation between sliders\n\n**Technical Implementation**:\n- Use nouislider-react for both sliders\n- Implement range filtering logic for chapter visibility\n- Handle positioning: direct time values for bottom, normalized for top\n- Real-time updates to XState context on slider changes\n<info added on 2025-07-25T14:01:27.697Z>\n**Implementation Complete:**\n\n**Created Stacked Range Sliders System:**\n\n1. **VideoRangeSlider Component** (`src/components/fs_components/VideoRangeSlider.tsx`):\n   - ✅ Bottom slider for range selection (0 → videoDuration)\n   - ✅ Two handles for rangeStart and rangeEnd\n   - ✅ Real-time updates to XState context\n   - ✅ Time formatting and tooltips\n   - ✅ Validation to ensure start < end\n\n2. **VideoChapterSlider Component** (`src/components/fs_components/VideoChapterSlider.tsx`):\n   - ✅ Top slider for chapter editing within selected range\n   - ✅ Dynamic range based on bottom slider selection\n   - ✅ Chapter filtering to show only chapters within range\n   - ✅ Handle positioning normalized to selected range\n   - ✅ Chapter labels overlaid at handle positions\n   - ✅ Real-time chapter updates\n\n3. **VideoTimeSliders Component** (`src/components/fs_components/VideoTimeSliders.tsx`):\n   - ✅ Stacked layout with clear visual separation\n   - ✅ Chapter Editor (top) and Range Selector (bottom)\n   - ✅ Range summary display\n   - ✅ Responsive design with proper spacing\n\n4. **XState Integration**:\n   - ✅ Added SET_RANGE_START, SET_RANGE_END, RESET_RANGE events\n   - ✅ Added corresponding actions in fsEditActions.ts\n   - ✅ rangeStart and rangeEnd already in context\n   - ✅ Proper state management and validation\n\n**Key Features Implemented:**\n- **Range Selection**: Bottom slider sets working range for top slider\n- **Chapter Filtering**: Only chapters within range are displayed\n- **Handle Positioning**: Bottom uses direct time values, top uses normalized positions\n- **Real-time Updates**: Changes immediately reflect in XState context\n- **Visual Design**: Clean stacked layout with proper labeling\n- **Performance**: Memoized calculations and efficient filtering\n\n**Ready for Testing:**\nThe stacked range sliders system is now fully implemented and ready for integration with the video player component.\n</info added on 2025-07-25T14:01:27.697Z>",
+            "details": "Implement VideoTimeSlider component with two stacked sliders:\n\n1. **Bottom Slider (Range Selector)**:\n   - Range: 0 → ctx.videoDuration (full video length)\n   - Two handles: ctx.rangeStart and ctx.rangeEnd\n   - Sets the working range for the top slider\n   - Uses nouislider-react with simple range configuration\n\n2. **Top Slider (Chapter Editor)**:\n   - Range: ctx.rangeStart → ctx.rangeEnd (dynamic based on bottom slider)\n   - Multiple handles for chapter startTime and endTime\n   - Only shows chapters within the selected range\n   - Filters out chapters outside range to reduce visual clutter\n\n**State Management**:\n- Add rangeStart and rangeEnd to projectMachine context\n- Add SET_RANGE_START and SET_RANGE_END events\n- Filter chapters based on range selection\n- Update chapter handles when range changes\n\n**Visual Design**:\n- Bottom slider: Full width, clear handle distinction\n- Top slider: Positioned above, chapter labels overlaid\n- Responsive design for different screen sizes\n- Clear visual separation between sliders\n\n**Technical Implementation**:\n- Use nouislider-react for both sliders\n- Implement range filtering logic for chapter visibility\n- Handle positioning: direct time values for bottom, normalized for top\n- Real-time updates to XState context on slider changes\n<info added on 2025-07-25T14:01:27.697Z>\n**Implementation Complete:**\n\n**Created Stacked Range Sliders System:**\n\n1. **VideoRangeSlider Component** (`src/components/fs_components/VideoRangeSlider.tsx`):\n   - ✅ Bottom slider for range selection (0 → videoDuration)\n   - ✅ Two handles for rangeStart and rangeEnd\n   - ✅ Real-time updates to XState context\n   - ✅ Time formatting and tooltips\n   - ✅ Validation to ensure start < end\n\n2. **VideoChapterSlider Component** (`src/components/fs_components/VideoChapterSlider.tsx`):\n   - ✅ Top slider for chapter editing within selected range\n   - ✅ Dynamic range based on bottom slider selection\n   - ✅ Chapter filtering to show only chapters within range\n   - ✅ Handle positioning normalized to selected range\n   - ✅ Chapter labels overlaid at handle positions\n   - ✅ Real-time chapter updates\n\n3. **VideoTimeSliders Component** (`src/components/fs_components/VideoTimeSliders.tsx`):\n   - ✅ Stacked layout with clear visual separation\n   - ✅ Chapter Editor (top) and Range Selector (bottom)\n   - ✅ Range summary display\n   - ✅ Responsive design with proper spacing\n\n4. **XState Integration**:\n   - ✅ Added SET_RANGE_START, SET_RANGE_END, RESET_RANGE events\n   - ✅ Added corresponding actions in projectActions.ts\n   - ✅ rangeStart and rangeEnd already in context\n   - ✅ Proper state management and validation\n\n**Key Features Implemented:**\n- **Range Selection**: Bottom slider sets working range for top slider\n- **Chapter Filtering**: Only chapters within range are displayed\n- **Handle Positioning**: Bottom uses direct time values, top uses normalized positions\n- **Real-time Updates**: Changes immediately reflect in XState context\n- **Visual Design**: Clean stacked layout with proper labeling\n- **Performance**: Memoized calculations and efficient filtering\n\n**Ready for Testing:**\nThe stacked range sliders system is now fully implemented and ready for integration with the video player component.\n</info added on 2025-07-25T14:01:27.697Z>",
             "status": "done",
             "dependencies": [],
             "parentTaskId": 4
           },
           {
             "id": 9,
-            "title": "Add range state management to fsEditMachine",
+            "title": "Add range state management to projectMachine",
             "description": "Extend XState machine to support range selection and chapter filtering",
-            "details": "Update fsEditMachine to support the stacked range slider functionality:\n\n**Context Updates**:\n- Add `rangeStart: number` to context (default: 0)\n- Add `rangeEnd: number` to context (default: videoDuration)\n- Ensure these values are properly initialized when video loads\n\n**New Events**:\n- `SET_RANGE_START`: Updates the start of the working range\n- `SET_RANGE_END`: Updates the end of the working range\n- `RESET_RANGE`: Resets range to full video duration\n\n**Actions**:\n- `updateRangeStart`: Updates context.rangeStart\n- `updateRangeEnd`: Updates context.rangeEnd\n- `resetRange`: Sets range to [0, videoDuration]\n\n**State Transitions**:\n- Handle range updates in all relevant states\n- Ensure range values are validated (rangeStart < rangeEnd)\n- Update range when video duration changes\n\n**Integration**:\n- Connect with VideoTimeSlider component\n- Provide selectors for range values\n- Ensure chapter filtering works with range changes\n<info added on 2025-07-25T14:12:19.098Z>\n**Implementation Complete:**\n\n**XState Machine Range Management Added:**\n\n1. **Events Added** (`src/lib/fs_machines/fsEditMachine.ts`):\n   - ✅ `SET_RANGE_START`: Updates the start of the working range\n   - ✅ `SET_RANGE_END`: Updates the end of the working range  \n   - ✅ `RESET_RANGE`: Resets range to full video duration\n\n2. **Actions Added** (`src/lib/fs_machines/fsEditActions.ts`):\n   - ✅ `setRangeStart`: Updates context.rangeStart\n   - ✅ `setRangeEnd`: Updates context.rangeEnd\n   - ✅ `resetRange`: Sets range to [0, videoDuration]\n\n3. **Context Already Available**:\n   - ✅ `rangeStart: number` already in FSEditContext\n   - ✅ `rangeEnd: number` already in FSEditContext\n   - ✅ Proper initialization in machine context\n\n4. **Integration**:\n   - ✅ Events connected to actions in machine definition\n   - ✅ Actions exported from fsEditActions\n   - ✅ Ready for use by VideoRangeSlider and VideoChapterSlider components\n\n**State Management Features:**\n- **Validation**: Range updates ensure start < end\n- **Initialization**: Range properly initialized when video loads\n- **Persistence**: Range state maintained across component updates\n- **Integration**: Seamless connection with slider components\n\n**Ready for Use:**\nThe XState machine now fully supports range selection and chapter filtering functionality.\n</info added on 2025-07-25T14:12:19.098Z>",
+            "details": "Update projectMachine to support the stacked range slider functionality:\n\n**Context Updates**:\n- Add `rangeStart: number` to context (default: 0)\n- Add `rangeEnd: number` to context (default: videoDuration)\n- Ensure these values are properly initialized when video loads\n\n**New Events**:\n- `SET_RANGE_START`: Updates the start of the working range\n- `SET_RANGE_END`: Updates the end of the working range\n- `RESET_RANGE`: Resets range to full video duration\n\n**Actions**:\n- `updateRangeStart`: Updates context.rangeStart\n- `updateRangeEnd`: Updates context.rangeEnd\n- `resetRange`: Sets range to [0, videoDuration]\n\n**State Transitions**:\n- Handle range updates in all relevant states\n- Ensure range values are validated (rangeStart < rangeEnd)\n- Update range when video duration changes\n\n**Integration**:\n- Connect with VideoTimeSlider component\n- Provide selectors for range values\n- Ensure chapter filtering works with range changes\n<info added on 2025-07-25T14:12:19.098Z>\n**Implementation Complete:**\n\n**XState Machine Range Management Added:**\n\n1. **Events Added** (`src/lib/fs_machines/projectMachine.ts`):\n   - ✅ `SET_RANGE_START`: Updates the start of the working range\n   - ✅ `SET_RANGE_END`: Updates the end of the working range  \n   - ✅ `RESET_RANGE`: Resets range to full video duration\n\n2. **Actions Added** (`src/lib/fs_machines/projectActions.ts`):\n   - ✅ `setRangeStart`: Updates context.rangeStart\n   - ✅ `setRangeEnd`: Updates context.rangeEnd\n   - ✅ `resetRange`: Sets range to [0, videoDuration]\n\n3. **Context Already Available**:\n   - ✅ `rangeStart: number` already in ProjectContext\n   - ✅ `rangeEnd: number` already in ProjectContext\n   - ✅ Proper initialization in machine context\n\n4. **Integration**:\n   - ✅ Events connected to actions in machine definition\n   - ✅ Actions exported from projectActions\n   - ✅ Ready for use by VideoRangeSlider and VideoChapterSlider components\n\n**State Management Features:**\n- **Validation**: Range updates ensure start < end\n- **Initialization**: Range properly initialized when video loads\n- **Persistence**: Range state maintained across component updates\n- **Integration**: Seamless connection with slider components\n\n**Ready for Use:**\nThe XState machine now fully supports range selection and chapter filtering functionality.\n</info added on 2025-07-25T14:12:19.098Z>",
             "status": "done",
             "dependencies": [],
             "parentTaskId": 4
@@ -248,9 +232,7 @@
         "title": "Implement Funscript File Parser and Validator",
         "description": "Create system to upload, parse, validate, and store Funscript JSON files with proper error handling and project-based database integration",
         "status": "pending",
-        "dependencies": [
-          14
-        ],
+        "dependencies": [14],
         "priority": "high",
         "details": "Create lib/funscript-parser.ts with project-aware functions: parseFunscript(file: File), validateFunscript(data: any), exportFunscript(data: FunscriptObject), saveFunscriptToProject(data: FunscriptObject, projectId: string), loadFunscriptFromProject(projectId: string), updateFunscriptInProject(data: FunscriptObject, projectId: string). Implement JSON parsing with try-catch error handling. Validate required fields (actions array, version) and store validation results in project data. Sort actions by timestamp. Handle malformed data gracefully. Create components/FunscriptUpload.tsx for file upload UI. Integrate with project-based workflow to automatically associate Funscript files with the current project.",
         "testStrategy": "Test with valid and invalid Funscript files. Verify error messages for malformed JSON. Test large file handling. Validate sorting and data integrity after parsing. Test integration with project-based storage system. Verify versioning system preserves edit history within projects. Test retrieval and update operations. Validate relationships between Funscript files and video projects. Test project-based organization and listing functionality.",
@@ -278,9 +260,7 @@
             "title": "Implement database integration functions",
             "description": "Create database operations for Funscript and related data",
             "status": "pending",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Implement saveFunscriptToDb(data, projectId), loadFunscriptFromDb(projectId), updateFunscriptVersion(data, projectId), saveROIData(roiData, funscriptId), saveMotionCaptureData(motionData, funscriptId), getEditHistory(funscriptId), createProject(name, settings), and listProjects() functions.",
             "testStrategy": "Test all database operations with sample data. Verify data integrity after save and load operations. Test error handling for database operations."
           },
@@ -289,10 +269,7 @@
             "title": "Implement versioning system",
             "description": "Add functionality to track edit history with timestamps and change descriptions",
             "status": "pending",
-            "dependencies": [
-              2,
-              3
-            ],
+            "dependencies": [2, 3],
             "details": "Create system to track edit history with timestamps, change descriptions, and snapshots. Implement getEditHistory function to retrieve version history for a Funscript.",
             "testStrategy": "Test version history creation and retrieval. Verify timestamps and change descriptions are accurate. Test with multiple edits to ensure history is maintained correctly."
           },
@@ -301,10 +278,7 @@
             "title": "Create project association system",
             "description": "Implement linking between Funscript files and video files via project IDs",
             "status": "pending",
-            "dependencies": [
-              2,
-              3
-            ],
+            "dependencies": [2, 3],
             "details": "Implement project-based organization for all data. Create functions to associate Funscript files with video files via project IDs. Implement createProject and listProjects functions.",
             "testStrategy": "Test project creation and listing. Verify associations between Funscript files and video files. Test project-based data organization."
           },
@@ -313,11 +287,7 @@
             "title": "Update FunscriptUpload component",
             "description": "Modify UI to work with database layer instead of direct file handling",
             "status": "pending",
-            "dependencies": [
-              1,
-              2,
-              3
-            ],
+            "dependencies": [1, 2, 3],
             "details": "Update components/FunscriptUpload.tsx to use the database abstraction layer for file uploads and storage. Implement project selection in the UI.",
             "testStrategy": "Test file upload with the new database layer. Verify UI feedback during upload and processing. Test project selection functionality."
           },
@@ -326,9 +296,7 @@
             "title": "Implement version history viewer",
             "description": "Create UI component to view and restore previous versions of Funscript files",
             "status": "pending",
-            "dependencies": [
-              4
-            ],
+            "dependencies": [4],
             "details": "Create UI component to view and restore previous versions of Funscript files using the edit history data from the database.",
             "testStrategy": "Test version history display and restoration. Verify UI accurately shows version differences. Test restoration of previous versions."
           },
@@ -337,9 +305,7 @@
             "title": "Add export options for database-stored Funscripts",
             "description": "Implement functionality to export Funscript data from database to file",
             "status": "pending",
-            "dependencies": [
-              3
-            ],
+            "dependencies": [3],
             "details": "Implement functionality to export Funscript data from database to file. Add options for exporting with or without ROI and motion capture data.",
             "testStrategy": "Test export functionality with various data combinations. Verify exported files match database content. Test with large datasets."
           },
@@ -348,9 +314,7 @@
             "title": "Implement soft delete for version management",
             "description": "Add functionality to mark versions as deleted without removing them from the database",
             "status": "pending",
-            "dependencies": [
-              4
-            ],
+            "dependencies": [4],
             "details": "Implement soft delete functionality to mark versions as deleted without removing them from the database. Add UI options to show or hide deleted versions.",
             "testStrategy": "Test soft delete functionality. Verify deleted versions are hidden by default but can be shown. Test restoration of soft-deleted versions."
           },
@@ -359,10 +323,7 @@
             "title": "Create ROI data management functions",
             "description": "Implement functions to save, load, and update ROI data",
             "status": "pending",
-            "dependencies": [
-              2,
-              3
-            ],
+            "dependencies": [2, 3],
             "details": "Create functions to manage Regions of Interest (ROI) data associated with Funscript files. Implement saveROIData, loadROIData, and updateROIData functions.",
             "testStrategy": "Test ROI data management functions with sample data. Verify data integrity after save and load operations. Test with complex region definitions."
           },
@@ -371,10 +332,7 @@
             "title": "Implement motion capture data integration",
             "description": "Add support for storing and retrieving motion capture data",
             "status": "pending",
-            "dependencies": [
-              2,
-              3
-            ],
+            "dependencies": [2, 3],
             "details": "Implement functions to store and retrieve motion capture data associated with Funscript files. Create saveMotionCaptureData and loadMotionCaptureData functions.",
             "testStrategy": "Test motion capture data storage and retrieval. Verify data integrity with large motion datasets. Test integration with Funscript data."
           },
@@ -383,10 +341,7 @@
             "title": "Create migration utilities for Supabase transition",
             "description": "Implement utilities to facilitate future migration to Supabase",
             "status": "pending",
-            "dependencies": [
-              2,
-              3
-            ],
+            "dependencies": [2, 3],
             "details": "Create utilities to export data from localStorage and import it into Supabase. Design database abstraction layer to make transition seamless.",
             "testStrategy": "Test data export and import utilities. Verify data integrity after migration. Test with large datasets to ensure all data is preserved."
           }
@@ -399,10 +354,7 @@
         "details": "Create components/FSGraph.tsx using Chart.js line chart. Configure chart options: responsive: true, maintainAspectRatio: false, scales with time (x-axis) and position 0-100 (y-axis). Implement data transformation from FunscriptAction[] to Chart.js dataset format. Add zoom and pan plugins. Style with custom colors and grid lines. Create useFSGraph hook for chart state management. Implement click-to-seek functionality that updates video player time. Integrate with project system to load and display Funscript data from the current project.",
         "testStrategy": "Test graph rendering with sample Funscript data. Verify zoom and pan functionality. Test click-to-seek integration with video player. Validate performance with large datasets (1000+ points). Test integration with project-based data loading system.",
         "priority": "high",
-        "dependencies": [
-          4,
-          5
-        ],
+        "dependencies": [4, 5],
         "status": "pending",
         "subtasks": []
       },
@@ -413,9 +365,7 @@
         "details": "Create lib/synchronization.ts with sync logic. Implement video timeupdate event handler that updates graph cursor position. Add vertical line indicator on graph showing current video time. Create bidirectional sync: video seeks update graph, graph clicks seek video. Use XState for synchronization state machine with states: idle, playing, seeking. Handle edge cases like rapid seeking and playback rate changes. Implement debouncing for smooth performance. Integrate with project system to maintain synchronization state per project.",
         "testStrategy": "Test synchronization accuracy with frame-by-frame video stepping. Verify cursor position updates during playback. Test rapid seeking scenarios. Validate performance during continuous playback. Test project-based synchronization state persistence.",
         "priority": "high",
-        "dependencies": [
-          6
-        ],
+        "dependencies": [6],
         "status": "pending",
         "subtasks": []
       },
@@ -426,9 +376,7 @@
         "details": "Extend FSGraph component with Chart.js drag plugin. Implement mouse event handlers: onMouseDown, onMouseMove, onMouseUp. Add point selection logic with visual feedback (highlight selected points). Implement drag constraints (position 0-100, time boundaries). Update Funscript data in real-time during drag operations. Add hover effects and cursor changes. Implement touch support for mobile devices. Create undo/redo system using command pattern. Automatically save changes to project data and maintain edit history.",
         "testStrategy": "Test drag functionality across different browsers. Verify constraints prevent invalid values. Test undo/redo operations. Validate touch interactions on mobile devices. Test performance with multiple simultaneous drags. Verify changes are properly saved to project data.",
         "priority": "medium",
-        "dependencies": [
-          7
-        ],
+        "dependencies": [7],
         "status": "pending",
         "subtasks": []
       },
@@ -439,9 +387,7 @@
         "details": "Extend graph interaction to support Ctrl+click and Shift+click for multi-selection. Implement selection rectangle with mouse drag. Add visual indicators for selected points (different color/border). Create bulk operations: delete selected, move selected, copy/paste. Implement keyboard shortcuts: Ctrl+A (select all), Delete (remove selected), Ctrl+C/V (copy/paste). Add selection state to XState machine. Create context menu for right-click operations. Ensure all bulk operations are saved to project data with proper edit history tracking.",
         "testStrategy": "Test multi-selection with various keyboard combinations. Verify bulk operations work correctly. Test copy/paste functionality. Validate keyboard shortcuts across different operating systems. Verify bulk changes are properly tracked in project edit history.",
         "priority": "medium",
-        "dependencies": [
-          8
-        ],
+        "dependencies": [8],
         "status": "pending",
         "subtasks": []
       },
@@ -452,9 +398,7 @@
         "details": "Create lib/export.ts with exportFunscript function. Generate valid Funscript JSON with metadata (version, range, inverted). Implement browser download using Blob and URL.createObjectURL. Add export options: filename customization, metadata inclusion. Create export button in UI with download progress indicator. Validate exported data matches Funscript 1.0 specification. Add export history and recent files list in project data. Support exporting from current project or specific project versions.",
         "testStrategy": "Test exported files can be re-imported successfully. Verify JSON structure matches Funscript specification. Test download functionality across browsers. Validate metadata preservation during export. Test exporting from different project versions.",
         "priority": "medium",
-        "dependencies": [
-          9
-        ],
+        "dependencies": [9],
         "status": "pending",
         "subtasks": []
       },
@@ -465,9 +409,7 @@
         "details": "Create app/page.tsx as main layout. Implement responsive grid layout: video player (top-left), graph editor (bottom), controls (top-right). Use Shadcn/ui components: Button, Card, Separator, Tabs. Add theme provider for dark/light mode support. Implement collapsible panels and resizable sections. Create navigation breadcrumbs and status indicators. Add loading states and error boundaries. Implement keyboard navigation and focus management for accessibility. Add project selector and project management UI elements to the main layout.",
         "testStrategy": "Test layout responsiveness across screen sizes. Verify theme switching functionality. Test keyboard navigation and screen reader compatibility. Validate loading states and error handling. Test project selection and management UI integration.",
         "priority": "medium",
-        "dependencies": [
-          10
-        ],
+        "dependencies": [10],
         "status": "pending",
         "subtasks": []
       },
@@ -475,12 +417,10 @@
         "id": 12,
         "title": "Implement State Management with XState and Zustand Integration",
         "description": "Create comprehensive state management system using XState for complex editor states and Zustand for simpler component state with project-based state persistence",
-        "details": "Create stores/fsEditActor.ts with XState machine for editor states: idle, loading, editing, exporting. Implement state transitions and guards for valid operations. Create stores/videoStore.ts with Zustand for video state. Create stores/graphStore.ts for graph interaction state. Create stores/projectStore.ts for project management state. Implement state persistence using project-based storage. Add state debugging tools and dev mode logging. Create custom hooks for state access: useEditorState, useVideoState, useGraphState, useProjectState. Handle state hydration and error recovery with project context.",
+        "details": "Create stores/projectActor.ts with XState machine for editor states: idle, loading, editing, exporting. Implement state transitions and guards for valid operations. Create stores/videoStore.ts with Zustand for video state. Create stores/graphStore.ts for graph interaction state. Create stores/projectStore.ts for project management state. Implement state persistence using project-based storage. Add state debugging tools and dev mode logging. Create custom hooks for state access: useEditorState, useVideoState, useGraphState, useProjectState. Handle state hydration and error recovery with project context.",
         "testStrategy": "Test state transitions and edge cases. Verify state persistence across browser sessions. Test concurrent state updates. Validate state debugging tools in development mode. Test project-based state isolation and switching between projects.",
         "priority": "medium",
-        "dependencies": [
-          11
-        ],
+        "dependencies": [11],
         "status": "pending",
         "subtasks": []
       },
@@ -491,9 +431,7 @@
         "details": "1. Create a `lib/db/` directory structure for the database abstraction layer:\n   - `lib/db/index.ts`: Main entry point exporting all database functionality\n   - `lib/db/types.ts`: Define interfaces for all data models and database operations\n   - `lib/db/localStorage.ts`: Implementation using browser's localStorage\n   - `lib/db/migrations.ts`: Utilities for future data migration to Supabase\n\n2. In `lib/db/types.ts`, define the following interfaces:\n   ```typescript\n   // Database provider interface\n   export interface DatabaseProvider {\n     // CRUD operations\n     getItem<T>(collection: string, id: string): Promise<T | null>;\n     setItem<T>(collection: string, id: string, data: T): Promise<void>;\n     removeItem(collection: string, id: string): Promise<void>;\n     listItems<T>(collection: string, query?: QueryParams): Promise<T[]>;\n     \n     // Collection operations\n     createCollection(name: string): Promise<void>;\n     dropCollection(name: string): Promise<void>;\n     \n     // Utility methods\n     clear(): Promise<void>;\n     migrate(provider: DatabaseProvider): Promise<void>;\n   }\n   \n   // Query parameters for filtering data\n   export interface QueryParams {\n     filters?: Record<string, any>;\n     limit?: number;\n     offset?: number;\n     orderBy?: string;\n     orderDirection?: 'asc' | 'desc';\n   }\n   \n   // Data models\n   export interface FunscriptData {\n     id: string;\n     name: string;\n     content: any; // The actual Funscript JSON\n     createdAt: number;\n     updatedAt: number;\n   }\n   \n   export interface ROIData {\n     id: string;\n     funscriptId: string;\n     regions: Array<{\n       start: number;\n       end: number;\n       name: string;\n       color?: string;\n     }>;\n     createdAt: number;\n     updatedAt: number;\n   }\n   \n   export interface MotionCaptureData {\n     id: string;\n     funscriptId: string;\n     data: any; // Motion capture data structure\n     createdAt: number;\n     updatedAt: number;\n   }\n   \n   export interface EditHistoryEntry {\n     id: string;\n     funscriptId: string;\n     timestamp: number;\n     changes: any; // Description of changes made\n     snapshot: any; // Optional full snapshot of data at this point\n   }\n   \n   export interface ProjectSettings {\n     id: string;\n     name: string;\n     settings: Record<string, any>;\n     createdAt: number;\n     updatedAt: number;\n   }\n   ```\n\n3. Implement `lib/db/localStorage.ts`:\n   ```typescript\n   import { DatabaseProvider, QueryParams } from './types';\n   \n   export class LocalStorageProvider implements DatabaseProvider {\n     private prefix = 'pfs-editor-';\n     \n     // Helper to get collection key\n     private getCollectionKey(collection: string): string {\n       return `${this.prefix}${collection}`;\n     }\n     \n     // Helper to get item key\n     private getItemKey(collection: string, id: string): string {\n       return `${this.prefix}${collection}:${id}`;\n     }\n     \n     // Helper to parse stored JSON data\n     private parseItem<T>(data: string | null): T | null {\n       if (!data) return null;\n       try {\n         return JSON.parse(data) as T;\n       } catch (e) {\n         console.error('Failed to parse stored data:', e);\n         return null;\n       }\n     }\n     \n     // CRUD implementations\n     async getItem<T>(collection: string, id: string): Promise<T | null> {\n       const data = localStorage.getItem(this.getItemKey(collection, id));\n       return this.parseItem<T>(data);\n     }\n     \n     async setItem<T>(collection: string, id: string, data: T): Promise<void> {\n       try {\n         // Ensure collection exists in index\n         await this.ensureCollection(collection);\n         \n         // Store the item\n         localStorage.setItem(\n           this.getItemKey(collection, id),\n           JSON.stringify(data)\n         );\n         \n         // Update collection index\n         const index = await this.getCollectionIndex(collection);\n         if (!index.includes(id)) {\n           index.push(id);\n           await this.setCollectionIndex(collection, index);\n         }\n       } catch (e) {\n         console.error('Failed to store item:', e);\n         throw new Error(`Storage error: ${e.message}`);\n       }\n     }\n     \n     async removeItem(collection: string, id: string): Promise<void> {\n       localStorage.removeItem(this.getItemKey(collection, id));\n       \n       // Update collection index\n       const index = await this.getCollectionIndex(collection);\n       const newIndex = index.filter(itemId => itemId !== id);\n       await this.setCollectionIndex(collection, newIndex);\n     }\n     \n     async listItems<T>(collection: string, query?: QueryParams): Promise<T[]> {\n       const index = await this.getCollectionIndex(collection);\n       const items: T[] = [];\n       \n       for (const id of index) {\n         const item = await this.getItem<T>(collection, id);\n         if (item) {\n           // Apply filters if provided\n           if (query?.filters && !this.matchesFilters(item, query.filters)) {\n             continue;\n           }\n           items.push(item);\n         }\n       }\n       \n       // Apply sorting if needed\n       if (query?.orderBy) {\n         items.sort((a, b) => {\n           const aVal = a[query.orderBy];\n           const bVal = b[query.orderBy];\n           const direction = query.orderDirection === 'desc' ? -1 : 1;\n           \n           if (aVal < bVal) return -1 * direction;\n           if (aVal > bVal) return 1 * direction;\n           return 0;\n         });\n       }\n       \n       // Apply pagination if needed\n       if (query?.offset || query?.limit) {\n         const offset = query.offset || 0;\n         const limit = query.limit || items.length;\n         return items.slice(offset, offset + limit);\n       }\n       \n       return items;\n     }\n     \n     // Collection operations\n     private async getCollectionIndex(collection: string): Promise<string[]> {\n       const key = this.getCollectionKey(collection);\n       const data = localStorage.getItem(key);\n       return this.parseItem<string[]>(data) || [];\n     }\n     \n     private async setCollectionIndex(collection: string, index: string[]): Promise<void> {\n       const key = this.getCollectionKey(collection);\n       localStorage.setItem(key, JSON.stringify(index));\n     }\n     \n     private async ensureCollection(collection: string): Promise<void> {\n       const key = this.getCollectionKey(collection);\n       if (!localStorage.getItem(key)) {\n         localStorage.setItem(key, JSON.stringify([]));\n       }\n     }\n     \n     async createCollection(name: string): Promise<void> {\n       await this.ensureCollection(name);\n     }\n     \n     async dropCollection(name: string): Promise<void> {\n       // Get all items in the collection\n       const index = await this.getCollectionIndex(name);\n       \n       // Remove each item\n       for (const id of index) {\n         localStorage.removeItem(this.getItemKey(name, id));\n       }\n       \n       // Remove the collection index\n       localStorage.removeItem(this.getCollectionKey(name));\n     }\n     \n     // Utility methods\n     async clear(): Promise<void> {\n       // Only clear items with our prefix\n       for (let i = 0; i < localStorage.length; i++) {\n         const key = localStorage.key(i);\n         if (key.startsWith(this.prefix)) {\n           localStorage.removeItem(key);\n         }\n       }\n     }\n     \n     async migrate(provider: DatabaseProvider): Promise<void> {\n       // This would be implemented when Supabase is ready\n       // It would iterate through all collections and items\n       // and copy them to the new provider\n     }\n     \n     // Helper for filtering\n     private matchesFilters<T>(item: T, filters: Record<string, any>): boolean {\n       for (const [key, value] of Object.entries(filters)) {\n         if (item[key] !== value) {\n           return false;\n         }\n       }\n       return true;\n     }\n   }\n   ```\n\n4. Create `lib/db/index.ts` to export the database functionality:\n   ```typescript\n   import { LocalStorageProvider } from './localStorage';\n   import type { DatabaseProvider } from './types';\n   \n   // Export all types\n   export * from './types';\n   \n   // Create and export the database instance\n   const db: DatabaseProvider = new LocalStorageProvider();\n   \n   // Initialize standard collections\n   const initializeDatabase = async () => {\n     await db.createCollection('funscripts');\n     await db.createCollection('roi');\n     await db.createCollection('motioncapture');\n     await db.createCollection('history');\n     await db.createCollection('settings');\n   };\n   \n   // Initialize on import\n   initializeDatabase().catch(console.error);\n   \n   export { db };\n   ```\n\n5. Create `lib/db/migrations.ts` for future Supabase migration:\n   ```typescript\n   import { db } from './index';\n   import type { DatabaseProvider } from './types';\n   \n   export async function exportDatabaseDump(): Promise<string> {\n     const collections = ['funscripts', 'roi', 'motioncapture', 'history', 'settings'];\n     const dump: Record<string, any[]> = {};\n     \n     for (const collection of collections) {\n       dump[collection] = await db.listItems(collection);\n     }\n     \n     return JSON.stringify(dump);\n   }\n   \n   export async function importDatabaseDump(json: string): Promise<void> {\n     try {\n       const dump = JSON.parse(json);\n       \n       // Clear existing data\n       await db.clear();\n       \n       // Import each collection\n       for (const [collection, items] of Object.entries(dump)) {\n         await db.createCollection(collection);\n         \n         for (const item of items) {\n           await db.setItem(collection, item.id, item);\n         }\n       }\n     } catch (e) {\n       console.error('Failed to import database dump:', e);\n       throw new Error(`Import failed: ${e.message}`);\n     }\n   }\n   \n   export async function migrateToProvider(newProvider: DatabaseProvider): Promise<void> {\n     await db.migrate(newProvider);\n   }\n   ```\n\n6. Create a simple hook for using the database in components:\n   ```typescript\n   // lib/hooks/useDatabase.ts\n   import { useCallback } from 'react';\n   import { db } from '../db';\n   import type { QueryParams } from '../db/types';\n   \n   export function useDatabase() {\n     const getFunscript = useCallback(async (id: string) => {\n       return db.getItem('funscripts', id);\n     }, []);\n     \n     const saveFunscript = useCallback(async (id: string, data: any) => {\n       return db.setItem('funscripts', id, {\n         id,\n         content: data,\n         updatedAt: Date.now(),\n         ...data\n       });\n     }, []);\n     \n     // Add similar methods for other data types\n     \n     return {\n       db,\n       getFunscript,\n       saveFunscript,\n       // ... other convenience methods\n     };\n   }\n   ```\n\n7. Implement storage size monitoring and quota management:\n   ```typescript\n   // Add to LocalStorageProvider class\n   async getStorageUsage(): Promise<{ used: number, quota: number }> {\n     let used = 0;\n     for (let i = 0; i < localStorage.length; i++) {\n       const key = localStorage.key(i);\n       if (key.startsWith(this.prefix)) {\n         const value = localStorage.getItem(key) || '';\n         used += key.length + value.length;\n       }\n     }\n     \n     // Convert to bytes (approximate)\n     used = used * 2; // UTF-16 characters are 2 bytes each\n     \n     // Estimate quota (typically 5-10MB)\n     const quota = 5 * 1024 * 1024; // 5MB\n     \n     return { used, quota };\n   }\n   ```",
         "testStrategy": "1. **Unit Testing Database Provider Interface**:\n   - Create a test suite for the LocalStorageProvider class\n   - Test each CRUD operation individually:\n     - Test `getItem` with existing and non-existing items\n     - Test `setItem` with new and updated items\n     - Test `removeItem` functionality\n     - Test `listItems` with various query parameters\n   - Test collection operations:\n     - Test `createCollection` creates new collections\n     - Test `dropCollection` removes all collection data\n   - Test utility methods:\n     - Test `clear` removes all database data\n     - Test storage usage calculation\n\n2. **Integration Testing with Mock Data**:\n   - Create a test suite that simulates real application usage\n   - Test storing and retrieving Funscript files:\n     ```typescript\n     const funscript = {\n       id: 'test-1',\n       name: 'Test Funscript',\n       content: { version: '1.0', actions: [{ at: 100, pos: 50 }] },\n       createdAt: Date.now(),\n       updatedAt: Date.now()\n     };\n     await db.setItem('funscripts', funscript.id, funscript);\n     const retrieved = await db.getItem('funscripts', 'test-1');\n     expect(retrieved).toEqual(funscript);\n     ```\n   - Test storing and retrieving ROI data\n   - Test storing and retrieving motion capture data\n   - Test edit history functionality\n   - Test project settings storage\n\n3. **Performance Testing**:\n   - Test with large datasets (100+ Funscript files)\n   - Measure read/write performance\n   - Test storage limits by filling localStorage to near capacity\n   - Implement and test pagination for large collections\n\n4. **Error Handling Testing**:\n   - Test behavior when localStorage is full\n   - Test with malformed JSON data\n   - Test with missing or invalid collection names\n   - Verify error messages are descriptive and helpful\n\n5. **Migration Testing**:\n   - Create mock Supabase provider that implements DatabaseProvider interface\n   - Test migration from localStorage to mock Supabase provider\n   - Verify all data is correctly transferred\n   - Test import/export functionality with sample database dumps\n\n6. **Browser Compatibility Testing**:\n   - Test in Chrome, Firefox, Safari, and Edge\n   - Verify localStorage behavior is consistent across browsers\n   - Test with private browsing mode enabled\n   - Verify storage persistence across browser sessions\n\n7. **React Component Integration**:\n   - Create test components that use the database hooks\n   - Test database operations from within React components\n   - Verify state updates correctly after database operations\n   - Test error handling in UI components\n\n8. **Manual Testing Checklist**:\n   - Verify data persistence after browser refresh\n   - Test storage and retrieval of all data types\n   - Verify query filtering works correctly\n   - Test storage quota monitoring\n   - Verify clear functionality works as expected",
         "status": "pending",
-        "dependencies": [
-          14
-        ],
+        "dependencies": [14],
         "priority": "high",
         "subtasks": []
       },
@@ -502,9 +440,7 @@
         "title": "Create Database Abstraction Layer with Storage Provider Interface",
         "description": "Implement a simplified project-focused storage system using localStorage initially but can be easily migrated to Supabase later, providing a consistent interface for storing project metadata, video file references, and funscript data.",
         "status": "done",
-        "dependencies": [
-          2
-        ],
+        "dependencies": [2],
         "priority": "high",
         "details": "1. Create a `lib/db/` directory structure with the following files:\n   - `lib/db/index.ts`: Main entry point exporting the database API\n   - `lib/db/types.ts`: Define interfaces for project data models and storage providers\n   - `lib/db/localStorage.ts`: Implementation using browser's localStorage\n   - `lib/db/providers/base.ts`: Abstract base provider class\n\n2. In `lib/db/types.ts`, define the following simplified interfaces:\n   ```typescript\n   // Core project data model\n   export interface Project {\n     id: string;\n     name: string;\n     createdAt: number;\n     updatedAt: number;\n     videoFile?: {\n       name: string;\n       size: number;\n       type: string;\n       handle?: FileSystemFileHandle; // For Chromium browsers\n       lastModified?: number;\n     };\n     funscriptData?: {\n       version: string;\n       range: number;\n       inverted: boolean;\n       actions: Array<{\n         at: number;\n         pos: number;\n       }>;\n     };\n     settings?: {\n       playbackRate?: number;\n       volume?: number;\n       graphZoom?: number;\n       [key: string]: any;\n     };\n   }\n   ```\n\n3. Create a simplified storage provider interface in `lib/db/providers/base.ts`:\n   ```typescript\n   export interface StorageProvider {\n     // Project CRUD operations\n     getProject(id: string): Promise<Project | null>;\n     getAllProjects(): Promise<Project[]>;\n     saveProject(project: Project): Promise<Project>;\n     deleteProject(id: string): Promise<boolean>;\n     \n     // Utility operations\n     clear(): Promise<boolean>;\n   }\n   \n   export abstract class BaseStorageProvider implements StorageProvider {\n     abstract getProject(id: string): Promise<Project | null>;\n     abstract getAllProjects(): Promise<Project[]>;\n     abstract saveProject(project: Project): Promise<Project>;\n     abstract deleteProject(id: string): Promise<boolean>;\n     abstract clear(): Promise<boolean>;\n     \n     // Helper to generate unique IDs\n     generateId(): string {\n       return Date.now().toString(36) + Math.random().toString(36).substring(2);\n     }\n   }\n   ```\n\n4. Implement the localStorage provider in `lib/db/localStorage.ts`:\n   ```typescript\n   import { BaseStorageProvider } from './providers/base';\n   import type { Project } from './types';\n   \n   export class LocalStorageProvider extends BaseStorageProvider {\n     private readonly STORAGE_KEY = 'pfs-editor-projects';\n     \n     private getStoredProjects(): Project[] {\n       try {\n         const data = localStorage.getItem(this.STORAGE_KEY);\n         return data ? JSON.parse(data) : [];\n       } catch (error) {\n         console.error('Failed to parse stored projects:', error);\n         return [];\n       }\n     }\n     \n     private saveStoredProjects(projects: Project[]): void {\n       try {\n         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(projects));\n       } catch (error) {\n         console.error('Failed to save projects:', error);\n         throw new Error('Storage quota exceeded or localStorage unavailable');\n       }\n     }\n     \n     async getProject(id: string): Promise<Project | null> {\n       const projects = this.getStoredProjects();\n       return projects.find(p => p.id === id) || null;\n     }\n     \n     async getAllProjects(): Promise<Project[]> {\n       return this.getStoredProjects();\n     }\n     \n     async saveProject(project: Project): Promise<Project> {\n       const projects = this.getStoredProjects();\n       const existingIndex = projects.findIndex(p => p.id === project.id);\n       \n       const updatedProject = {\n         ...project,\n         updatedAt: Date.now()\n       };\n       \n       if (existingIndex >= 0) {\n         projects[existingIndex] = updatedProject;\n       } else {\n         projects.push(updatedProject);\n       }\n       \n       this.saveStoredProjects(projects);\n       return updatedProject;\n     }\n     \n     async deleteProject(id: string): Promise<boolean> {\n       const projects = this.getStoredProjects();\n       const filteredProjects = projects.filter(p => p.id !== id);\n       \n       if (filteredProjects.length === projects.length) {\n         return false; // Project not found\n       }\n       \n       this.saveStoredProjects(filteredProjects);\n       return true;\n     }\n     \n     async clear(): Promise<boolean> {\n       try {\n         localStorage.removeItem(this.STORAGE_KEY);\n         return true;\n       } catch (error) {\n         console.error('Failed to clear projects:', error);\n         return false;\n       }\n     }\n   }\n   ```\n\n5. Create the main database API in `lib/db/index.ts`:\n   ```typescript\n   import { LocalStorageProvider } from './localStorage';\n   import type { Project } from './types';\n   \n   // Use localStorage provider initially\n   const storageProvider = new LocalStorageProvider();\n   \n   // Database API\n   export const db = {\n     // Project operations\n     getProject: (id: string) => storageProvider.getProject(id),\n     getAllProjects: () => storageProvider.getAllProjects(),\n     saveProject: (project: Project) => storageProvider.saveProject(project),\n     deleteProject: (id: string) => storageProvider.deleteProject(id),\n     \n     // Utility operations\n     createProject: (name: string): Project => {\n       return {\n         id: storageProvider.generateId(),\n         name,\n         createdAt: Date.now(),\n         updatedAt: Date.now()\n       };\n     },\n     \n     // Helper to generate unique IDs\n     generateId: () => storageProvider.generateId(),\n     \n     // Clear all data (useful for testing)\n     clear: () => storageProvider.clear()\n   };\n   \n   // Export types\n   export type { Project };\n   export { LocalStorageProvider };\n   ```\n\n6. Create a utility for future migration to Supabase in `lib/db/migrations.ts`:\n   ```typescript\n   import { db } from './index';\n   \n   export async function exportAllProjects() {\n     const projects = await db.getAllProjects();\n     return {\n       version: '1.0',\n       exportedAt: Date.now(),\n       projects: projects\n     };\n   }\n   \n   export async function importProjects(data: any) {\n     if (!data.projects || !Array.isArray(data.projects)) {\n       throw new Error('Invalid import data format');\n     }\n     \n     const results = [];\n     for (const project of data.projects) {\n       try {\n         const savedProject = await db.saveProject(project);\n         results.push({ success: true, project: savedProject });\n       } catch (error) {\n         results.push({ success: false, error: error.message, project });\n       }\n     }\n     \n     return results;\n   }\n   \n   // This will be expanded later when Supabase integration is added\n   ```\n\n7. Create a placeholder for future Supabase provider in `lib/db/supabaseProvider.ts`:\n   ```typescript\n   import { BaseStorageProvider } from './providers/base';\n   import type { Project } from './types';\n   \n   // This is a placeholder that will be implemented when Supabase integration is added\n   export class SupabaseProvider extends BaseStorageProvider {\n     // Implementation will go here when Supabase is integrated\n     // The interface will match LocalStorageProvider\n     \n     async getProject(id: string): Promise<Project | null> {\n       throw new Error('SupabaseProvider not implemented yet');\n     }\n     \n     async getAllProjects(): Promise<Project[]> {\n       throw new Error('SupabaseProvider not implemented yet');\n     }\n     \n     async saveProject(project: Project): Promise<Project> {\n       throw new Error('SupabaseProvider not implemented yet');\n     }\n     \n     async deleteProject(id: string): Promise<boolean> {\n       throw new Error('SupabaseProvider not implemented yet');\n     }\n     \n     async clear(): Promise<boolean> {\n       throw new Error('SupabaseProvider not implemented yet');\n     }\n   }\n   ```",
         "testStrategy": "1. **Unit Testing Storage Provider Interface**:\n   - Create a test suite for the LocalStorageProvider class\n   - Test each CRUD operation individually:\n     - Test `getProject` with existing and non-existing projects\n     - Test `saveProject` with new and updated projects\n     - Test `deleteProject` functionality\n     - Test `getAllProjects` returns correct data\n   - Test ID generation uniqueness\n   - Test clear functionality\n\n2. **Integration Testing Database API**:\n   - Create test cases for project lifecycle (create, save, retrieve, delete)\n   - Test saving and retrieving projects with video file references\n   - Test saving and retrieving projects with funscript data\n   - Verify project settings persistence\n   - Test concurrent operations and data consistency\n\n3. **Storage Limit Testing**:\n   - Test behavior when approaching localStorage limits (typically 5-10MB)\n   - Test graceful error handling when storage is full\n   - Verify appropriate error messages for storage issues\n\n4. **Data Migration Testing**:\n   - Test the export functionality to ensure all projects are properly collected\n   - Test import functionality with valid and invalid data\n   - Verify data structure is suitable for future Supabase migration\n   - Test data integrity during export/import cycles\n\n5. **Performance Testing**:\n   - Measure read/write performance with multiple projects\n   - Test performance with large funscript data\n   - Benchmark operations with projects containing video file references\n\n6. **Mock Application Integration**:\n   - Create a simple test application that uses the database layer\n   - Test real-world usage patterns (create project, save funscript, reopen project)\n   - Verify the API is intuitive and consistent for project-based workflow\n\n7. **Error Handling and Recovery**:\n   - Test behavior when localStorage is unavailable\n   - Test handling of corrupted data in localStorage\n   - Verify error messages are helpful and actionable\n   - Test recovery mechanisms for interrupted operations\n\n8. **Cross-Browser Compatibility**:\n   - Test in Chrome, Firefox, Safari, and Edge\n   - Test File System Access API availability (Chromium browsers)\n   - Verify consistent behavior across browsers\n   - Test in private/incognito mode\n\n9. **Manual Testing Checklist**:\n   - Verify all database operations through browser console\n   - Inspect localStorage contents to confirm proper data structure\n   - Test project persistence across page refreshes\n   - Test video file handle persistence in supported browsers\n   - Verify no memory leaks occur during extended usage",
@@ -517,45 +453,36 @@
         "details": "1. Create a validation system for all data models:\n   - Create `lib/db/validation.ts` with Zod schemas for all data types\n   - Implement validators for Project data, ensuring proper data structure\n   - Add runtime type checking with detailed error messages\n\n2. Enhance error handling in the database layer:\n   - Create `lib/db/errors.ts` with custom error classes:\n     ```typescript\n     export class DatabaseError extends Error {\n       constructor(message: string) {\n         super(`Database Error: ${message}`);\n         this.name = 'DatabaseError';\n       }\n     }\n     \n     export class ValidationError extends DatabaseError {\n       constructor(message: string, public validationErrors: any) {\n         super(`Validation Error: ${message}`);\n         this.name = 'ValidationError';\n       }\n     }\n     \n     export class StorageError extends DatabaseError {\n       constructor(message: string) {\n         super(`Storage Error: ${message}`);\n         this.name = 'StorageError';\n       }\n     }\n     ```\n   - Implement try/catch blocks in all database operations\n   - Add error logging and recovery mechanisms\n   - Create error boundary components for UI error handling\n\n3. Implement data migration utilities:\n   - Create `lib/db/migrations.ts` with version-based migration system\n   - Add schema versioning to track database structure changes\n   - Implement data transformation functions for each schema version\n   - Create migration runner that can upgrade data from any version to latest\n\n4. Add data integrity checks:\n   - Implement transaction-like operations for multi-step data changes\n   - Add data consistency validation before and after operations\n   - Create periodic integrity check utility for localStorage data\n   - Implement data repair functions for corrupted entries\n\n5. Create backup and restore functionality:\n   - Add export/import of all database data as JSON\n   - Implement automatic backup before major operations\n   - Create recovery system from backups\n   - Add backup rotation and management\n\n6. Prepare for Supabase migration:\n   - Create data mapping utilities between localStorage and Supabase formats\n   - Implement data chunking for large datasets\n   - Add offline/online synchronization logic\n   - Create migration wizard UI component",
         "testStrategy": "1. Unit Testing Validation System:\n   - Test each Zod schema with valid and invalid data\n   - Verify validation error messages are descriptive and actionable\n   - Test edge cases like empty objects, null values, and type mismatches\n   - Validate that all required fields are properly enforced\n\n2. Error Handling Tests:\n   - Create test suite that triggers each error type\n   - Verify error propagation through the application\n   - Test error recovery mechanisms\n   - Validate error logging functionality\n   - Test UI error boundaries with simulated database errors\n\n3. Migration Utility Tests:\n   - Create test datasets for each schema version\n   - Verify migration from each version to the latest\n   - Test migration of large datasets for performance\n   - Validate data integrity before and after migration\n   - Test interrupted migration scenarios and recovery\n\n4. Data Integrity Tests:\n   - Create test cases that intentionally corrupt data\n   - Verify integrity check identifies all issues\n   - Test repair functions restore data correctly\n   - Validate transaction-like operations maintain consistency\n   - Test concurrent operations handling\n\n5. Backup/Restore Testing:\n   - Test export of database to JSON file\n   - Verify import restores all data correctly\n   - Test automatic backup triggers\n   - Validate backup rotation functionality\n   - Test recovery from various backup points\n\n6. Integration Testing:\n   - Test the database layer with actual application components\n   - Verify all CRUD operations work end-to-end\n   - Test performance with large datasets\n   - Validate error handling in real-world scenarios",
         "status": "pending",
-        "dependencies": [
-          14
-        ],
+        "dependencies": [14],
         "priority": "high",
         "subtasks": []
       },
       {
         "id": 16,
         "title": "Implement Multi-ROI Management System for Video Editing",
-        "description": "Create a simple CRUD (Create, Read, Update, Delete) system for ROIs that integrates with the existing motionMachine context. This system provides basic ROI management functionality without complex state management architectures.",
+        "description": "Create a simple CRUD (Create, Read, Update, Delete) system for ROIs that integrates with the existing roiMachine context. This system provides basic ROI management functionality without complex state management architectures.",
         "status": "pending",
-        "dependencies": [
-          2,
-          4,
-          12,
-          14
-        ],
+        "dependencies": [2, 4, 12, 14],
         "priority": "high",
-        "details": "1. **Simple ROI CRUD System**:\n   - Create basic CRUD operations for ROIs integrated with existing motionMachine context\n   - No separate Zustand store or dedicated state machine - keep it simple\n   - Use existing ROI type structure from src/types/roi-types.ts\n\n2. **ROI List in Control Panel**:\n   - Add \"ROIs\" tab to existing ControlPanel component\n   - Display list of all ROIs with basic information (title, time range, coordinates)\n   - Show ROI details in a clean, organized format\n\n3. **Create ROI Button**:\n   - Add \"Create ROI at [current time]\" button at bottom of ROI list\n   - Display current video time in MM:SS format\n   - Button creates new ROI at current video playback position\n\n4. **MotionMachine Integration**:\n   - Store all ROIs in existing motionMachine context (no separate store)\n   - Add ROIs array to motionMachine state\n   - Add ROI events: CREATE_ROI, UPDATE_ROI, DELETE_ROI\n   - Maintain existing motionMachine architecture patterns\n\n5. **Basic CRUD Operations**:\n   - **Create**: Button creates ROI at current video time with default properties\n   - **Read**: List displays all ROIs with title, time range, and coordinates\n   - **Update**: Click ROI to edit properties (title, coordinates, time range)\n   - **Delete**: Delete button for each ROI with confirmation\n\n6. **Simple ROI Structure**:\n   - Use existing ROI type from src/types/roi-types.ts\n   - Maintain current ROI properties: id, title, coordinates, time range\n   - No complex state management or hybrid architectures\n\n7. **Files to Modify**:\n   - src/lib/fs_machines/motionMachine.ts (add ROI state and events)\n   - src/components/fs_components/ControlPanel.tsx (add ROIs tab)\n   - src/types/roi-types.ts (use existing ROI type)\n\n8. **Integration with Existing Systems**:\n   - Connect with existing video player for current time retrieval\n   - Use existing project system for ROI persistence\n   - Maintain compatibility with current UI patterns and components",
-        "testStrategy": "1. **Basic CRUD Testing**:\n   - Test ROI creation at current video time\n   - Verify ROI list displays correctly with all properties\n   - Test ROI editing functionality for all properties\n   - Validate ROI deletion with confirmation dialog\n\n2. **MotionMachine Integration Testing**:\n   - Test ROI state persistence in motionMachine context\n   - Verify ROI events (CREATE_ROI, UPDATE_ROI, DELETE_ROI) work correctly\n   - Test ROI state updates through motionMachine transitions\n   - Validate existing motionMachine functionality remains intact\n\n3. **Control Panel Integration Testing**:\n   - Test ROIs tab integration with existing ControlPanel component\n   - Verify ROI list rendering and interaction\n   - Test \"Create ROI at [time]\" button functionality\n   - Validate current time display in MM:SS format\n\n4. **Video Integration Testing**:\n   - Test ROI creation uses correct current video time\n   - Verify time format display matches video playback time\n   - Test ROI time range validation against video duration\n   - Validate ROI coordinates stay within video bounds\n\n5. **Project System Integration Testing**:\n   - Test ROI data persistence with existing project system\n   - Verify ROI state restoration when loading projects\n   - Test ROI data export/import with project functionality\n   - Validate ROI data integrity across project operations\n\n6. **User Interface Testing**:\n   - Test ROI list UI follows existing design patterns\n   - Verify edit forms use consistent validation patterns\n   - Test delete confirmation follows existing dialog patterns\n   - Validate keyboard navigation and accessibility compliance\n\n7. **Error Handling Testing**:\n   - Test invalid ROI property handling\n   - Verify error messages follow existing patterns\n   - Test edge cases like duplicate ROI names\n   - Validate graceful handling of corrupted ROI data",
+        "details": "1. **Simple ROI CRUD System**:\n   - Create basic CRUD operations for ROIs integrated with existing roiMachine context\n   - No separate Zustand store or dedicated state machine - keep it simple\n   - Use existing ROI type structure from src/types/roi-types.ts\n\n2. **ROI List in Control Panel**:\n   - Add \"ROIs\" tab to existing ControlPanel component\n   - Display list of all ROIs with basic information (title, time range, coordinates)\n   - Show ROI details in a clean, organized format\n\n3. **Create ROI Button**:\n   - Add \"Create ROI at [current time]\" button at bottom of ROI list\n   - Display current video time in MM:SS format\n   - Button creates new ROI at current video playback position\n\n4. **MotionMachine Integration**:\n   - Store all ROIs in existing roiMachine context (no separate store)\n   - Add ROIs array to roiMachine state\n   - Add ROI events: CREATE_ROI, UPDATE_ROI, DELETE_ROI\n   - Maintain existing roiMachine architecture patterns\n\n5. **Basic CRUD Operations**:\n   - **Create**: Button creates ROI at current video time with default properties\n   - **Read**: List displays all ROIs with title, time range, and coordinates\n   - **Update**: Click ROI to edit properties (title, coordinates, time range)\n   - **Delete**: Delete button for each ROI with confirmation\n\n6. **Simple ROI Structure**:\n   - Use existing ROI type from src/types/roi-types.ts\n   - Maintain current ROI properties: id, title, coordinates, time range\n   - No complex state management or hybrid architectures\n\n7. **Files to Modify**:\n   - src/lib/fs_machines/roiMachine.ts (add ROI state and events)\n   - src/components/fs_components/ControlPanel.tsx (add ROIs tab)\n   - src/types/roi-types.ts (use existing ROI type)\n\n8. **Integration with Existing Systems**:\n   - Connect with existing video player for current time retrieval\n   - Use existing project system for ROI persistence\n   - Maintain compatibility with current UI patterns and components",
+        "testStrategy": "1. **Basic CRUD Testing**:\n   - Test ROI creation at current video time\n   - Verify ROI list displays correctly with all properties\n   - Test ROI editing functionality for all properties\n   - Validate ROI deletion with confirmation dialog\n\n2. **MotionMachine Integration Testing**:\n   - Test ROI state persistence in roiMachine context\n   - Verify ROI events (CREATE_ROI, UPDATE_ROI, DELETE_ROI) work correctly\n   - Test ROI state updates through roiMachine transitions\n   - Validate existing roiMachine functionality remains intact\n\n3. **Control Panel Integration Testing**:\n   - Test ROIs tab integration with existing ControlPanel component\n   - Verify ROI list rendering and interaction\n   - Test \"Create ROI at [time]\" button functionality\n   - Validate current time display in MM:SS format\n\n4. **Video Integration Testing**:\n   - Test ROI creation uses correct current video time\n   - Verify time format display matches video playback time\n   - Test ROI time range validation against video duration\n   - Validate ROI coordinates stay within video bounds\n\n5. **Project System Integration Testing**:\n   - Test ROI data persistence with existing project system\n   - Verify ROI state restoration when loading projects\n   - Test ROI data export/import with project functionality\n   - Validate ROI data integrity across project operations\n\n6. **User Interface Testing**:\n   - Test ROI list UI follows existing design patterns\n   - Verify edit forms use consistent validation patterns\n   - Test delete confirmation follows existing dialog patterns\n   - Validate keyboard navigation and accessibility compliance\n\n7. **Error Handling Testing**:\n   - Test invalid ROI property handling\n   - Verify error messages follow existing patterns\n   - Test edge cases like duplicate ROI names\n   - Validate graceful handling of corrupted ROI data",
         "subtasks": [
           {
             "id": 1,
             "title": "Add ROI State and Events to MotionMachine",
-            "description": "Extend the existing motionMachine in src/lib/fs_machines/motionMachine.ts to include ROI array state and basic CRUD events",
+            "description": "Extend the existing roiMachine in src/lib/fs_machines/roiMachine.ts to include ROI array state and basic CRUD events",
             "status": "pending",
             "dependencies": [],
-            "details": "Add rois array to motionMachine context to store all ROI data. Implement ROI events: CREATE_ROI (adds new ROI at current time), UPDATE_ROI (updates existing ROI properties), DELETE_ROI (removes ROI by ID). Extend existing motionMachine state to include selectedROIId for tracking current selection. Use existing ROI type from src/types/roi-types.ts. Maintain backward compatibility with existing motionMachine functionality. Add proper TypeScript types for ROI events and context updates.",
-            "testStrategy": "Test ROI state initialization in motionMachine context. Verify CREATE_ROI event creates ROI with correct properties. Test UPDATE_ROI event modifies existing ROI data. Validate DELETE_ROI event removes correct ROI. Test selectedROIId state management. Verify existing motionMachine functionality remains intact."
+            "details": "Add rois array to roiMachine context to store all ROI data. Implement ROI events: CREATE_ROI (adds new ROI at current time), UPDATE_ROI (updates existing ROI properties), DELETE_ROI (removes ROI by ID). Extend existing roiMachine state to include selectedROIId for tracking current selection. Use existing ROI type from src/types/roi-types.ts. Maintain backward compatibility with existing roiMachine functionality. Add proper TypeScript types for ROI events and context updates.",
+            "testStrategy": "Test ROI state initialization in roiMachine context. Verify CREATE_ROI event creates ROI with correct properties. Test UPDATE_ROI event modifies existing ROI data. Validate DELETE_ROI event removes correct ROI. Test selectedROIId state management. Verify existing roiMachine functionality remains intact."
           },
           {
             "id": 2,
             "title": "Create ROI List Component for Control Panel",
             "description": "Build a simple ROI list component that displays all ROIs with basic information and integrates with the ControlPanel tabs",
             "status": "pending",
-            "dependencies": [
-              1
-            ],
-            "details": "Create ROIList component that displays all ROIs from motionMachine context. Show ROI title, time range (MM:SS format), and coordinates for each ROI. Add edit button for each ROI that opens simple edit form. Add delete button with confirmation dialog using existing Shadcn/ui patterns. Implement ROI selection highlighting. Use existing ControlPanel design patterns and Shadcn/ui components. Connect to motionMachine through existing context patterns.",
+            "dependencies": [1],
+            "details": "Create ROIList component that displays all ROIs from roiMachine context. Show ROI title, time range (MM:SS format), and coordinates for each ROI. Add edit button for each ROI that opens simple edit form. Add delete button with confirmation dialog using existing Shadcn/ui patterns. Implement ROI selection highlighting. Use existing ControlPanel design patterns and Shadcn/ui components. Connect to roiMachine through existing context patterns.",
             "testStrategy": "Test ROI list renders all ROIs correctly. Verify time format displays as MM:SS. Test edit button opens ROI editing interface. Validate delete button shows confirmation dialog. Test ROI selection highlighting. Verify component follows existing ControlPanel design patterns."
           },
           {
@@ -563,9 +490,7 @@
             "title": "Add ROIs Tab to Control Panel",
             "description": "Integrate the ROI list component into the existing ControlPanel by adding a new 'ROIs' tab",
             "status": "pending",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Modify src/components/fs_components/ControlPanel.tsx to add new 'ROIs' tab alongside existing tabs. Integrate ROIList component into the tab content. Maintain existing tab styling and behavior patterns. Ensure ROIs tab follows same layout and spacing as other tabs. Add proper tab navigation and accessibility support. Use existing Shadcn/ui Tabs component patterns.",
             "testStrategy": "Test ROIs tab appears correctly in ControlPanel. Verify tab switching works with existing tabs. Test ROI list displays properly within tab content. Validate tab accessibility and keyboard navigation. Test responsive behavior matches other tabs."
           },
@@ -574,10 +499,8 @@
             "title": "Implement Create ROI Button with Current Time Display",
             "description": "Add 'Create ROI at [current time]' button at bottom of ROI list that shows current video time in MM:SS format",
             "status": "pending",
-            "dependencies": [
-              3
-            ],
-            "details": "Create button component that displays current video time in MM:SS format. Connect to existing video player to get current playback time. Update button text dynamically as video plays. Implement click handler that dispatches CREATE_ROI event to motionMachine with current time. Add default ROI properties (title, coordinates) for new ROIs. Use existing button styling patterns from Shadcn/ui. Position button at bottom of ROI list with proper spacing.",
+            "dependencies": [3],
+            "details": "Create button component that displays current video time in MM:SS format. Connect to existing video player to get current playback time. Update button text dynamically as video plays. Implement click handler that dispatches CREATE_ROI event to roiMachine with current time. Add default ROI properties (title, coordinates) for new ROIs. Use existing button styling patterns from Shadcn/ui. Position button at bottom of ROI list with proper spacing.",
             "testStrategy": "Test button displays current video time correctly in MM:SS format. Verify time updates as video plays. Test button click creates ROI at correct current time. Validate default ROI properties are set correctly. Test button styling matches existing patterns."
           },
           {
@@ -585,10 +508,8 @@
             "title": "Create ROI Edit Form Component",
             "description": "Build simple form component for editing ROI properties (title, coordinates, time range) with validation",
             "status": "pending",
-            "dependencies": [
-              1
-            ],
-            "details": "Create ROIEditForm component with form fields for ROI title, x/y coordinates, width/height, start time, and end time. Implement form validation for coordinate bounds (0-100%) and time ranges. Use existing Shadcn/ui form components (Input, Label, Button). Add save and cancel buttons with proper event handling. Connect form to motionMachine UPDATE_ROI event. Include real-time validation feedback. Support both inline editing and modal/popover editing modes.",
+            "dependencies": [1],
+            "details": "Create ROIEditForm component with form fields for ROI title, x/y coordinates, width/height, start time, and end time. Implement form validation for coordinate bounds (0-100%) and time ranges. Use existing Shadcn/ui form components (Input, Label, Button). Add save and cancel buttons with proper event handling. Connect form to roiMachine UPDATE_ROI event. Include real-time validation feedback. Support both inline editing and modal/popover editing modes.",
             "testStrategy": "Test form displays current ROI values correctly. Verify validation prevents invalid coordinates and time ranges. Test save button dispatches UPDATE_ROI event with correct data. Validate cancel button discards changes. Test form validation feedback displays properly."
           },
           {
@@ -596,10 +517,8 @@
             "title": "Implement ROI Delete Functionality with Confirmation",
             "description": "Add delete functionality for ROIs with confirmation dialog using existing Shadcn/ui patterns",
             "status": "pending",
-            "dependencies": [
-              2
-            ],
-            "details": "Implement delete button for each ROI in the list. Create confirmation dialog using existing Shadcn/ui AlertDialog component. Show ROI title in confirmation message for clarity. Connect delete confirmation to motionMachine DELETE_ROI event. Handle ROI selection state when deleting selected ROI. Add proper error handling for delete operations. Follow existing deletion patterns used in other parts of the application.",
+            "dependencies": [2],
+            "details": "Implement delete button for each ROI in the list. Create confirmation dialog using existing Shadcn/ui AlertDialog component. Show ROI title in confirmation message for clarity. Connect delete confirmation to roiMachine DELETE_ROI event. Handle ROI selection state when deleting selected ROI. Add proper error handling for delete operations. Follow existing deletion patterns used in other parts of the application.",
             "testStrategy": "Test delete button shows confirmation dialog. Verify confirmation dialog displays ROI title correctly. Test confirmed deletion removes ROI from list. Validate cancelled deletion keeps ROI intact. Test deleting selected ROI updates selection state properly."
           },
           {
@@ -616,10 +535,8 @@
             "title": "Integrate ROI System with Project Persistence",
             "description": "Extend existing project system to save and load ROI data with projects, ensuring ROI state persists across sessions",
             "status": "pending",
-            "dependencies": [
-              1
-            ],
-            "details": "Extend existing project data structure to include ROIs array. Modify project save functionality to include ROI data from motionMachine. Update project load functionality to restore ROI state to motionMachine. Ensure ROI data is included in project export/import operations. Add ROI data validation during project loading. Handle migration of projects without ROI data. Maintain backward compatibility with existing projects. Use existing project persistence patterns and error handling.",
+            "dependencies": [1],
+            "details": "Extend existing project data structure to include ROIs array. Modify project save functionality to include ROI data from roiMachine. Update project load functionality to restore ROI state to roiMachine. Ensure ROI data is included in project export/import operations. Add ROI data validation during project loading. Handle migration of projects without ROI data. Maintain backward compatibility with existing projects. Use existing project persistence patterns and error handling.",
             "testStrategy": "Test ROI data saves correctly with projects. Verify ROI state restores when loading projects. Test project export includes ROI data. Validate project import restores ROI state correctly. Test backward compatibility with projects created before ROI system. Verify error handling for corrupted ROI data in projects."
           },
           {
@@ -627,11 +544,9 @@
             "title": "Add ROI System Documentation and Testing",
             "description": "Create comprehensive documentation for the ROI CRUD system and implement thorough testing coverage",
             "status": "pending",
-            "dependencies": [
-              8
-            ],
-            "details": "Document ROI system architecture and integration with motionMachine. Create usage examples for ROI CRUD operations. Document ROI data structure and validation rules. Add JSDoc comments to all ROI-related functions and components. Create unit tests for ROI utilities and components. Add integration tests for motionMachine ROI events. Test ROI system with various edge cases and error conditions. Document troubleshooting guide for common ROI issues.",
-            "testStrategy": "Verify documentation covers all ROI functionality comprehensively. Test all documented examples work correctly. Validate JSDoc comments are complete and accurate. Test unit tests cover all ROI utilities and edge cases. Verify integration tests validate motionMachine ROI functionality. Test error handling documentation matches actual behavior."
+            "dependencies": [8],
+            "details": "Document ROI system architecture and integration with roiMachine. Create usage examples for ROI CRUD operations. Document ROI data structure and validation rules. Add JSDoc comments to all ROI-related functions and components. Create unit tests for ROI utilities and components. Add integration tests for roiMachine ROI events. Test ROI system with various edge cases and error conditions. Document troubleshooting guide for common ROI issues.",
+            "testStrategy": "Verify documentation covers all ROI functionality comprehensively. Test all documented examples work correctly. Validate JSDoc comments are complete and accurate. Test unit tests cover all ROI utilities and edge cases. Verify integration tests validate roiMachine ROI functionality. Test error handling documentation matches actual behavior."
           }
         ]
       }

@@ -49,7 +49,7 @@ export const SharedMachineProvider: React.FC<{ children: React.ReactNode }> = ({
   const [chartRef, setChartRefState] = useState<any>(null);
   const [projectId, setProjectIdState] = useState<string | null>(null);
 
-  const [fsEditListeners, setFsEditListeners] = useState<
+  const [projectListeners, setFsEditListeners] = useState<
     Array<(event: string, data?: any) => void>
   >([]);
   const [motionListeners, setMotionListeners] = useState<
@@ -74,9 +74,9 @@ export const SharedMachineProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const notifyFsEdit = useCallback(
     (event: string, data?: any) => {
-      fsEditListeners.forEach((listener) => listener(event, data));
+      projectListeners.forEach((listener) => listener(event, data));
     },
-    [fsEditListeners]
+    [projectListeners]
   );
 
   const notifyMotion = useCallback(
