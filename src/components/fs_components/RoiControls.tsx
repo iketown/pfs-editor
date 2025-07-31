@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useMotionSelector, useMotionActorRef } from './MotionActorContext';
-import { useEditSelector } from './FsEditActorContext';
+import { useEditActorRef, useEditSelector } from './FsEditActorContext';
 import { ROI } from '@/types/roi-types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,13 +12,36 @@ import {
   AccordionItem,
   AccordionTrigger
 } from '@/components/ui/accordion';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from '@/components/ui/form';
 import { Edit, Plus, Save, X, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { nanoid } from 'nanoid';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+
+// Form schema for ROI validation
+const roiFormSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  x: z.number().min(0, 'X must be 0 or greater'),
+  y: z.number().min(0, 'Y must be 0 or greater'),
+  w: z.number().min(1, 'Width must be at least 1'),
+  h: z.number().min(1, 'Height must be at least 1'),
+  timeStart: z.number().min(0, 'Start time must be 0 or greater')
+});
+
+type RoiFormData = z.infer<typeof roiFormSchema>;
 
 const RoiControls: React.FC = () => {
   const { send: motionSend } = useMotionActorRef();
+  const { send: editSend } = useEditActorRef();
 
   // Get state from motion machine
   const roisObject = useMotionSelector((state) => state.context.rois);
@@ -57,33 +80,90 @@ const RoiControls: React.FC = () => {
     return 0;
   };
 
+  // Create form instance
+  const form = useForm<RoiFormData>({
+    resolver: zodResolver(roiFormSchema),
+    defaultValues: {
+      title: '',
+      x: 0,
+      y: 0,
+      w: 100,
+      h: 100,
+      timeStart: 0
+    }
+  });
+
+  // Watch form values for change detection
+  const watchedValues = form.watch();
+  const [originalValues, setOriginalValues] = useState<RoiFormData | null>(
+    null
+  );
+
+  // Check if form has changes
+  const hasChanges =
+    originalValues &&
+    Object.keys(watchedValues).some(
+      (key) =>
+        watchedValues[key as keyof RoiFormData] !==
+        originalValues[key as keyof RoiFormData]
+    );
+
   // Handle selecting an ROI for editing
   const handleSelectROI = useCallback(
     (roi: ROI) => {
-      setEditingROI({ ...roi });
+      const formData: RoiFormData = {
+        title: roi.title || `ROI ${roi.id}`,
+        x: roi.x,
+        y: roi.y,
+        w: roi.w,
+        h: roi.h,
+        timeStart: roi.timeStart
+      };
+
+      form.reset(formData);
+      setOriginalValues(formData);
+      setEditingROI(roi);
       setIsEditing(true);
       motionSend({ type: 'SELECT_ROI', roiId: roi.id });
+      editSend({ type: 'SEEK_VIDEO', time: roi.timeStart });
     },
-    [motionSend]
+    [form, motionSend, editSend]
   );
 
   // Handle saving ROI changes
   const handleSaveROI = useCallback(
-    (roi: ROI) => {
-      console.log('handleSaveROI', roi);
-      motionSend({ type: 'UPDATE_ROI', roi });
+    (data: RoiFormData) => {
+      if (!editingROI) return;
+
+      const updatedROI: ROI = {
+        ...editingROI,
+        title: data.title,
+        x: data.x,
+        y: data.y,
+        w: data.w,
+        h: data.h,
+        timeStart: data.timeStart
+      };
+
+      console.log('handleSaveROI', updatedROI);
+      motionSend({ type: 'UPDATE_ROI', roi: updatedROI });
       setIsEditing(false);
       setEditingROI(null);
+      setOriginalValues(null);
     },
-    [motionSend]
+    [motionSend, editingROI]
   );
 
   // Handle canceling edits
   const handleCancelEdit = useCallback(() => {
+    if (originalValues) {
+      form.reset(originalValues);
+    }
     setIsEditing(false);
     setEditingROI(null);
+    setOriginalValues(null);
     motionSend({ type: 'SELECT_ROI', roiId: null });
-  }, [motionSend]);
+  }, [motionSend, form, originalValues]);
 
   // Handle deleting an ROI
   const handleDeleteROI = useCallback(
@@ -92,6 +172,7 @@ const RoiControls: React.FC = () => {
       if (editingROI?.id === roiId) {
         setIsEditing(false);
         setEditingROI(null);
+        setOriginalValues(null);
       }
     },
     [motionSend, editingROI?.id]
@@ -112,51 +193,27 @@ const RoiControls: React.FC = () => {
     motionSend({ type: 'ADD_ROI', roi: newROI });
   }, [videoTime, rois.length, motionSend]);
 
-  // Handle input changes during editing
-  const handleInputChange = useCallback(
-    (field: keyof ROI, value: string) => {
-      if (!editingROI) return;
-
-      let parsedValue: number | string = value;
-
-      // Parse time fields
-      if (field === 'timeStart') {
-        parsedValue = parseTime(value);
-      } else if (
-        field === 'x' ||
-        field === 'y' ||
-        field === 'w' ||
-        field === 'h'
-      ) {
-        parsedValue = parseFloat(value) || 0;
-      }
-
-      setEditingROI({
-        ...editingROI,
-        [field]: parsedValue
-      });
-    },
-    [editingROI]
-  );
-
   // Handle ROI accordion trigger click
-  const handleROIAccordionClick = useCallback(
-    (roi: ROI, event: React.MouseEvent) => {
-      const trigger = event.currentTarget as HTMLElement;
-      const isExpanded = trigger.getAttribute('data-state') === 'open';
+  const handleClickROIListItem = useCallback(
+    (value: string) => {
+      motionSend({ type: 'SELECT_ROI', roiId: value });
+      if (!!value) {
+        // send a VIDEO_TIME_UPDATE event to the motion machine
+        const roi = roisObject[value];
+        console.log('selected roi', roi);
 
-      if (isExpanded) {
-        // If it's currently expanded, clicking will close it - deselect the ROI
-        console.log('Closing accordion, deselecting ROI');
-        motionSend({ type: 'SELECT_ROI', roiId: null });
-      } else {
-        // If it's currently closed, clicking will open it - select the ROI
-        console.log('Opening accordion, selecting ROI', roi);
-        motionSend({ type: 'SELECT_ROI', roiId: roi.id });
+        if (roi) {
+          editSend({ type: 'VIDEO_TIME_UPDATE', time: roi.timeStart });
+        }
       }
     },
-    [motionSend]
+    [motionSend, roisObject, editSend]
   );
+
+  // Handle setting start time to current video time
+  const handleSetCurrentTime = useCallback(() => {
+    form.setValue('timeStart', videoTime);
+  }, [form, videoTime]);
 
   return (
     <div className='space-y-4'>
@@ -169,7 +226,9 @@ const RoiControls: React.FC = () => {
           <CardContent>
             <Accordion
               type='single'
-              value={selectedROIid || undefined}
+              onValueChange={handleClickROIListItem}
+              collapsible
+              value={selectedROIid || ''}
               className='space-y-2'
             >
               {rois.map((roi) => {
@@ -182,10 +241,7 @@ const RoiControls: React.FC = () => {
                     value={roi.id}
                     className='rounded-lg border'
                   >
-                    <AccordionTrigger
-                      className='px-4 py-3 hover:no-underline'
-                      onClick={(event) => handleROIAccordionClick(roi, event)}
-                    >
+                    <AccordionTrigger className='px-4 py-3 hover:no-underline'>
                       <div className='flex w-full items-center justify-between pr-4'>
                         <span className='font-medium'>
                           {roi.title || `ROI ${roi.id}`}
@@ -196,128 +252,240 @@ const RoiControls: React.FC = () => {
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className='space-y-4 px-4 pb-4'>
-                      {/* Coordinates and Dimensions */}
-                      <div className='grid grid-cols-4 gap-2'>
-                        <div>
-                          <Label htmlFor={`x-${roi.id}`}>x</Label>
-                          <Input
-                            id={`x-${roi.id}`}
-                            value={
-                              isCurrentlyEditing
-                                ? (editingROI?.x ?? roi.x)
-                                : roi.x
-                            }
-                            onChange={(e) =>
-                              handleInputChange('x', e.target.value)
-                            }
-                            disabled={!isCurrentlyEditing}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor={`y-${roi.id}`}>y</Label>
-                          <Input
-                            id={`y-${roi.id}`}
-                            value={
-                              isCurrentlyEditing
-                                ? (editingROI?.y ?? roi.y)
-                                : roi.y
-                            }
-                            onChange={(e) =>
-                              handleInputChange('y', e.target.value)
-                            }
-                            disabled={!isCurrentlyEditing}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor={`w-${roi.id}`}>w</Label>
-                          <Input
-                            id={`w-${roi.id}`}
-                            value={
-                              isCurrentlyEditing
-                                ? (editingROI?.w ?? roi.w)
-                                : roi.w
-                            }
-                            onChange={(e) =>
-                              handleInputChange('w', e.target.value)
-                            }
-                            disabled={!isCurrentlyEditing}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor={`h-${roi.id}`}>h</Label>
-                          <Input
-                            id={`h-${roi.id}`}
-                            value={
-                              isCurrentlyEditing
-                                ? (editingROI?.h ?? roi.h)
-                                : roi.h
-                            }
-                            onChange={(e) =>
-                              handleInputChange('h', e.target.value)
-                            }
-                            disabled={!isCurrentlyEditing}
-                          />
-                        </div>
-                      </div>
+                      {isCurrentlyEditing ? (
+                        <Form {...form}>
+                          <form
+                            onSubmit={form.handleSubmit(handleSaveROI)}
+                            className='space-y-4'
+                          >
+                            {/* Title */}
+                            <FormField
+                              control={form.control}
+                              name='title'
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Title</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder='ROI Title' {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
 
-                      {/* Start Time */}
-                      <div>
-                        <Label htmlFor={`timeStart-${roi.id}`}>
-                          Start Time
-                        </Label>
-                        <Input
-                          id={`timeStart-${roi.id}`}
-                          value={formatTime(
-                            isCurrentlyEditing
-                              ? (editingROI?.timeStart ?? roi.timeStart)
-                              : roi.timeStart
-                          )}
-                          onChange={(e) =>
-                            handleInputChange('timeStart', e.target.value)
-                          }
-                          disabled={!isCurrentlyEditing}
-                          placeholder='MM:SS'
-                        />
-                      </div>
+                            {/* Coordinates and Dimensions */}
+                            <div className='grid grid-cols-4 gap-2'>
+                              <FormField
+                                control={form.control}
+                                name='x'
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>X</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type='number'
+                                        {...field}
+                                        onChange={(e) =>
+                                          field.onChange(
+                                            parseFloat(e.target.value) || 0
+                                          )
+                                        }
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name='y'
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Y</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type='number'
+                                        {...field}
+                                        onChange={(e) =>
+                                          field.onChange(
+                                            parseFloat(e.target.value) || 0
+                                          )
+                                        }
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name='w'
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Width</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type='number'
+                                        {...field}
+                                        onChange={(e) =>
+                                          field.onChange(
+                                            parseFloat(e.target.value) || 0
+                                          )
+                                        }
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name='h'
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Height</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type='number'
+                                        {...field}
+                                        onChange={(e) =>
+                                          field.onChange(
+                                            parseFloat(e.target.value) || 0
+                                          )
+                                        }
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
 
-                      {/* Action Buttons */}
-                      <div className='flex justify-end space-x-2'>
-                        {!isCurrentlyEditing ? (
-                          <>
-                            <Button
-                              size='sm'
-                              variant='outline'
-                              onClick={() => handleSelectROI(roi)}
-                            >
-                              <Edit className='h-4 w-4' />
-                            </Button>
-                            <Button
-                              size='sm'
-                              variant='outline'
-                              onClick={() => handleDeleteROI(roi.id)}
-                            >
-                              <Trash2 className='h-4 w-4' />
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <Button
-                              size='sm'
-                              variant='outline'
-                              onClick={() => handleSaveROI(editingROI!)}
-                            >
-                              <Save className='h-4 w-4' />
-                            </Button>
-                            <Button
-                              size='sm'
-                              variant='outline'
-                              onClick={handleCancelEdit}
-                            >
-                              <X className='h-4 w-4' />
-                            </Button>
-                          </>
-                        )}
-                      </div>
+                            {/* Start Time */}
+                            <div className='grid grid-cols-2 gap-2'>
+                              <FormField
+                                control={form.control}
+                                name='timeStart'
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Start Time</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        placeholder='MM:SS'
+                                        value={formatTime(field.value)}
+                                        onChange={(e) =>
+                                          field.onChange(
+                                            parseTime(e.target.value)
+                                          )
+                                        }
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <div className='flex flex-col justify-end'>
+                                <Button
+                                  type='button'
+                                  variant='outline'
+                                  onClick={handleSetCurrentTime}
+                                  className='text-sm'
+                                >
+                                  Set to {formatTime(videoTime)}
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className='flex justify-end space-x-2'>
+                              <Button
+                                type='button'
+                                size='sm'
+                                variant='outline'
+                                onClick={handleCancelEdit}
+                              >
+                                <X className='h-4 w-4' />
+                              </Button>
+                              <Button
+                                type='submit'
+                                size='sm'
+                                variant='outline'
+                                disabled={!hasChanges}
+                              >
+                                <Save className='h-4 w-4' />
+                              </Button>
+                            </div>
+                          </form>
+                        </Form>
+                      ) : (
+                        <>
+                          {/* Read-only view */}
+                          <div className='grid grid-cols-4 gap-2'>
+                            <div>
+                              <label className='text-sm font-medium'>X</label>
+                              <div className='text-muted-foreground text-sm'>
+                                {roi.x}
+                              </div>
+                            </div>
+                            <div>
+                              <label className='text-sm font-medium'>Y</label>
+                              <div className='text-muted-foreground text-sm'>
+                                {roi.y}
+                              </div>
+                            </div>
+                            <div>
+                              <label className='text-sm font-medium'>
+                                Width
+                              </label>
+                              <div className='text-muted-foreground text-sm'>
+                                {roi.w}
+                              </div>
+                            </div>
+                            <div>
+                              <label className='text-sm font-medium'>
+                                Height
+                              </label>
+                              <div className='text-muted-foreground text-sm'>
+                                {roi.h}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className='text-sm font-medium'>
+                              Start Time
+                            </label>
+                            <div className='text-muted-foreground text-sm'>
+                              {formatTime(roi.timeStart)}
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className='flex justify-between space-x-2'>
+                            <div>
+                              <Button size={'sm'} variant={'outline'}>
+                                Delete
+                              </Button>
+                            </div>
+                            <div className='flex space-x-2'>
+                              <Button
+                                size='sm'
+                                variant='outline'
+                                onClick={() => handleSelectROI(roi)}
+                              >
+                                <Edit className='h-4 w-4' />
+                              </Button>
+                              <Button
+                                size='sm'
+                                variant='destructive'
+                                onClick={() => handleDeleteROI(roi.id)}
+                              >
+                                <Trash2 className='h-4 w-4' />
+                              </Button>
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </AccordionContent>
                   </AccordionItem>
                 );

@@ -40,6 +40,7 @@ const VideoControls: React.FC<VideoControlsProps> = ({ className = '' }) => {
       if (isPlaying) {
         video.pause();
       } else {
+        video.currentTime = videoTime;
         video.play();
       }
       setIsPlaying(!isPlaying);

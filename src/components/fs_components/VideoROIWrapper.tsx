@@ -29,16 +29,13 @@ export const VideoROIWrapper: React.FC<VideoROIWrapperProps> = ({
 
   // Get the raw data from the motion machine
   const rois = useMotionSelector(({ context }) => context.rois);
-  const activeROIid = useMotionSelector(({ context }) => context.activeROIid);
+  const activeROI = useMotionSelector(({ context }) =>
+    context.activeROIid ? rois[context.activeROIid] : null
+  );
   const selectedROIid = useMotionSelector(
     (state) => state.context.selectedROIid
   );
   const motionActorRef = useMotionActorRef();
-
-  // Get the single active ROI
-  const activeROI = useMemo(() => {
-    return activeROIid ? rois[activeROIid] : null;
-  }, [rois, activeROIid]);
 
   const [target, setTarget] = useState<SVGRectElement | null>(null);
   const [svgSize, setSvgSize] = useState({ w: 0, h: 0 });
@@ -69,14 +66,26 @@ export const VideoROIWrapper: React.FC<VideoROIWrapperProps> = ({
   }, [playerRef]);
 
   const onUpdateROI = useCallback(
-    (updatedROI: ROI) => {
+    (updatedROI: ROI, save: boolean = false) => {
       motionActorRef.send({
-        type: 'UPDATE_ROI',
+        type: save ? 'UPDATE_ROI_AND_SAVE' : 'UPDATE_ROI',
         roi: updatedROI
       });
     },
     [motionActorRef]
   );
+
+  const handleResizeEnd = useCallback(() => {
+    if (activeROI) {
+      onUpdateROI(activeROI, true);
+    }
+  }, [activeROI, onUpdateROI]);
+
+  const handleDragEnd = useCallback(() => {
+    if (activeROI) {
+      onUpdateROI(activeROI, true);
+    }
+  }, [activeROI, onUpdateROI]);
 
   // Track initial position for drag operations
   const initialPositionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -167,6 +176,7 @@ export const VideoROIWrapper: React.FC<VideoROIWrapperProps> = ({
 
           {target && (
             <Moveable
+              key={activeROI.id} // Force remount when activeROI changes
               target={target}
               container={containerElement}
               draggable
@@ -176,9 +186,11 @@ export const VideoROIWrapper: React.FC<VideoROIWrapperProps> = ({
               keepRatio={false}
               origin={false}
               onDragStart={handleDragStart}
-              onResizeStart={handleResizeStart}
               onDrag={handleDrag}
+              onDragEnd={handleDragEnd}
+              onResizeStart={handleResizeStart}
               onResize={handleResize}
+              onResizeEnd={handleResizeEnd}
             />
           )}
         </>

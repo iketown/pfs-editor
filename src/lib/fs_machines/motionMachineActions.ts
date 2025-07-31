@@ -2,12 +2,13 @@ import { ROI } from '@/types/roi-types';
 import { MotionContext, MotionEvent } from './motionMachine'
 import { assign, AssignAction } from 'xstate';
 import invariant from 'tiny-invariant';
+import { db } from '@/lib/db';
 
 type MotionAssignAction = AssignAction<MotionContext, MotionEvent, any, any, any>
 
 const updateRoi: MotionAssignAction = assign({
     rois: ({ context, event }) => {
-        invariant(event.type === 'UPDATE_ROI', 'updateRoi action must be called with an UPDATE_ROI event');
+        invariant(event.type === 'UPDATE_ROI' || event.type === 'UPDATE_ROI_AND_SAVE', 'updateRoi action must be called with an UPDATE_ROI event');
         invariant(event.roi?.id, 'updateRoi action must be called with a roi.id');
         return {
             ...context.rois,
@@ -39,9 +40,67 @@ const selectRoi: MotionAssignAction = assign({
     selectedROIid: ({ context, event }) => {
         invariant(event.type === 'SELECT_ROI', 'selectRoi action must be called with a SELECT_ROI event');
         return event.roiId;
+    },
+
+})
+
+const setActvieROItoSelectedROI: MotionAssignAction = assign({
+    activeROIid: ({ context, event }) => {
+        invariant(event.type === 'SELECT_ROI', 'selectRoi action must be called with a SELECT_ROI event');
+        return event.roiId;
+    }
+})
+
+
+
+const addRoi: MotionAssignAction = assign({
+    rois: ({ context, event }) => {
+        console.log('adding roi', event)
+        invariant(event.type === 'ADD_ROI', 'addRoi action must be called with an ADD_ROI event');
+        return {
+            ...context.rois,
+            [event.roi.id]: event.roi
+        };
+    }
+})
+
+const saveRois: MotionAssignAction = assign({
+    // This action doesn't modify the context, it just saves to the database
+    // We use assign to make it compatible with XState, but return the same context
+    rois: ({ context }) => {
+        console.log('saving rois', context.rois)
+        // Only save if we have a project ID
+        if (context.projectId) {
+            const projectROIs = {
+                projectId: context.projectId,
+                rois: context.rois,
+                updatedAt: Date.now()
+            };
+
+            // Save to database asynchronously
+            db.saveProjectROIs(projectROIs).catch(error => {
+                console.error('Failed to save ROIs:', error);
+            });
+        }
+
+        return context.rois;
+    }
+})
+
+const removeRoi: MotionAssignAction = assign({
+    rois: ({ context, event }) => {
+        invariant(event.type === 'REMOVE_ROI', 'removeRoi action must be called with a REMOVE_ROI event');
+        const { [event?.roiId]: removed, ...remaining } = context.rois;
+        return remaining;
     }
 })
 
 export const motionActions = {
-    updateRoi, updateActiveROI, selectRoi
+    updateRoi,
+    updateActiveROI,
+    selectRoi,
+    addRoi,
+    setActvieROItoSelectedROI,
+    saveRois,
+    removeRoi
 }

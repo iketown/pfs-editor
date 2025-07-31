@@ -7,7 +7,10 @@ import {
   useEditActorRef
 } from '@/components/fs_components/FsEditActorContext';
 import { FSGraph } from '@/components/fs_components/FSGraph';
-import { MotionActorContext } from '@/components/fs_components/MotionActorContext';
+import {
+  MotionActorContext,
+  useMotionActorRef
+} from '@/components/fs_components/MotionActorContext';
 import VideoControls from '@/components/fs_components/VideoControls';
 import VideoPlayer from '@/components/fs_components/VideoPlayer';
 import VideoTimeSliders from '@/components/fs_components/VideoTimeSliders';
@@ -38,6 +41,7 @@ export function EditProjectPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { send: editSend } = useEditActorRef();
+  const { send: motionSend } = useMotionActorRef();
 
   // Use the video file manager hook
   const { videoUrl, videoPrompt, handleSelectVideo } =
@@ -55,8 +59,13 @@ export function EditProjectPage() {
 
         setProject(loadedProject);
 
-        // Set the project ID in the machine context
+        // Set the project ID in both machine contexts
         editSend({
+          type: 'SET_PROJECT_ID',
+          projectId: projectId
+        });
+
+        motionSend({
           type: 'SET_PROJECT_ID',
           projectId: projectId
         });
@@ -102,6 +111,30 @@ export function EditProjectPage() {
             settings: loadedProject.settings
           });
         }
+
+        // Load saved ROIs if they exist
+        try {
+          const savedROIs = await db.getProjectROIs(projectId);
+          if (savedROIs && Object.keys(savedROIs.rois).length > 0) {
+            motionSend({
+              type: 'LOAD_ROIS',
+              rois: savedROIs.rois
+            });
+          } else {
+            // If no saved ROIs, clear the default ROI to start fresh
+            motionSend({
+              type: 'LOAD_ROIS',
+              rois: {}
+            });
+          }
+        } catch (err) {
+          console.error('Failed to load ROIs:', err);
+          // On error, start with empty ROIs
+          motionSend({
+            type: 'LOAD_ROIS',
+            rois: {}
+          });
+        }
       } catch (err) {
         console.error('Failed to load project:', err);
         setError('Failed to load project');
@@ -113,7 +146,7 @@ export function EditProjectPage() {
     if (projectId) {
       loadProject();
     }
-  }, [projectId, editSend]);
+  }, [projectId, editSend, motionSend]);
 
   if (loading) {
     return (
@@ -201,10 +234,10 @@ export function EditProjectPage() {
 
 export default function WrappedEditProjectPage() {
   return (
-    <MotionActorContext.Provider>
-      <FsEditActorContext.Provider>
+    <FsEditActorContext.Provider>
+      <MotionActorContext.Provider>
         <EditProjectPage />
-      </FsEditActorContext.Provider>
-    </MotionActorContext.Provider>
+      </MotionActorContext.Provider>
+    </FsEditActorContext.Provider>
   );
 }

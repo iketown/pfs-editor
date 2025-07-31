@@ -10,22 +10,25 @@ export type MotionContext = {
     activeROIid: string | null; // the currently active ROI at this time
     rois: { [roi_id: string]: ROI };
     videoFps: number | null;
+    projectId: string | null; // Add project ID for saving ROIs
 };
 
 export type MotionEvent =
     | { type: 'SET_PLAYER_REF'; playerRef: React.RefObject<HTMLVideoElement> }
     | { type: 'SET_CHART_REF'; chartRef: React.RefObject<ChartJSOrUndefined<'line', { x: number; y: number }[], unknown>> }
-    | { type: 'SET_CURRENT_ROI'; roi: ROI }
+    | { type: 'SET_ACTIVE_ROI'; roiId: string | null }
     | { type: 'SELECT_ROI'; roiId: string | null }
     | { type: 'ADD_ROI'; roi: ROI }
     | { type: 'UPDATE_ROI'; roi: ROI }
+    | { type: 'UPDATE_ROI_AND_SAVE'; roi: ROI }
     | { type: 'REMOVE_ROI'; roiId: string }
     | { type: 'VIDEO_TIME_UPDATE'; time: number }
     | { type: 'SET_VIDEO_FPS'; fps: number }
+    | { type: 'SET_PROJECT_ID'; projectId: string }
+    | { type: 'LOAD_ROIS'; rois: { [roi_id: string]: ROI } }; // Add LOAD_ROIS event
 
 const initialROI: ROI = { x: 0, y: 0, w: 100, h: 100, id: 'default', timeStart: 0 };
-const test5s = { ...initialROI, id: 'test5s', timeStart: 5 }
-const test10s = { ...initialROI, id: 'test10s', timeStart: 10 }
+
 
 export const motionMachine = createMachine({
     id: 'motion',
@@ -37,10 +40,10 @@ export const motionMachine = createMachine({
         selectedROIid: null,
         rois: {
             [initialROI.id]: initialROI,
-            [test5s.id]: test5s,
-            [test10s.id]: test10s
+
         },
-        videoFps: null
+        videoFps: null,
+        projectId: null // Add projectId to initial context
     },
     on: {
         VIDEO_TIME_UPDATE: {
@@ -63,6 +66,16 @@ export const motionMachine = createMachine({
                 }
             })
         },
+        SET_PROJECT_ID: {
+            actions: assign({
+                projectId: ({ event }) => event.projectId
+            })
+        },
+        LOAD_ROIS: {
+            actions: assign({
+                rois: ({ event }) => event.rois
+            })
+        }
     },
     states: {
         ready: {
@@ -75,34 +88,26 @@ export const motionMachine = createMachine({
                 },
                 editingROI: {
                     on: {
-                        SET_CURRENT_ROI: {
+                        SET_ACTIVE_ROI: {
                             actions: assign({
-                                selectedROIid: (_args: any, event: any) => event?.roi?.id ?? null
+                                activeROIid: (_args: any, event: any) => event?.roiId ?? null
                             })
                         },
                         SELECT_ROI: {
-                            actions: ['selectRoi']
+                            actions: ['selectRoi', 'setActvieROItoSelectedROI']
                         },
-                        ADD_ROI: {
-                            actions: assign({
-                                rois: ({ context }, event: any) => ({
-                                    ...context.rois,
-                                    [event?.roi?.id]: event?.roi
-                                })
-                            })
-                        },
+                        ADD_ROI: { actions: ['addRoi', 'saveRois'] }, // Add saveRois action
                         UPDATE_ROI: {
                             actions: ['updateRoi']
                         },
+                        UPDATE_ROI_AND_SAVE: {
+                            actions: ['updateRoi', 'saveRois']
+                        },
                         REMOVE_ROI: {
-                            actions: assign({
-                                rois: ({ context }, event: any) => {
-                                    const { [event?.roiId]: removed, ...remaining } = context.rois;
-                                    return remaining;
-                                },
-                                selectedROIid: ({ context }, event: any) =>
-                                    context.selectedROIid === event?.roiId ? null : context.selectedROIid
-                            })
+                            actions: [
+                                'removeRoi',
+                                'saveRois' // Add saveRois action after removing ROI
+                            ]
                         },
                     }
                 },

@@ -4,9 +4,57 @@ import { FSEditContext } from './fsEditMachine';
 import { nanoid } from 'nanoid';
 import { db } from '@/lib/db';
 
-const updateVideoTime = assign(({ event }: any) => {
+// Debounced save queue for actions
+let saveQueue: Array<() => Promise<void>> = [];
+let saveTimeout: NodeJS.Timeout | null = null;
+const SAVE_DEBOUNCE_MS = 1000; // 1 second debounce
+
+const flushSaveQueue = async () => {
+    if (saveQueue.length === 0) return;
+
+    const currentQueue = [...saveQueue];
+    saveQueue = [];
+
+    try {
+        // If we have multiple saves, use batch update
+        if (currentQueue.length > 1) {
+            const projectId = currentQueue[0].toString().match(/projectId:\s*([^,]+)/)?.[1];
+            if (projectId) {
+                await db.batchUpdate({
+                    projectId,
+                    updates: {
+                        actions: {
+                            projectId,
+                            actions: [], // Will be filled by individual saves
+                            updatedAt: Date.now()
+                        }
+                    },
+                    timestamp: Date.now()
+                });
+            }
+        } else {
+            // Single save, execute directly
+            await currentQueue[0]();
+        }
+    } catch (error) {
+        console.error('Failed to flush save queue:', error);
+    }
+};
+
+const queueSave = (saveFn: () => Promise<void>) => {
+    saveQueue.push(saveFn);
+
+    if (saveTimeout) {
+        clearTimeout(saveTimeout);
+    }
+
+    saveTimeout = setTimeout(flushSaveQueue, SAVE_DEBOUNCE_MS);
+};
+
+const updateVideoTime = assign(({ context, event }: any) => {
     invariant(event.type === 'VIDEO_TIME_UPDATE', 'updateVideoTime must be called with a VIDEO_TIME_UPDATE event');
     const videoTime = event.time;
+
     return { videoTime };
 })
 
@@ -41,6 +89,96 @@ const setVideoDuration = assign(({ event }: any) => {
     return {};
 })
 
+// Optimized save functions for different data types
+const saveProjectChapters = async ({ context }: any) => {
+    if (!context.projectId) {
+        console.error('No project ID available in context');
+        return;
+    }
+
+    try {
+        await db.saveProjectChapters({
+            projectId: context.projectId,
+            chapters: context.fsChapters || {},
+            updatedAt: Date.now()
+        });
+        console.log('Chapters auto-saved successfully');
+    } catch (error) {
+        console.error('Failed to auto-save chapters:', error);
+    }
+};
+
+const saveProjectSettings = async ({ context }: any) => {
+    if (!context.projectId) {
+        console.error('No project ID available in context');
+        return;
+    }
+
+    try {
+        await db.saveProjectSettings({
+            projectId: context.projectId,
+            settings: {
+                hideVideo: context.hideVideo,
+                // Add other settings as needed
+            },
+            updatedAt: Date.now()
+        });
+        console.log('Settings auto-saved successfully');
+    } catch (error) {
+        console.error('Failed to auto-save settings:', error);
+    }
+};
+
+const saveProjectActions = async ({ context }: any) => {
+    if (!context.projectId || !context.funscript) {
+        console.error('No project ID or funscript available in context');
+        return;
+    }
+
+    try {
+        await db.saveProjectActions({
+            projectId: context.projectId,
+            actions: context.funscript.actions || [],
+            updatedAt: Date.now()
+        });
+        console.log('Actions auto-saved successfully');
+    } catch (error) {
+        console.error('Failed to auto-save actions:', error);
+    }
+};
+
+// Debounced action save for frequent updates
+const queueActionSave = async ({ context }: any) => {
+    if (!context.projectId || !context.funscript) {
+        console.error('No project ID or funscript available in context');
+        return;
+    }
+
+    queueSave(async () => {
+        try {
+            await db.saveProjectActions({
+                projectId: context.projectId,
+                actions: context.funscript.actions || [],
+                updatedAt: Date.now()
+            });
+
+            // Also save action event for history
+            await db.saveActionEvent({
+                id: nanoid(),
+                projectId: context.projectId,
+                type: 'BATCH_UPDATE',
+                data: { actionCount: context.funscript.actions?.length || 0 },
+                timestamp: Date.now()
+            });
+
+            console.log('Actions batch-saved successfully');
+        } catch (error) {
+            console.error('Failed to batch-save actions:', error);
+        }
+    });
+};
+
+// Legacy full project save (for backward compatibility)
 const saveProject = async ({ event, context }: any) => {
     if (!context.projectId) {
         console.error('No project ID available in context');
@@ -198,27 +336,19 @@ const updateChapterAndSave = async ({ context, event }: any) => {
             if (title !== undefined) updatedChapters[chapterId].title = title;
         }
 
-        // Then save to database using projectId from context
+        // Then save using granular operation
         if (!context.projectId) {
             console.error('No project ID available in context');
             return;
         }
 
         try {
-            const project = await db.getProject(context.projectId);
-            if (project) {
-                const updatedProject = {
-                    ...project,
-                    fsChapters: updatedChapters,
-                    settings: {
-                        ...project.settings,
-                        hideVideo: context.hideVideo
-                    },
-                    updatedAt: Date.now()
-                };
-                await db.saveProject(updatedProject);
-                console.log('Chapter updated and auto-saved successfully');
-            }
+            await db.saveProjectChapters({
+                projectId: context.projectId,
+                chapters: updatedChapters,
+                updatedAt: Date.now()
+            });
+            console.log('Chapter updated and auto-saved successfully');
         } catch (error) {
             console.error('Failed to update chapter and save:', error);
         }
@@ -451,6 +581,10 @@ export const fsEditActions = {
     switchEditMode,
     seekToChapterStart,
     saveProject,
+    saveProjectChapters,
+    saveProjectSettings,
+    saveProjectActions,
+    queueActionSave,
     showHideVideo,
     loadProjectSettings,
     setProjectId

@@ -60,7 +60,7 @@ const ROIRangeSlider: React.FC = () => {
   const handleSeekToROI = useCallback(
     (roi: ROI) => {
       const timeInSeconds = roi.timeStart; // Already in seconds
-      editSend({ type: 'SEEK', time: timeInSeconds });
+      editSend({ type: 'SEEK_VIDEO', time: timeInSeconds });
     },
     [editSend]
   );
