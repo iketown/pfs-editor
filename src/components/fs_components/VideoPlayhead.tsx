@@ -2,7 +2,12 @@
 
 import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import * as SliderPrimitive from '@radix-ui/react-slider';
-import { useEditActorRef, useEditSelector } from './FsEditActorContext';
+import {
+  useFsEditActorRef,
+  useFsEditSelector,
+  useProjectParentActorRef,
+  useProjectParentSelector
+} from './ProjectParentMachineCtx';
 import { cn } from '@/lib/utils';
 
 interface VideoPlayheadProps {
@@ -11,13 +16,17 @@ interface VideoPlayheadProps {
 
 export default function VideoPlayhead({ className = '' }: VideoPlayheadProps) {
   const [mounted, setMounted] = useState(false);
-  const { send } = useEditActorRef();
+  const { send } = useProjectParentActorRef();
 
   // Get video state from the machine context
-  const videoTime = useEditSelector((state) => state.context.videoTime);
-  const videoDuration = useEditSelector((state) => state.context.videoDuration);
-  const rangeStart = useEditSelector((state) => state.context.rangeStart);
-  const rangeEnd = useEditSelector((state) => state.context.rangeEnd);
+  const currentTime = useProjectParentSelector(
+    (state) => state.context.currentTime
+  );
+  const videoDuration = useFsEditSelector(
+    (state) => state.context.videoDuration
+  );
+  const rangeStart = useFsEditSelector((state) => state.context.rangeStart);
+  const rangeEnd = useFsEditSelector((state) => state.context.rangeEnd);
 
   // Ensure component only renders on client side to prevent hydration mismatches
   useEffect(() => {
@@ -25,7 +34,6 @@ export default function VideoPlayhead({ className = '' }: VideoPlayheadProps) {
   }, []);
 
   // Convert videoTime from milliseconds to seconds for display
-  const currentTime = videoTime;
   const duration = videoDuration;
 
   const formatTime = (time: number): string => {
@@ -44,7 +52,7 @@ export default function VideoPlayhead({ className = '' }: VideoPlayheadProps) {
     (values: number[]) => {
       const newTime = values[0];
       if (newTime !== currentTime) {
-        send({ type: 'SEEK_VIDEO', time: newTime });
+        send({ type: 'VIDEO_SEEK', time: newTime });
       }
     },
     [currentTime, send]
@@ -54,7 +62,8 @@ export default function VideoPlayhead({ className = '' }: VideoPlayheadProps) {
   const handleValueCommit = useCallback(
     (values: number[]) => {
       const newTime = values[0];
-      send({ type: 'SEEK_VIDEO', time: newTime });
+      send({ type: 'VIDEO_SEEK', time: newTime });
+      send({ type: 'VIDEO_TIME_UPDATE', time: newTime });
     },
     [send]
   );

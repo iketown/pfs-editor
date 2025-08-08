@@ -2,19 +2,17 @@
 
 import ContextView from '@/components/fs_components/ContextView';
 import ControlPanel from '@/components/fs_components/ControlPanel';
-import {
-  FsEditActorContext,
-  useEditActorRef
-} from '@/components/fs_components/FsEditActorContext';
-import { FSGraph } from '@/components/fs_components/FSGraph';
-import {
-  RoiActorContext,
-  useRoiActorRef
-} from '@/components/fs_components/RoiActorContext';
 import VideoControls from '@/components/fs_components/VideoControls';
+import VideoCustomControls from '@/components/fs_components/VideoCustomControls';
 import VideoPlayer from '@/components/fs_components/VideoPlayer';
+import VideoPlayhead from '@/components/fs_components/VideoPlayhead';
 import VideoTimeSliders from '@/components/fs_components/VideoTimeSliders';
+import {
+  ProjectParentMachineCtx,
+  useProjectParentActorRef
+} from '@/components/fs_components/ProjectParentMachineCtx';
 import { Button } from '@/components/ui/button';
+import { useVideoFileManager } from '@/hooks/useVideoFileManager';
 import {
   Card,
   CardContent,
@@ -22,15 +20,12 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { useVideoFileManager } from '@/hooks/useVideoFileManager';
 import { db } from '@/lib/db';
 import type { Project } from '@/lib/db/types';
-import VideoPlayhead from '@/components/fs_components/VideoPlayhead';
 
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import VideoCustomControls from '@/components/fs_components/VideoCustomControls';
 
 export function EditProjectPage() {
   const params = useParams();
@@ -40,8 +35,10 @@ export function EditProjectPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { send: editSend } = useEditActorRef();
-  const { send: roiSend } = useRoiActorRef();
+  const [chaptersExist, setChaptersExist] = useState(false);
+  const [showImportButton, setShowImportButton] = useState(false);
+  const [showReimportButton, setShowReimportButton] = useState(false);
+  const { send: parentSend } = useProjectParentActorRef();
 
   // Use the video file manager hook
   const { videoUrl, videoPrompt, handleSelectVideo } =
@@ -51,6 +48,7 @@ export function EditProjectPage() {
     const loadProject = async () => {
       setLoading(true);
       try {
+        console.log('Loading project:', projectId);
         const loadedProject = await db.getProject(projectId);
         if (!loadedProject) {
           setError('Project not found');
@@ -58,83 +56,72 @@ export function EditProjectPage() {
         }
 
         setProject(loadedProject);
+        console.log('Project loaded:', loadedProject);
 
-        // Set the project ID in both machine contexts
-        editSend({
-          type: 'SET_PROJECT_ID',
-          projectId: projectId
-        });
+        // Set the project ID in the parent machine context
+        if (parentSend) {
+          parentSend({
+            type: 'SET_PROJECT_ID',
+            projectId: projectId
+          });
 
-        roiSend({
-          type: 'SET_PROJECT_ID',
-          projectId: projectId
-        });
-
-        // Load video file if it exists
-        if (loadedProject.videoFile?.handle) {
+          // Load ROIs for this project
           try {
-            const file = await loadedProject.videoFile.handle.getFile();
-            const url = URL.createObjectURL(file);
-            editSend({
-              type: 'LOAD_VIDEO',
-              url,
-              file
-            });
-          } catch (err) {
-            console.error('Failed to load video file:', err);
+            const projectROIs = await db.getProjectROIs(projectId);
+            if (projectROIs && projectROIs.rois) {
+              // Send ROIs to the ROI machine via the parent machine
+              parentSend({
+                type: 'FORWARD_TO_ROI',
+                event: {
+                  type: 'LOAD_ROIS',
+                  rois: projectROIs.rois
+                }
+              });
+            }
+          } catch (error) {
+            console.error('Failed to load ROIs:', error);
+          }
+
+          // Load chapters for this project
+          try {
+            const projectChapters = await db.getProjectChapters(projectId);
+            if (
+              projectChapters &&
+              Object.keys(projectChapters.chapters).length > 0
+            ) {
+              // Chapters exist in our DB, load them into the chapter machine
+              parentSend({
+                type: 'FORWARD_TO_CHAPTER',
+                event: {
+                  type: 'LOAD_FS_CHAPTERS',
+                  fsChapters: projectChapters.chapters
+                }
+              });
+              setChaptersExist(true);
+
+              // Check if funscript has chapters for re-import option
+              if (
+                loadedProject.funscriptData?.metadata?.chapters &&
+                loadedProject.funscriptData.metadata.chapters.length > 0
+              ) {
+                setShowReimportButton(true);
+              }
+            } else {
+              // No chapters in our DB, check if funscript has chapters to import
+              if (
+                loadedProject.funscriptData?.metadata?.chapters &&
+                loadedProject.funscriptData.metadata.chapters.length > 0
+              ) {
+                setShowImportButton(true);
+              }
+            }
+          } catch (error) {
+            console.error('Failed to load chapters:', error);
           }
         }
 
-        // Load funscript data if it exists
-        if (loadedProject.funscriptData) {
-          editSend({
-            type: 'LOAD_FUNSCRIPT',
-            funscript: loadedProject.funscriptData
-          });
-        }
-
-        // Load saved fsChapters if they exist, otherwise they will be generated from funscript metadata
-        if (
-          loadedProject.fsChapters &&
-          Object.keys(loadedProject.fsChapters).length > 0
-        ) {
-          editSend({
-            type: 'LOAD_FS_CHAPTERS',
-            fsChapters: loadedProject.fsChapters
-          });
-        }
-
-        // Load project settings including hideVideo preference
-        if (loadedProject.settings) {
-          editSend({
-            type: 'LOAD_PROJECT_SETTINGS',
-            settings: loadedProject.settings
-          });
-        }
-
-        // Load saved ROIs if they exist
-        try {
-          const savedROIs = await db.getProjectROIs(projectId);
-          if (savedROIs && Object.keys(savedROIs.rois).length > 0) {
-            roiSend({
-              type: 'LOAD_ROIS',
-              rois: savedROIs.rois
-            });
-          } else {
-            // If no saved ROIs, clear the default ROI to start fresh
-            roiSend({
-              type: 'LOAD_ROIS',
-              rois: {}
-            });
-          }
-        } catch (err) {
-          console.error('Failed to load ROIs:', err);
-          // On error, start with empty ROIs
-          roiSend({
-            type: 'LOAD_ROIS',
-            rois: {}
-          });
-        }
+        // Note: Video file loading is handled by useVideoFileManager hook
+        // which will restore from IndexedDB if available
       } catch (err) {
         console.error('Failed to load project:', err);
         setError('Failed to load project');
@@ -146,7 +133,7 @@ export function EditProjectPage() {
     if (projectId) {
       loadProject();
     }
-  }, [projectId, editSend, roiSend]);
+  }, [projectId]);
 
   if (loading) {
     return (
@@ -194,9 +181,7 @@ export function EditProjectPage() {
         </div>
 
         <div className='space-y-6'>
-          {/* Top Row - Video and Controls */}
           <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
-            {/* Video Player */}
             <Card>
               <CardContent className='p-0'>
                 {videoUrl ? (
@@ -216,11 +201,57 @@ export function EditProjectPage() {
                     </Button>
                   </div>
                 )}
+
+                <div className='p-6'>
+                  <p>Project loaded successfully!</p>
+                  <p>Project ID: {projectId}</p>
+                  <p>Project Name: {project.name}</p>
+                  {chaptersExist && (
+                    <p className='text-green-600'>✓ Chapters loaded</p>
+                  )}
+                </div>
               </CardContent>
             </Card>
 
             {/* Controls */}
-            <ControlPanel />
+            <ControlPanel
+              project={project}
+              chaptersExist={chaptersExist}
+              showImportButton={showImportButton}
+              showReimportButton={showReimportButton}
+              onImportChapters={() => {
+                if (project?.funscriptData && parentSend) {
+                  parentSend({
+                    type: 'FORWARD_TO_CHAPTER',
+                    event: {
+                      type: 'IMPORT_FS_CHAPTERS',
+                      funscriptData: project.funscriptData
+                    }
+                  });
+                  setShowImportButton(false);
+                  setChaptersExist(true);
+                  setShowReimportButton(true);
+                }
+              }}
+              onReimportChapters={() => {
+                if (project?.funscriptData && parentSend) {
+                  if (
+                    confirm(
+                      'This will overwrite all existing chapters with fresh data from the funscript file. Are you sure?'
+                    )
+                  ) {
+                    parentSend({
+                      type: 'FORWARD_TO_CHAPTER',
+                      event: {
+                        type: 'IMPORT_FS_CHAPTERS',
+                        funscriptData: project.funscriptData
+                      }
+                    });
+                    console.log('Chapters re-imported from funscript file');
+                  }
+                }
+              }}
+            />
           </div>
           <div className='p-4'>
             <VideoTimeSliders />
@@ -234,10 +265,8 @@ export function EditProjectPage() {
 
 export default function WrappedEditProjectPage() {
   return (
-    <FsEditActorContext.Provider>
-      <RoiActorContext.Provider>
-        <EditProjectPage />
-      </RoiActorContext.Provider>
-    </FsEditActorContext.Provider>
+    <ProjectParentMachineCtx.Provider>
+      <EditProjectPage />
+    </ProjectParentMachineCtx.Provider>
   );
 }

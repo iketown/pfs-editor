@@ -11,8 +11,6 @@ export type FSEditContext = {
     rangeStart: number;
     rangeEnd: number;
     funscript: FunscriptObject | null;
-    fsChapters: { [chapter_id: string]: { startTime: number; endTime: number; title: string; color: string; id: string; } };
-    selectedChapterId: string | null;
     videoTime: number;
     videoDuration: number;
     selectedActionIds: string[];
@@ -40,10 +38,6 @@ export type FSEditEvent =
     | { type: 'SEEK_VIDEO'; time: number }
     | { type: 'VIDEO_TIME_UPDATE'; time: number }
     | { type: 'LOAD_FUNSCRIPT'; funscript: FunscriptObject }
-    | { type: 'LOAD_FS_CHAPTERS'; fsChapters: { [chapter_id: string]: { startTime: number; endTime: number; title: string; color: string; id: string; } } }
-    | { type: 'UPDATE_CHAPTER'; chapterId: string; startTime?: number; endTime?: number; title?: string }
-    | { type: 'UPDATE_CHAPTER_AND_SAVE'; chapterId: string; startTime?: number; endTime?: number; title?: string }
-    | { type: 'SELECT_CHAPTER'; chapterId: string | null }
     | { type: 'SAVE_PROJECT' }
     | { type: 'TEST_ACTION' }
     | { type: 'SELECT_NODE'; actionId: string }
@@ -73,11 +67,9 @@ export const fsEditMachine = createMachine({
         rangeStart: 0,
         rangeEnd: 0,
         funscript: null,
-        fsChapters: {},
         videoTime: 0,
         videoDuration: 0,
         selectedActionIds: [],
-        selectedChapterId: null,
         currentNodeIdx: 0,
         playerRef: null,
         chartRef: null,
@@ -91,23 +83,11 @@ export const fsEditMachine = createMachine({
         LOAD_FUNSCRIPT: {
             actions: 'loadFunScript'
         },
-        LOAD_FS_CHAPTERS: {
-            actions: 'loadFsChapters'
-        },
         LOAD_PROJECT_SETTINGS: {
             actions: 'loadProjectSettings'
         },
         SET_PROJECT_ID: {
             actions: 'setProjectId'
-        },
-        UPDATE_CHAPTER: {
-            actions: ['updateChapter']
-        },
-        UPDATE_CHAPTER_AND_SAVE: {
-            actions: ['updateChapter', 'saveProject']
-        },
-        SELECT_CHAPTER: {
-            actions: ['selectChapter', 'seekToChapterStart']
         },
         SAVE_PROJECT: {
             actions: 'saveProject'

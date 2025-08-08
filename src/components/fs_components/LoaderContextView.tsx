@@ -8,15 +8,15 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useState } from 'react';
 import { JSONTree } from 'react-json-tree';
-import { ProjectActorContext, useProjectSelector } from './ProjectActorContext';
+import { LoaderActorContext, useLoaderSelector } from './LoaderActorContext';
 
-export default function ProjectContextView() {
+export default function LoaderContextView() {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState('project');
-  const projectContext = ProjectActorContext.useSelector(
+  const projectContext = LoaderActorContext.useSelector(
     (state) => state.context
   );
-  const projectState = useProjectSelector((state) => state);
+  const projectState = useLoaderSelector((state) => state);
 
   return (
     <div>

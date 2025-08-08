@@ -1,17 +1,13 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
-import { useRoiSelector, useRoiActorRef } from './RoiActorContext';
-import { useEditActorRef, useEditSelector } from './FsEditActorContext';
-import { ROI } from '@/types/roi-types';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger
 } from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -20,12 +16,21 @@ import {
   FormLabel,
   FormMessage
 } from '@/components/ui/form';
-import { Edit, Plus, Save, X, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { nanoid } from 'nanoid';
-import { useForm } from 'react-hook-form';
+import { ROI } from '@/types/roi-types';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Edit, Plus, Save, Trash2, X } from 'lucide-react';
+import { nanoid } from 'nanoid';
+import React, { useCallback, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import {
+  // useRoiSelector,
+  useFsEditActorRef,
+  useProjectParentSelector,
+  useRoiActorRef
+} from './ProjectParentMachineCtx';
+import { useRoiSelector } from './TypedSelectors';
 
 // Form schema for ROI validation
 const roiFormSchema = z.object({
@@ -41,14 +46,16 @@ type RoiFormData = z.infer<typeof roiFormSchema>;
 
 const RoiControls: React.FC = () => {
   const { send: roiSend } = useRoiActorRef();
-  const { send: editSend } = useEditActorRef();
+  const { send: editSend } = useFsEditActorRef();
 
   // Get state from roi machine
   const roisObject = useRoiSelector((state) => state.context.rois);
   const selectedROIid = useRoiSelector((state) => state.context.selectedROIid);
 
   // Get current video time from edit machine
-  const videoTime = useEditSelector((state) => state.context.videoTime);
+  const currentTime = useProjectParentSelector(
+    (state) => state.context.currentTime
+  );
 
   // Local state for editing
   const [editingROI, setEditingROI] = useState<ROI | null>(null);
@@ -178,7 +185,6 @@ const RoiControls: React.FC = () => {
 
   // Handle creating a new ROI at current time
   const handleAddROI = useCallback(() => {
-    const currentTime = videoTime; // Video time is already in seconds
     const newROI: ROI = {
       id: nanoid(8),
       title: `ROI ${rois.length + 1}`,
@@ -189,7 +195,7 @@ const RoiControls: React.FC = () => {
       timeStart: currentTime
     };
     roiSend({ type: 'ADD_ROI', roi: newROI });
-  }, [videoTime, rois.length, roiSend]);
+  }, [currentTime, rois.length, roiSend]);
 
   // Handle ROI accordion trigger click
   const handleClickROIListItem = useCallback(
@@ -210,8 +216,8 @@ const RoiControls: React.FC = () => {
 
   // Handle setting start time to current video time
   const handleSetCurrentTime = useCallback(() => {
-    form.setValue('timeStart', videoTime);
-  }, [form, videoTime]);
+    form.setValue('timeStart', currentTime);
+  }, [form, currentTime]);
 
   return (
     <div className='space-y-4'>
@@ -389,7 +395,7 @@ const RoiControls: React.FC = () => {
                                   onClick={handleSetCurrentTime}
                                   className='text-sm'
                                 >
-                                  Set to {formatTime(videoTime)}
+                                  Set to {formatTime(currentTime)}
                                 </Button>
                               </div>
                             </div>
@@ -496,7 +502,7 @@ const RoiControls: React.FC = () => {
       {/* Add ROI Button */}
       <Button onClick={handleAddROI} className='w-full' variant='outline'>
         <Plus className='mr-2 h-4 w-4' />
-        ADD ROI at {formatTime(videoTime)}
+        ADD ROI at {formatTime(currentTime)}
       </Button>
     </div>
   );

@@ -28,18 +28,18 @@ import { Upload, FileText, Video, Edit } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  useProjectActorRef,
-  useProjectSelector
-} from './fs_components/ProjectActorContext';
+  useLoaderActorRef,
+  useLoaderSelector
+} from './fs_components/LoaderActorContext';
 
 const ProjectWorkflowXState: React.FC = () => {
   return <ProjectWorkflowContent />;
 };
 
 const ProjectWorkflowContent: React.FC = () => {
-  const actorRef = useProjectActorRef();
-  const currentState = useProjectSelector((state) => state.value);
-  const context = useProjectSelector((state) => state.context);
+  const actorRef = useLoaderActorRef();
+  const currentState = useLoaderSelector((state) => state.value);
+  const context = useLoaderSelector((state) => state.context);
   const [newProjectName, setNewProjectName] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [projects, setProjects] = useState<any[]>([]);

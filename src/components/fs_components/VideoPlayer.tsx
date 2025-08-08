@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useEditActorRef, useEditSelector } from './FsEditActorContext';
-import { useRoiActorRef } from './RoiActorContext';
+import {
+  useProjectParentActorRef,
+  useFsEditSelector
+} from './ProjectParentMachineCtx';
 import { VideoROIWrapper } from './VideoROIWrapper';
 
 interface VideoPlayerProps
@@ -15,10 +17,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const playerRef = useRef<HTMLVideoElement>(null);
   const isSeekingRef = useRef(false);
   const [mounted, setMounted] = useState(false);
-  const videoUrl = useEditSelector((state) => state.context.videoUrl);
-  const hideVideo = useEditSelector((state) => state.context.hideVideo);
-  const { send: editSend } = useEditActorRef();
-  const { send: roiSend } = useRoiActorRef();
+  const videoUrl = useFsEditSelector((state) => state.context.videoUrl);
+  const hideVideo = useFsEditSelector((state) => state.context.hideVideo);
+  const { send: parentSend } = useProjectParentActorRef();
 
   // Ensure component only renders on client side to prevent hydration mismatches
   useEffect(() => {
@@ -26,15 +27,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   }, []);
 
   useEffect(() => {
-    roiSend({
+    parentSend({
       type: 'SET_PLAYER_REF',
       playerRef: playerRef as React.RefObject<HTMLVideoElement>
     });
-    editSend({
-      type: 'SET_PLAYER_REF',
-      playerRef: playerRef as React.RefObject<HTMLVideoElement>
-    });
-  }, [playerRef, roiSend, editSend]);
+    // window.playerRef = playerRef;
+  }, [playerRef, parentSend]);
 
   // Listen for seek events to prevent time update loops
   useEffect(() => {
@@ -73,12 +71,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       onTimeUpdate(video.currentTime);
     }
 
-    roiSend({
-      type: 'VIDEO_TIME_UPDATE',
-      time: video.currentTime
-    });
-
-    editSend({
+    parentSend({
       type: 'VIDEO_TIME_UPDATE',
       time: video.currentTime
     });
@@ -91,9 +84,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     // For now, use a default FPS of 30 as it's most common
     // In a real implementation, you might want to analyze the video stream
     console.log('Using default FPS: 30');
-    roiSend({ type: 'SET_VIDEO_FPS', fps: 30 });
-    editSend({ type: 'SET_VIDEO_FPS', fps: 30 });
-    editSend({ type: 'SET_VIDEO_DURATION', duration: video.duration });
+    parentSend({ type: 'SET_VIDEO_FPS', fps: 30 });
+    parentSend({ type: 'SET_VIDEO_DURATION', duration: video.duration });
   };
 
   if (!videoUrl || !mounted) return null;

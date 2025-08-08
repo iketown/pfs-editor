@@ -1,8 +1,8 @@
 import { createMachine, assign, and } from 'xstate';
 import type { Project } from '@/lib/db/types';
-import { projectMachineActions } from './projectMachineActions';
+import { loaderMachineActions } from './loaderMachineActions';
 // Context for the project machine
-export interface ProjectContext {
+export interface LoaderContext {
     currentProject: Project | null;
     videoBlobUrl: string | null;
     error: string | null;
@@ -10,7 +10,7 @@ export interface ProjectContext {
 }
 
 // Events for the project machine
-export type ProjectEvent =
+export type LoaderEvent =
     | { type: 'SELECT_PROJECT'; project: Project }
     | { type: 'CREATE_PROJECT'; project: Project }
     | { type: 'SELECT_VIDEO'; videoFile: File; blobUrl: string }
@@ -23,7 +23,7 @@ export type ProjectEvent =
     | { type: 'CANCEL' }
 
 // Create the project machine
-export const projectMachine = createMachine({
+export const loaderMachine = createMachine({
     id: 'project',
     initial: 'selectProject',
     context: {
@@ -31,10 +31,10 @@ export const projectMachine = createMachine({
         videoBlobUrl: null,
         error: null,
         isLoading: false
-    } as ProjectContext,
+    } as LoaderContext,
     types: {} as {
-        context: ProjectContext;
-        events: ProjectEvent;
+        context: LoaderContext;
+        events: LoaderEvent;
     },
     states: {
         selectProject: {
@@ -149,7 +149,7 @@ export const projectMachine = createMachine({
         }
     }
 }, {
-    actions: projectMachineActions,
+    actions: loaderMachineActions,
     guards: {
         hasVideo: ({ context }) => !!context.currentProject && !!context.currentProject.videoFile,
         hasFunscript: ({ context }) => !!context.currentProject && !!context.currentProject.funscriptData,

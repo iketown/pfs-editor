@@ -67,16 +67,16 @@ Implement components/ProjectManager.tsx with project list, create new project di
 
 **Created XState-based Project Workflow:**
 
-1. **Project Machine** (`src/lib/fs_machines/projectMachine.ts`):
+1. **Project Machine** (`src/lib/fs_machines/loaderMachine.ts`):
    - ✅ State machine with 4 states: `selectProject`, `selectVideo`, `selectFunscript`, `ready`
    - ✅ Context management for project data, video blob URLs, errors, and loading states
    - ✅ Event-driven transitions with proper TypeScript typing
    - ✅ Actions for updating project context on state transitions
    - ✅ Service for project saving (currently mocked)
 
-2. **Project Actor Context** (`src/components/fs_components/ProjectActorContext.tsx`):
+2. **Project Actor Context** (`src/components/fs_components/LoaderActorContext.tsx`):
    - ✅ XState actor context following same pattern as FsEditActorContext
-   - ✅ `useProjectActorRef` and `useProjectSelector` hooks for state management
+   - ✅ `useLoaderActorRef` and `useLoaderSelector` hooks for state management
    - ✅ Provider component for React integration
 
 3. **New Workflow Component** (`src/components/ProjectWorkflowXState.tsx`):
@@ -104,17 +104,17 @@ Implement components/ProjectManager.tsx with project list, create new project di
 The application now has a fully functional project workflow using XState that follows the same patterns as the existing codebase.
 </info added on 2025-07-20T11:59:25.046Z>
 <info added on 2025-07-20T12:12:49.281Z>
-**ProjectContextView Component Added:**
+**LoaderContextView Component Added:**
 
-Created `ProjectContextView` component following the same pattern as the existing `ContextView`:
+Created `LoaderContextView` component following the same pattern as the existing `ContextView`:
 
-1. **Component Location**: `src/components/fs_components/ProjectContextView.tsx`
+1. **Component Location**: `src/components/fs_components/LoaderContextView.tsx`
 2. **Features**:
    - Settings icon button in top-right corner
    - Dialog with project machine state and context display
    - Uses `react-json-tree` for formatted JSON viewing
    - Shows current state value and full context
-   - Integrated with `ProjectActorContext` hooks
+   - Integrated with `LoaderActorContext` hooks
 
 3. **Integration**: Added to main page (`src/app/page.tsx`) for debugging and monitoring
 

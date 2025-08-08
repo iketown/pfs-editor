@@ -3,16 +3,21 @@
 import React, { useMemo, useCallback, useState } from 'react';
 import * as SliderPrimitive from '@radix-ui/react-slider';
 import { useEditActorRef, useEditSelector } from './FsEditActorContext';
+import {
+  useProjectParentActorRef,
+  useChapterSelector,
+  useSendToChapter
+} from './ProjectParentMachineCtx';
 import VideoChapterEditButtons from './VideoChapterEditButtons';
 
 interface VideoChapterSliderProps {}
 
 const VideoChapterSlider: React.FC<VideoChapterSliderProps> = ({}) => {
-  const { send } = useEditActorRef();
-  const fsChapters = useEditSelector((state) => state.context.fsChapters);
-  const rangeStart = useEditSelector((state) => state.context.rangeStart);
-  const rangeEnd = useEditSelector((state) => state.context.rangeEnd);
-  const selectedChapterId = useEditSelector(
+  const sendToChapter = useSendToChapter();
+  const fsChapters = useChapterSelector((state) => state.context.fsChapters);
+  const rangeStart = useChapterSelector((state) => state.context.rangeStart);
+  const rangeEnd = useChapterSelector((state) => state.context.rangeEnd);
+  const selectedChapterId = useChapterSelector(
     (state) => state.context.selectedChapterId
   );
 
@@ -129,13 +134,13 @@ const VideoChapterSlider: React.FC<VideoChapterSliderProps> = ({}) => {
 
           // Only update if values actually changed and are meaningful
           if (startChanged) {
-            send({ type: 'SEEK_VIDEO', time: newStartTime });
+            sendToChapter({ type: 'SEEK_VIDEO', time: newStartTime });
           }
           if (endChanged) {
-            send({ type: 'SEEK_VIDEO', time: newEndTime });
+            sendToChapter({ type: 'SEEK_VIDEO', time: newEndTime });
           }
           if (startChanged || endChanged) {
-            send({
+            sendToChapter({
               type: 'UPDATE_CHAPTER',
               chapterId: chapter.id,
               startTime: newStartTime,
@@ -147,7 +152,7 @@ const VideoChapterSlider: React.FC<VideoChapterSliderProps> = ({}) => {
         }
       }
     },
-    [allChapters, rangeStart, rangeEnd, send]
+    [allChapters, rangeStart, rangeEnd, sendToChapter]
   );
 
   const handleChapterCommit = useCallback(
@@ -161,7 +166,7 @@ const VideoChapterSlider: React.FC<VideoChapterSliderProps> = ({}) => {
   const handleChapterClick = (chapter: (typeof memoizedChapters)[0]) => {
     // Toggle selection: if already selected, deselect; otherwise select
     const newChapterId = selectedChapterId === chapter.id ? null : chapter.id;
-    send({
+    sendToChapter({
       type: 'SELECT_CHAPTER',
       chapterId: newChapterId
     });

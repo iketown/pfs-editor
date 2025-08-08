@@ -8,16 +8,31 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useState } from 'react';
 import { JSONTree } from 'react-json-tree';
-import { FsEditActorContext, useEditSelector } from './FsEditActorContext';
-import { useRoiSelector } from './RoiActorContext';
+import {
+  ProjectParentMachineCtx,
+  useProjectParentSelector,
+  useCurrentMode,
+  useProjectState,
+  useFsEditSelector,
+  useRoiSelector,
+  useChapterSelector
+} from './ProjectParentMachineCtx';
 
 export default function ContextView() {
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState('edit');
-  const editContext = FsEditActorContext.useSelector((state) => state.context);
-  const editState = useEditSelector((state) => state);
+  const [tab, setTab] = useState('parent');
+  const editContext = useFsEditSelector((state) => state.context);
+  const editState = useFsEditSelector((state) => state);
   const roiContext = useRoiSelector((s) => s?.context);
   const roiState = useRoiSelector((state) => state);
+  const chapterContext = useChapterSelector((s) => s?.context);
+  const chapterState = useChapterSelector((state) => state);
+  const projectParentContext = useProjectParentSelector(
+    (state) => state.context
+  );
+  const projectParentState = useProjectParentSelector((state) => state);
+  const currentMode = useCurrentMode();
+  const projectState = useProjectState();
 
   return (
     <div>
@@ -36,10 +51,30 @@ export default function ContextView() {
               <DialogHeader>
                 {/* <DialogTitle>XState Context</DialogTitle> */}
                 <TabsList>
+                  <TabsTrigger value='parent'>Parent Context</TabsTrigger>
                   <TabsTrigger value='edit'>Edit Context</TabsTrigger>
                   <TabsTrigger value='roi'>Roi Context</TabsTrigger>
+                  <TabsTrigger value='chapter'>Chapter Context</TabsTrigger>
                 </TabsList>
               </DialogHeader>
+              <TabsContent value='parent'>
+                <div className='mb-2 space-y-2'>
+                  <div className='flex gap-2'>
+                    <span className='bg-accent text-accent-foreground inline-block rounded px-3 py-1 text-xs font-semibold'>
+                      project state: {projectState}
+                    </span>
+                    <span className='bg-accent text-accent-foreground inline-block rounded px-3 py-1 text-xs font-semibold'>
+                      current mode: {currentMode}
+                    </span>
+                  </div>
+                  <div className='bg-accent text-accent-foreground inline-block rounded px-3 py-1 text-xs font-semibold'>
+                    state: {JSON.stringify(projectParentState.value) as string}
+                  </div>
+                </div>
+                <div className='bg-muted max-h-[60vh] overflow-auto rounded p-2'>
+                  <JSONTree data={projectParentContext} hideRoot={true} />
+                </div>
+              </TabsContent>
               <TabsContent value='edit'>
                 <div className='mb-2'>
                   <span className='bg-accent text-accent-foreground inline-block rounded px-3 py-1 text-xs font-semibold'>
@@ -58,6 +93,16 @@ export default function ContextView() {
                 </div>
                 <div className='bg-muted max-h-[60vh] overflow-auto rounded p-2'>
                   <JSONTree data={roiContext} hideRoot={true} />
+                </div>
+              </TabsContent>
+              <TabsContent value='chapter'>
+                <div className='mb-2'>
+                  <span className='bg-accent text-accent-foreground inline-block rounded px-3 py-1 text-xs font-semibold'>
+                    state: {JSON.stringify(chapterState.value) as string}
+                  </span>
+                </div>
+                <div className='bg-muted max-h-[60vh] overflow-auto rounded p-2'>
+                  <JSONTree data={chapterContext} hideRoot={true} />
                 </div>
               </TabsContent>
             </Tabs>

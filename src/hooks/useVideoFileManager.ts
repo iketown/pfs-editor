@@ -1,15 +1,14 @@
 import { useEffect } from 'react';
-import { useEditActorRef, useEditSelector } from '@/components/fs_components/FsEditActorContext';
+import { useProjectParentActorRef, useFsEditSelector } from '@/components/fs_components/ProjectParentMachineCtx';
 import * as videoFileHandler from '@/lib/video-file-handler';
 import { db } from '@/lib/db';
 
 export const useVideoFileManager = (projectId: string) => {
-    const { send: editSend } = useEditActorRef();
-
+    const { send: parentSend } = useProjectParentActorRef();
     // Get current state from context
-    const videoUrl = useEditSelector((state) => state.context.videoUrl);
-    const videoPrompt = useEditSelector((state) => state.context.videoPrompt);
-    const videoFile = useEditSelector((state) => state.context.videoFile);
+    const videoUrl = useFsEditSelector((state) => state.context.videoUrl);
+    const videoPrompt = useFsEditSelector((state) => state.context.videoPrompt);
+    const videoFile = useFsEditSelector((state) => state.context.videoFile);
 
     // Restore video file on mount
     useEffect(() => {
@@ -26,11 +25,17 @@ export const useVideoFileManager = (projectId: string) => {
                             const file = await entry.handle.getFile();
                             url = URL.createObjectURL(file);
                             foundVideo = true;
-                            editSend({ type: 'SET_VIDEO_URL', url });
+                            parentSend({
+                                type: 'FORWARD_TO_FSEDIT',
+                                event: { type: 'SET_VIDEO_URL', url }
+                            });
                         } catch (e) {
                             // Permission revoked or file missing
                             const prompt = 'Please re-select your video file: ' + (entry.metadata?.fileName || '');
-                            editSend({ type: 'SET_VIDEO_PROMPT', prompt });
+                            parentSend({
+                                type: 'FORWARD_TO_FSEDIT',
+                                event: { type: 'SET_VIDEO_PROMPT', prompt }
+                            });
                             await videoFileHandler.removeVideoHandleFromIndexedDB(projectId);
                         }
                     }
@@ -43,7 +48,10 @@ export const useVideoFileManager = (projectId: string) => {
                         if (videoFile && typeof videoFile === 'object' && 'name' in videoFile) {
                             url = URL.createObjectURL(videoFile as File);
                             foundVideo = true;
-                            editSend({ type: 'SET_VIDEO_URL', url });
+                            parentSend({
+                                type: 'FORWARD_TO_FSEDIT',
+                                event: { type: 'SET_VIDEO_URL', url }
+                            });
                         }
                     } catch (e) {
                         // Not a File object or error
@@ -55,20 +63,29 @@ export const useVideoFileManager = (projectId: string) => {
                         ? (videoFile as any).name
                         : '';
                     const prompt = 'Please select your video file: ' + fileName;
-                    editSend({ type: 'SET_VIDEO_PROMPT', prompt });
+                    parentSend({
+                        type: 'FORWARD_TO_FSEDIT',
+                        event: { type: 'SET_VIDEO_PROMPT', prompt }
+                    });
                 } else {
-                    editSend({ type: 'SET_VIDEO_PROMPT', prompt: null });
+                    parentSend({
+                        type: 'FORWARD_TO_FSEDIT',
+                        event: { type: 'SET_VIDEO_PROMPT', prompt: null }
+                    });
                 }
             } catch (err) {
                 console.error('Failed to restore video file:', err);
-                editSend({ type: 'SET_VIDEO_PROMPT', prompt: 'Failed to restore video file' });
+                parentSend({
+                    type: 'FORWARD_TO_FSEDIT',
+                    event: { type: 'SET_VIDEO_PROMPT', prompt: 'Failed to restore video file' }
+                });
             }
         };
 
         if (projectId) {
             restoreVideo();
         }
-    }, [projectId, editSend]);
+    }, [projectId, parentSend]);
 
     // Handler for user selecting/re-linking video file
     const handleSelectVideo = async () => {
@@ -76,8 +93,14 @@ export const useVideoFileManager = (projectId: string) => {
             const result = await videoFileHandler.promptForVideoFile();
             if (result.file) {
                 const url = URL.createObjectURL(result.file);
-                editSend({ type: 'SET_VIDEO_URL', url });
-                editSend({ type: 'SET_VIDEO_PROMPT', prompt: null });
+                parentSend({
+                    type: 'FORWARD_TO_FSEDIT',
+                    event: { type: 'SET_VIDEO_URL', url }
+                });
+                parentSend({
+                    type: 'FORWARD_TO_FSEDIT',
+                    event: { type: 'SET_VIDEO_PROMPT', prompt: null }
+                });
 
                 // Save handle/metadata for Chromium
                 if (videoFileHandler.isChromium() && result.handle) {
@@ -94,7 +117,10 @@ export const useVideoFileManager = (projectId: string) => {
                 }
             }
         } catch (e) {
-            editSend({ type: 'SET_VIDEO_PROMPT', prompt: 'Failed to load video file. Please try again.' });
+            parentSend({
+                type: 'FORWARD_TO_FSEDIT',
+                event: { type: 'SET_VIDEO_PROMPT', prompt: 'Failed to load video file. Please try again.' }
+            });
         }
     };
 

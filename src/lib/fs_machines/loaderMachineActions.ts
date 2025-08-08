@@ -1,8 +1,8 @@
 import { assign, AssignAction } from 'xstate';
-import { ProjectContext, ProjectEvent } from './projectMachine'
+import { LoaderContext, LoaderEvent } from './loaderMachine'
 import { db } from '@/lib/db';
 
-type ProjectMachineAssignAction = AssignAction<ProjectContext, any, any, ProjectEvent, any>
+type ProjectMachineAssignAction = AssignAction<LoaderContext, any, any, LoaderEvent, any>
 
 const selectVideo: ProjectMachineAssignAction = assign({
     currentProject: ({ context, event }) => ({
@@ -31,7 +31,7 @@ const selectFunscript: ProjectMachineAssignAction = assign({
 })
 
 // Action to save the current project to the database
-const saveProject = async ({ context }: { context: ProjectContext }) => {
+const saveProject = async ({ context }: { context: LoaderContext }) => {
     console.log('Saving project', context.currentProject);
     if (context.currentProject) {
         try {
@@ -44,7 +44,7 @@ const saveProject = async ({ context }: { context: ProjectContext }) => {
     }
 }
 
-export const projectMachineActions = {
+export const loaderMachineActions = {
     selectVideo,
     selectFunscript,
     saveProject

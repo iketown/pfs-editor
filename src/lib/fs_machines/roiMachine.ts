@@ -2,6 +2,7 @@ import { createMachine, assign } from 'xstate';
 import { ChartJSOrUndefined } from 'react-chartjs-2/dist/types';
 import type { ROI } from '@/types/roi-types';
 import { roiActions } from './roiMachineActions';
+import { db } from '@/lib/db';
 
 export type RoiContext = {
     playerRef: React.RefObject<HTMLVideoElement> | null;
@@ -25,7 +26,7 @@ export type RoiEvent =
     | { type: 'VIDEO_TIME_UPDATE'; time: number }
     | { type: 'SET_VIDEO_FPS'; fps: number }
     | { type: 'SET_PROJECT_ID'; projectId: string }
-    | { type: 'LOAD_ROIS'; rois: { [roi_id: string]: ROI } }; // Add LOAD_ROIS event
+    | { type: 'LOAD_ROIS'; rois: { [roi_id: string]: ROI } };
 
 const initialROI: ROI = { x: 0, y: 0, w: 100, h: 100, id: 'default', timeStart: 0 };
 

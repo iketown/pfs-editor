@@ -25,7 +25,9 @@ export const db = {
     saveProjectChapters: (chapters: ProjectChapters) => storageProvider.saveProjectChapters(chapters),
 
     getProjectROIs: (projectId: string) => storageProvider.getProjectROIs(projectId),
-    saveProjectROIs: (rois: ProjectROIs) => storageProvider.saveProjectROIs(rois),
+    saveProjectROIs: (rois: ProjectROIs) => {
+        return storageProvider.saveProjectROIs(rois)
+    },
 
     getProjectActions: (projectId: string) => storageProvider.getProjectActions(projectId),
     saveProjectActions: (actions: ProjectActions) => storageProvider.saveProjectActions(actions),

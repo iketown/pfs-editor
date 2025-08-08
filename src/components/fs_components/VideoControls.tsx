@@ -1,6 +1,9 @@
 import React from 'react';
-import { useEditActorRef, useEditSelector } from './FsEditActorContext';
-import { useRoiActorRef, useRoiSelector } from './RoiActorContext';
+import {
+  useFsEditActorRef,
+  useRoiActorRef,
+  useFsEditSelector
+} from './ProjectParentMachineCtx';
 import { Button } from '@/components/ui/button';
 import {
   Play,
@@ -18,16 +21,16 @@ interface VideoControlsProps {
 }
 
 const VideoControls: React.FC<VideoControlsProps> = ({ className = '' }) => {
-  const { send: editSend } = useEditActorRef();
+  const { send: editSend } = useFsEditActorRef();
   const { send: roiSend } = useRoiActorRef();
 
   // Get current state from contexts
-  const playerRef = useEditSelector(
+  const playerRef = useFsEditSelector(
     (state) => state.context.playerRef
   ) as React.RefObject<HTMLVideoElement> | null;
-  const videoTime = useEditSelector((state) => state.context.videoTime);
-  const videoFps = useEditSelector((state) => state.context.videoFps);
-  const hideVideo = useEditSelector((state) => state.context.hideVideo);
+  const videoTime = useFsEditSelector((state) => state.context.videoTime);
+  const videoFps = useFsEditSelector((state) => state.context.videoFps);
+  const hideVideo = useFsEditSelector((state) => state.context.hideVideo);
 
   // Local state for play/pause and zoom
   const [isPlaying, setIsPlaying] = React.useState(false);

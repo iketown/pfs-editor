@@ -1,20 +1,26 @@
 'use client';
 
 import React, { useCallback, useMemo } from 'react';
-import { useRoiSelector, useRoiActorRef } from './RoiActorContext';
-import { useEditSelector, useEditActorRef } from './FsEditActorContext';
+import { useRoiSelector, useRoiActorRef } from './ProjectParentMachineCtx';
+import {
+  useFsEditSelector,
+  useFsEditActorRef
+} from './ProjectParentMachineCtx';
+
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { ROI } from '@/types/roi-types';
 
 const ROIRangeSlider: React.FC = () => {
   const { send: roiSend } = useRoiActorRef();
-  const { send: editSend } = useEditActorRef();
-  const rangeStart = useEditSelector((state) => state.context.rangeStart);
-  const rangeEnd = useEditSelector((state) => state.context.rangeEnd);
+  const { send: editSend } = useFsEditActorRef();
+  const rangeStart = useFsEditSelector((state) => state.context.rangeStart);
+  const rangeEnd = useFsEditSelector((state) => state.context.rangeEnd);
   // Get current video time from edit machine
-  const videoTime = useEditSelector((state) => state.context.videoTime);
-  const videoDuration = useEditSelector((state) => state.context.videoDuration);
+  const videoTime = useFsEditSelector((state) => state.context.videoTime);
+  const videoDuration = useFsEditSelector(
+    (state) => state.context.videoDuration
+  );
 
   // Get all ROIs from roi machine
   const roisObject = useRoiSelector((state) => state.context.rois);
@@ -142,7 +148,7 @@ const ROIRangeSlider: React.FC = () => {
       </div>
 
       {/* ROI List */}
-      {rois.length > 0 && (
+      {/* {rois.length > 0 && (
         <div className='space-y-2'>
           <h4 className='text-sm font-medium'>ROIs</h4>
           <div className='max-h-32 space-y-1 overflow-y-auto'>
@@ -179,7 +185,7 @@ const ROIRangeSlider: React.FC = () => {
             ))}
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 };

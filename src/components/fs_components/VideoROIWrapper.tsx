@@ -8,7 +8,7 @@ import React, {
   useCallback
 } from 'react';
 import Moveable, { OnDrag, OnResize } from 'react-moveable';
-import { useRoiSelector, useRoiActorRef } from './RoiActorContext';
+import { useRoiSelector, useRoiActorRef } from './ProjectParentMachineCtx';
 import { ROI } from '@/types/roi-types';
 
 interface VideoROIWrapperProps {

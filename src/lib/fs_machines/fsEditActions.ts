@@ -228,19 +228,7 @@ const minSecToMS = (timeString: string): number => {
     return Math.round((hours * 3600 + minutes * 60 + seconds) * 1000 + milliseconds);
 };
 
-// New action to load fsChapters directly from project data
-const loadFsChapters = assign(({ event }: any) => {
-    if (
-        event &&
-        typeof event === 'object' &&
-        'type' in event &&
-        event.type === 'LOAD_FS_CHAPTERS' &&
-        'fsChapters' in event
-    ) {
-        return { fsChapters: event.fsChapters };
-    }
-    return {};
-});
+
 
 const loadFunScript = assign(({ event, context }: any) => {
     if (
@@ -265,95 +253,12 @@ const loadFunScript = assign(({ event, context }: any) => {
             }));
         }
 
-        // Only generate fsChapters if they don't already exist
-        let fsChapters = context.fsChapters;
-        if (!fsChapters || Object.keys(fsChapters).length === 0) {
-            // Create fsChapters object from funscript chapters
-            fsChapters = {};
-
-            // 6 equidistant colors on the color wheel (60 degrees apart)
-            const chapterColors = [
-                'bg-red-500',    // 0° - Red
-                'bg-yellow-500', // 60° - Yellow
-                'bg-green-500',  // 120° - Green
-                'bg-cyan-500',   // 180° - Cyan
-                'bg-blue-500',   // 240° - Blue
-                'bg-purple-500'  // 300° - Purple
-            ];
-
-            if (funscript.metadata?.chapters) {
-                funscript.metadata.chapters.forEach((chapter: any, index: number) => {
-                    const chapterId = nanoid(6);
-                    const colorIndex = index % chapterColors.length; // Cycle through colors if more than 6 chapters
-                    fsChapters[chapterId] = {
-                        startTime: typeof chapter.startTime === 'string' ? parseFloat(chapter.startTime) : chapter.startTime,
-                        endTime: typeof chapter.endTime === 'string' ? parseFloat(chapter.endTime) : chapter.endTime,
-                        title: chapter.name || `Chapter ${index + 1}`,
-                        color: chapterColors[colorIndex],
-                        id: chapterId
-                    };
-                });
-            }
-        }
-
-        return { funscript, fsChapters };
+        return { funscript };
     }
     return {};
 })
 
-const updateChapter = assign(({ context, event }: any) => {
-    invariant(['UPDATE_CHAPTER', "UPDATE_CHAPTER_AND_SAVE"].includes(event.type), 'updateChapter must be called with a UPDATE_CHAPTER event');
 
-    const { chapterId, startTime, endTime, title } = event;
-    const updatedChapters = { ...context.fsChapters };
-
-    if (updatedChapters[chapterId]) {
-        if (startTime !== undefined) updatedChapters[chapterId].startTime = startTime;
-        if (endTime !== undefined) updatedChapters[chapterId].endTime = endTime;
-        if (title !== undefined) updatedChapters[chapterId].title = title;
-    }
-
-    return { fsChapters: updatedChapters };
-});
-
-
-
-const updateChapterAndSave = async ({ context, event }: any) => {
-    if (
-        event &&
-        typeof event === 'object' &&
-        'type' in event &&
-        event.type === 'UPDATE_CHAPTER_AND_SAVE' &&
-        'chapterId' in event
-    ) {
-        // First update the chapter
-        const { chapterId, startTime, endTime, title } = event;
-        const updatedChapters = { ...context.fsChapters };
-
-        if (updatedChapters[chapterId]) {
-            if (startTime !== undefined) updatedChapters[chapterId].startTime = startTime;
-            if (endTime !== undefined) updatedChapters[chapterId].endTime = endTime;
-            if (title !== undefined) updatedChapters[chapterId].title = title;
-        }
-
-        // Then save using granular operation
-        if (!context.projectId) {
-            console.error('No project ID available in context');
-            return;
-        }
-
-        try {
-            await db.saveProjectChapters({
-                projectId: context.projectId,
-                chapters: updatedChapters,
-                updatedAt: Date.now()
-            });
-            console.log('Chapter updated and auto-saved successfully');
-        } catch (error) {
-            console.error('Failed to update chapter and save:', error);
-        }
-    }
-};
 
 
 const selectNode = assign(({ context, event }: any) => {
@@ -456,73 +361,14 @@ const resetRange = assign(({ context }: any) => {
     };
 });
 
-const selectChapter = assign(({ context, event }: any) => {
-    invariant(event.type === 'SELECT_CHAPTER', 'selectChapter must be called with a SELECT_CHAPTER event');
 
-    const { chapterId } = event;
-
-    // If no chapter is selected, clear the selection and reset range to full video
-    if (!chapterId) {
-        return {
-            selectedChapterId: null,
-            rangeStart: 0,
-            rangeEnd: context.videoDuration
-        };
-    }
-
-    // Get the chapter data
-    const chapter = context.fsChapters[chapterId];
-    if (!chapter) {
-        return {
-            selectedChapterId: null,
-            rangeStart: 0,
-            rangeEnd: context.videoDuration
-        };
-    }
-
-    // Calculate the range: chapter takes up middle 3/5, with 1/5 margin on each side
-    const chapterDuration = chapter.endTime - chapter.startTime;
-    const margin = chapterDuration / 3; // 1/5 of total range = 1/3 of chapter duration
-
-    const newRangeStart = Math.max(0, chapter.startTime - margin);
-    const newRangeEnd = Math.min(context.videoDuration, chapter.endTime + margin);
-
-    return {
-        selectedChapterId: chapterId,
-        rangeStart: newRangeStart,
-        rangeEnd: newRangeEnd
-    };
-});
 
 const switchEditMode = assign(({ event }: any) => {
     invariant(event.type === 'SWITCH_EDIT_MODE', 'switchEditMode must be called with a SWITCH_EDIT_MODE event');
     return { editMode: event.mode };
 });
 
-const seekToChapterStart = assign(({ context, event }: any) => {
-    invariant(event.type === 'SELECT_CHAPTER', 'seekToChapterStart must be called with a SELECT_CHAPTER event');
 
-    const { chapterId } = event;
-
-    // If no chapter is selected (toggling OFF), don't seek
-    if (!chapterId) {
-        return {};
-    }
-
-    // Get the chapter data
-    const chapter = context.fsChapters[chapterId];
-    if (!chapter) {
-        return {};
-    }
-
-    // Seek to the beginning of the chapter
-    const { playerRef } = context;
-    if (playerRef && playerRef.current) {
-        playerRef.current.currentTime = chapter.startTime;
-    }
-
-    return {};
-});
 
 const showHideVideo = assign(({ context, event }: any) => {
     invariant(event.type === 'SHOW_HIDE_VIDEO', 'showHideVideo must be called with a SHOW_HIDE_VIDEO event');
@@ -557,10 +403,7 @@ export const fsEditActions = {
     updateVideoTime,
     loadVideo,
     setVideoDuration,
-    loadFsChapters,
     loadFunScript,
-    updateChapter,
-    updateChapterAndSave,
     selectNode,
     toggleSelectedNode,
     clearSelectedNodes,
@@ -577,9 +420,7 @@ export const fsEditActions = {
     setRangeStart,
     setRangeEnd,
     resetRange,
-    selectChapter,
     switchEditMode,
-    seekToChapterStart,
     saveProject,
     saveProjectChapters,
     saveProjectSettings,

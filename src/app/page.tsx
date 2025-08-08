@@ -1,18 +1,18 @@
 'use client';
 
 import ProjectWorkflowXState from '@/components/ProjectWorkflowXState';
-import ProjectContextView from '@/components/fs_components/ProjectContextView';
-import { ProjectActorContext } from '@/components/fs_components/ProjectActorContext';
+import LoaderContextView from '@/components/fs_components/LoaderContextView';
+import { LoaderActorContext } from '@/components/fs_components/LoaderActorContext';
 
 export default function Home() {
   return (
-    <ProjectActorContext.Provider>
+    <LoaderActorContext.Provider>
       <main className='flex min-h-screen flex-col items-center justify-between p-24'>
         <div className='w-full'>
           <ProjectWorkflowXState />
         </div>
-        <ProjectContextView />
+        <LoaderContextView />
       </main>
-    </ProjectActorContext.Provider>
+    </LoaderActorContext.Provider>
   );
 }

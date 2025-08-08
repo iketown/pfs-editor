@@ -24,7 +24,7 @@ Completed implementation of custom video controls component. Created VideoContro
 ### Description: Connect VideoPlayer component to existing context providers for state management and synchronization
 ### Details:
 <info added on 2025-07-22T16:34:36.806Z>
-Refactored video file handling architecture to follow better separation of concerns. Moved video file handling logic from EditProjectPage into a dedicated useVideoFileManager hook. Updated projectMachine to include videoPrompt in context and added new events for video file management (SET_VIDEO_URL, SET_VIDEO_PROMPT, RESTORE_VIDEO_FILE, SELECT_VIDEO_FILE). Modified VideoPlayer component to get videoUrl from XState context instead of props, eliminating prop drilling. The videoUrl and videoPrompt state now live in the projectMachine context, providing centralized state management for video-related functionality.
+Refactored video file handling architecture to follow better separation of concerns. Moved video file handling logic from EditProjectPage into a dedicated useVideoFileManager hook. Updated loaderMachine to include videoPrompt in context and added new events for video file management (SET_VIDEO_URL, SET_VIDEO_PROMPT, RESTORE_VIDEO_FILE, SELECT_VIDEO_FILE). Modified VideoPlayer component to get videoUrl from XState context instead of props, eliminating prop drilling. The videoUrl and videoPrompt state now live in the loaderMachine context, providing centralized state management for video-related functionality.
 </info added on 2025-07-22T16:34:36.806Z>
 
 ## 3. Implement custom video controls with video.js [done]
@@ -32,7 +32,7 @@ Refactored video file handling architecture to follow better separation of conce
 ### Description: Create custom play/pause, progress bar, volume control, and fullscreen toggle using video.js API
 ### Details:
 <info added on 2025-07-22T16:56:18.434Z>
-Implemented VideoTimeline component using react-video-timelines-slider library. Created comprehensive timeline with chapter markers from funscript metadata.chapters and loop point controls. Added loopStart and loopEnd to projectMachine context with SET_LOOP_POINTS event and action. Timeline displays chapter boundaries as disabled intervals and allows setting loop ranges via selectedInterval. Added clickable chapter labels below timeline for quick navigation. Integrated timeline under VideoPlayer in EditProjectPage with proper styling and padding.
+Implemented VideoTimeline component using react-video-timelines-slider library. Created comprehensive timeline with chapter markers from funscript metadata.chapters and loop point controls. Added loopStart and loopEnd to loaderMachine context with SET_LOOP_POINTS event and action. Timeline displays chapter boundaries as disabled intervals and allows setting loop ranges via selectedInterval. Added clickable chapter labels below timeline for quick navigation. Integrated timeline under VideoPlayer in EditProjectPage with proper styling and padding.
 </info added on 2025-07-22T16:56:18.434Z>
 <info added on 2025-07-22T17:04:33.944Z>
 Fixed timeline display issues based on user feedback: 1) Reduced tick density from 60 to max 20 ticks (every 5 seconds) to eliminate smudged overlapping time labels, 2) Removed chapter disabledIntervals as requested for different handling approach, 3) Added custom CSS styling to make timeline background grey (#6b7280) with green selected area (#22c55e) for loop points, 4) Added white handles with green borders for better visibility on green background. Timeline now has clean, readable time labels and proper color scheme.
@@ -81,7 +81,7 @@ Implement VideoTimeSlider component with two stacked sliders:
    - Filters out chapters outside range to reduce visual clutter
 
 **State Management**:
-- Add rangeStart and rangeEnd to projectMachine context
+- Add rangeStart and rangeEnd to loaderMachine context
 - Add SET_RANGE_START and SET_RANGE_END events
 - Filter chapters based on range selection
 - Update chapter handles when range changes
@@ -141,11 +141,11 @@ Implement VideoTimeSlider component with two stacked sliders:
 The stacked range sliders system is now fully implemented and ready for integration with the video player component.
 </info added on 2025-07-25T14:01:27.697Z>
 
-## 9. Add range state management to projectMachine [done]
+## 9. Add range state management to loaderMachine [done]
 ### Dependencies: None
 ### Description: Extend XState machine to support range selection and chapter filtering
 ### Details:
-Update projectMachine to support the stacked range slider functionality:
+Update loaderMachine to support the stacked range slider functionality:
 
 **Context Updates**:
 - Add `rangeStart: number` to context (default: 0)
@@ -176,7 +176,7 @@ Update projectMachine to support the stacked range slider functionality:
 
 **XState Machine Range Management Added:**
 
-1. **Events Added** (`src/lib/fs_machines/projectMachine.ts`):
+1. **Events Added** (`src/lib/fs_machines/loaderMachine.ts`):
    - ✅ `SET_RANGE_START`: Updates the start of the working range
    - ✅ `SET_RANGE_END`: Updates the end of the working range  
    - ✅ `RESET_RANGE`: Resets range to full video duration
@@ -187,8 +187,8 @@ Update projectMachine to support the stacked range slider functionality:
    - ✅ `resetRange`: Sets range to [0, videoDuration]
 
 3. **Context Already Available**:
-   - ✅ `rangeStart: number` already in ProjectContext
-   - ✅ `rangeEnd: number` already in ProjectContext
+   - ✅ `rangeStart: number` already in LoaderContext
+   - ✅ `rangeEnd: number` already in LoaderContext
    - ✅ Proper initialization in machine context
 
 4. **Integration**:

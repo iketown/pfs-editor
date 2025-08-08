@@ -1,12 +1,13 @@
 'use client';
 
 import React from 'react';
+import { FSGraph } from './FSGraph';
+import {
+  useCurrentMode,
+  useProjectParentSelector
+} from './ProjectParentMachineCtx';
 import VideoChapterSlider from './VideoChapterSlider';
 import VideoRangeSlider from './VideoRangeSlider';
-import { useEditSelector } from './FsEditActorContext';
-import { useEditState } from '@/hooks/use-editstate';
-import { Card, CardContent } from '../ui/card';
-import { FSGraph } from './FSGraph';
 
 interface Chapter {
   name?: string;
@@ -21,10 +22,14 @@ interface VideoTimeSlidersProps {
 const VideoTimeSliders: React.FC<VideoTimeSlidersProps> = ({
   onChaptersChange
 }) => {
-  const rangeStart = useEditSelector((state) => state.context.rangeStart);
-  const rangeEnd = useEditSelector((state) => state.context.rangeEnd);
-  const videoDuration = useEditSelector((state) => state.context.videoDuration);
-  const editMode = useEditState();
+  const rangeStart = useProjectParentSelector(
+    ({ context }) => context.rangeStart
+  );
+  const rangeEnd = useProjectParentSelector(({ context }) => context.rangeEnd);
+  const videoDuration = useProjectParentSelector(
+    ({ context }) => context.videoDuration
+  );
+  const editMode = useCurrentMode();
 
   // Format time for display
   const formatTime = (seconds: number): string => {

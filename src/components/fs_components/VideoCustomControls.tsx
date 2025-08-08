@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useRoiSelector } from './RoiActorContext';
+import { useRoiSelector } from './ProjectParentMachineCtx';
 import ROIRangeSlider from './ROIRangeSlider';
 
 const VideoCustomControls: React.FC = () => {

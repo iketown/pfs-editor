@@ -1,32 +1,32 @@
 'use client';
 
-import React, { useCallback } from 'react';
-import { useEditActorRef, useEditSelector } from './FsEditActorContext';
 import { Slider } from '@/components/ui/slider';
+import React, { useCallback } from 'react';
+import {
+  useChapterActorRef,
+  useProjectParentSelector
+} from './ProjectParentMachineCtx';
 
 interface VideoRangeSliderProps {}
 
 const VideoRangeSlider: React.FC<VideoRangeSliderProps> = ({}) => {
-  const { send } = useEditActorRef();
-  const rangeStart = useEditSelector((state) =>
-    Math.round(state.context.rangeStart)
+  const { send } = useChapterActorRef();
+  const rangeStart = useProjectParentSelector(
+    ({ context }) => context.rangeStart
   );
-  const rangeEnd = useEditSelector((state) =>
-    Math.round(state.context.rangeEnd)
-  );
-  const videoDuration = useEditSelector((state) =>
+  const rangeEnd = useProjectParentSelector(({ context }) => context.rangeEnd);
+  const videoDuration = useProjectParentSelector((state) =>
     Math.round(state.context.videoDuration)
   );
-
+  console.log('videorangeslider', { rangeStart, rangeEnd, videoDuration });
   // Handle range slider change
   const handleRangeChange = useCallback(
     (values: number[]) => {
-      const [start, end] = values;
-
+      const [rangeStart, rangeEnd] = values;
       // Ensure start is less than end
-      if (start < end) {
-        send({ type: 'SET_RANGE_START', start });
-        send({ type: 'SET_RANGE_END', end });
+      if (rangeStart < rangeEnd) {
+        console.log('VideoRangeSlider onValueChange', rangeStart, rangeEnd);
+        send({ type: 'SET_VIDEO_RANGE', rangeStart, rangeEnd });
       }
     },
     [send]

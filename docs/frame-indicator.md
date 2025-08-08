@@ -48,6 +48,6 @@ The Frame Indicator is a new feature that provides precise frame-by-frame naviga
 - `src/components/fs_components/FSGraph.tsx` - Integration
 - `src/components/fs_components/FSGraphButtons.tsx` - FPS input
 - `src/components/fs_components/VideoPlayer.tsx` - FPS detection
-- `src/lib/fs_machines/projectMachine.ts` - State management
+- `src/lib/fs_machines/loaderMachine.ts` - State management
 - `src/lib/fs_machines/roiMachine.ts` - State management
 - `src/lib/fs_machines/projectActions.ts` - Actions 

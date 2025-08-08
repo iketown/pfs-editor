@@ -68,7 +68,7 @@ const saveRois: RoiAssignAction = assign({
     // This action doesn't modify the context, it just saves to the database
     // We use assign to make it compatible with XState, but return the same context
     rois: ({ context }) => {
-        console.log('saving rois', context.rois)
+        console.log('saving rois', context.rois, context)
         // Only save if we have a project ID
         if (context.projectId) {
             const projectROIs = {

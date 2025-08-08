@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ChevronDown } from 'lucide-react';
-import { useEditActorRef, useEditSelector } from './FsEditActorContext';
+import { useEditSelector } from './FsEditActorContext';
 import { cn } from '@/lib/utils';
 import { useParams } from 'next/navigation';
+import { useSendToChapter } from './ProjectParentMachineCtx';
 
 interface ChapterFormData {
   title: string;
@@ -33,7 +34,7 @@ const VideoChapterEditButtons: React.FC<VideoChapterEditButtonsProps> = ({
   selectedChapterId,
   onChapterClick
 }) => {
-  const { send } = useEditActorRef();
+  const sendToChapter = useSendToChapter();
   const params = useParams();
   const projectId = params.project_id as string;
 
@@ -129,7 +130,7 @@ const VideoChapterEditButtons: React.FC<VideoChapterEditButtonsProps> = ({
   // Handle form save
   const handleSave = () => {
     if (openPopoverId && Object.keys(validationErrors).length === 0) {
-      send({
+      sendToChapter({
         type: 'UPDATE_CHAPTER_AND_SAVE',
         chapterId: openPopoverId,
         title: formData.title,

@@ -1,21 +1,27 @@
 'use client';
 
-import { useEditActorRef, useEditSelector } from './FsEditActorContext';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardFooter,
-  CardTitle,
-  CardAction
-} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Save } from 'lucide-react';
 import { useState } from 'react';
-import { useEditState } from '@/hooks/use-editstate';
+import {
+  useCurrentMode,
+  useFsEditActorRef,
+  useFsEditSelector,
+  useSwitchMode
+} from './ProjectParentMachineCtx';
 import RoiControls from './RoiControls';
+import { Download, RefreshCw } from 'lucide-react';
+import type { Project } from '@/lib/db/types';
+
+interface ControlPanelProps {
+  project: Project;
+  chaptersExist: boolean;
+  showImportButton: boolean;
+  showReimportButton: boolean;
+  onImportChapters: () => void;
+  onReimportChapters: () => void;
+}
 
 const editModes = [
   { label: 'Play', value: 'playing' },
@@ -26,13 +32,21 @@ const editModes = [
   { label: 'Motion', value: 'motion_editing' }
 ];
 
-const ControlPanel = () => {
-  const { send } = useEditActorRef();
+const ControlPanel = ({
+  project,
+  chaptersExist,
+  showImportButton,
+  showReimportButton,
+  onImportChapters,
+  onReimportChapters
+}: ControlPanelProps) => {
+  const { send } = useFsEditActorRef();
+  const switchMode = useSwitchMode();
 
   // Get the current editing substate
-  const editMode = useEditState();
+  const editMode = useCurrentMode();
 
-  const fsChapters = useEditSelector((state) => state.context.fsChapters);
+  const fsChapters = useFsEditSelector((state) => state.context.fsChapters);
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSaveChapters = async () => {
@@ -50,26 +64,72 @@ const ControlPanel = () => {
   const handleTabChange = (value: string) => {
     switch (value) {
       case 'fsaction_editing':
-        send({ type: 'SWITCH_TO_FSACTIONS_EDITING' });
+        switchMode.switchToFsActionEditing();
         break;
       case 'chapters_editing':
-        send({ type: 'SWITCH_TO_CHAPTERS_EDITING' });
+        switchMode.switchToChaptersEditing();
         break;
       case 'zoom_editing':
-        send({ type: 'SWITCH_TO_ZOOM_EDITING' });
+        switchMode.switchToZoomEditing();
         break;
       case 'roi_editing':
-        send({ type: 'SWITCH_TO_ROI_EDITING' });
+        switchMode.switchToRoiEditing();
         break;
       case 'motion_editing':
-        send({ type: 'SWITCH_TO_MOTION_EDITING' });
+        switchMode.switchToMotionEditing();
         break;
       case 'playing':
-        send({ type: 'SWITCH_TO_PLAYING' });
+        switchMode.switchToPlaying();
         break;
     }
   };
 
+  const getChapterControls = () => {
+    return (
+      <div className='space-y-4'>
+        <div className='text-muted-foreground text-sm'>
+          {chaptersExist ? (
+            <p>✓ Chapters loaded and ready for editing</p>
+          ) : (
+            <p>
+              No chapters loaded. Import from funscript file to get started.
+            </p>
+          )}
+        </div>
+
+        {showImportButton && (
+          <div className='space-y-2'>
+            <Button onClick={onImportChapters} className='w-full' size='sm'>
+              <Download className='mr-2 h-4 w-4' />
+              Import Chapters from Funscript
+            </Button>
+            <p className='text-muted-foreground text-xs'>
+              Import chapters from the funscript file for editing
+            </p>
+          </div>
+        )}
+
+        {showReimportButton && (
+          <div className='space-y-2'>
+            <Button
+              onClick={onReimportChapters}
+              variant='outline'
+              className='w-full'
+              size='sm'
+            >
+              <RefreshCw className='mr-2 h-4 w-4' />
+              Re-import Chapters
+            </Button>
+            <p className='text-muted-foreground text-xs'>
+              Overwrite existing chapters with fresh data from funscript
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  console.log('edit mode', editMode);
   return (
     <Card>
       <CardContent>
@@ -89,6 +149,8 @@ const ControlPanel = () => {
             <TabsContent key={mode.value} value={mode.value}>
               {mode.value === 'roi_editing' ? (
                 <RoiControls />
+              ) : mode.value === 'chapters_editing' ? (
+                getChapterControls()
               ) : (
                 <div className='text-muted-foreground text-center text-sm'>
                   {mode.label} mode active
