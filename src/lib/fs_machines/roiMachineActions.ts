@@ -95,6 +95,53 @@ const removeRoi: RoiAssignAction = assign({
     }
 })
 
+const toggleRoiZoom: RoiAssignAction = assign({
+    rois: ({ context, event }) => {
+        invariant(event.type === 'TOGGLE_ROI_ZOOM', 'toggleRoiZoom action must be called with a TOGGLE_ROI_ZOOM event');
+
+        // Use provided roiId or fallback to activeROIid
+        const targetRoiId = event.roiId || context.activeROIid;
+
+        if (!targetRoiId || !context.rois[targetRoiId]) {
+            console.warn('No valid ROI to toggle zoom for');
+            return context.rois;
+        }
+
+        const targetRoi = context.rois[targetRoiId];
+        const updatedRoi = {
+            ...targetRoi,
+            zoomed: !targetRoi.zoomed
+        };
+
+        return {
+            ...context.rois,
+            [targetRoiId]: updatedRoi
+        };
+    }
+})
+
+const setRoiZoom: RoiAssignAction = assign({
+    rois: ({ context, event }) => {
+        invariant(event.type === 'SET_ROI_ZOOM', 'setRoiZoom action must be called with a SET_ROI_ZOOM event');
+
+        if (!context.rois[event.roiId]) {
+            console.warn(`ROI with id ${event.roiId} not found`);
+            return context.rois;
+        }
+
+        const targetRoi = context.rois[event.roiId];
+        const updatedRoi = {
+            ...targetRoi,
+            zoomed: event.zoomed
+        };
+
+        return {
+            ...context.rois,
+            [event.roiId]: updatedRoi
+        };
+    }
+})
+
 export const roiActions = {
     updateRoi,
     updateActiveROI,
@@ -102,5 +149,7 @@ export const roiActions = {
     addRoi,
     setActvieROItoSelectedROI,
     saveRois,
-    removeRoi
+    removeRoi,
+    toggleRoiZoom,
+    setRoiZoom
 }

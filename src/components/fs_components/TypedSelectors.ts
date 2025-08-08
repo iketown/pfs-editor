@@ -8,7 +8,6 @@ import {
     useFsEditActorRef,
     useRoiActorRef,
     useChapterActorRef,
-    useZoomActorRef,
     useMotionActorRef,
     useFsActionActorRef,
     useProjectParentSelector as _uPPS
@@ -42,11 +41,6 @@ export const useChapterSelector = <T>(selector: (state: MachineState<ChapterCont
     return useSelector(chapterActor, selector as any);
 };
 
-export const useZoomSelector = <T>(selector: (state: MachineState<any>) => T): T => {
-    const zoomActor = useZoomActorRef();
-    return useSelector(zoomActor, selector as any);
-};
-
 export const useMotionSelector = <T>(selector: (state: MachineState<any>) => T): T => {
     const motionActor = useMotionActorRef();
     return useSelector(motionActor, selector as any);
@@ -55,4 +49,29 @@ export const useMotionSelector = <T>(selector: (state: MachineState<any>) => T):
 export const useFsActionSelector = <T>(selector: (state: MachineState<any>) => T): T => {
     const fsActionActor = useFsActionActorRef();
     return useSelector(fsActionActor, selector as any);
+};
+
+// Convenient zoom-related selectors
+export const useActiveRoiZoomState = (): boolean => {
+    return useRoiSelector((state) => {
+        const { activeROIid, rois } = state.context;
+        if (!activeROIid || !rois[activeROIid]) return false;
+        return rois[activeROIid].zoomed || false;
+    });
+};
+
+export const useRoiZoomState = (roiId: string): boolean => {
+    return useRoiSelector((state) => {
+        const { rois } = state.context;
+        if (!rois[roiId]) return false;
+        return rois[roiId].zoomed || false;
+    });
+};
+
+export const useActiveRoiWithZoom = () => {
+    return useRoiSelector((state) => {
+        const { activeROIid, rois } = state.context;
+        if (!activeROIid || !rois[activeROIid]) return null;
+        return rois[activeROIid];
+    });
 };

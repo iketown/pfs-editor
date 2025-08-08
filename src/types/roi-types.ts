@@ -6,4 +6,5 @@ export type ROI = {
     id: string;
     title?: string;
     timeStart: number; // start time in seconds
+    zoomed?: boolean; // whether this ROI is currently zoomed in
 };

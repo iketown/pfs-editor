@@ -23,7 +23,6 @@ export interface ProjectParentContext {
     fsEditActor: any;
     roiActor: any;
     chapterActor: any; // Future: chapterMachine
-    zoomActor: any; // Future: zoomMachine
     motionActor: any; // Future: motionMachine
     fsActionActor: any; // Future: fsActionMachine
 }
@@ -43,7 +42,6 @@ export type ProjectParentEvent =
     | { type: 'SWITCH_TO_PLAYING' }
     | { type: 'SWITCH_TO_CHAPTERS_EDITING' }
     | { type: 'SWITCH_TO_ROI_EDITING' }
-    | { type: 'SWITCH_TO_ZOOM_EDITING' }
     | { type: 'SWITCH_TO_MOTION_EDITING' }
     | { type: 'SWITCH_TO_FSACTION_EDITING' }
 
@@ -57,7 +55,6 @@ export type ProjectParentEvent =
     | { type: 'FORWARD_TO_FSEDIT'; event: any }
     | { type: 'FORWARD_TO_ROI'; event: any }
     | { type: 'FORWARD_TO_CHAPTER'; event: any }
-    | { type: 'FORWARD_TO_ZOOM'; event: any }
     | { type: 'FORWARD_TO_MOTION'; event: any }
     | { type: 'FORWARD_TO_FSACTION'; event: any };
 
@@ -78,7 +75,6 @@ export const projectParentMachine = createMachine({
         fsEditActor: null,
         roiActor: null,
         chapterActor: null,
-        zoomActor: null,
         motionActor: null,
         fsActionActor: null,
     } as ProjectParentContext,
@@ -99,7 +95,6 @@ export const projectParentMachine = createMachine({
                 sendTo(({ context }) => context.fsEditActor, ({ event }) => event),
                 sendTo(({ context }) => context.roiActor, ({ event }) => event),
                 // sendTo(({ context }) => context.chapterActor, ({ event }) => event), // Not spawned yet
-                // sendTo(({ context }) => context.zoomActor, ({ event }) => event),    // Not spawned yet
                 // sendTo(({ context }) => context.motionActor, ({ event }) => event),  // Not spawned yet
                 // sendTo(({ context }) => context.fsActionActor, ({ event }) => event), // Not spawned yet
             ]
@@ -114,7 +109,6 @@ export const projectParentMachine = createMachine({
                 sendTo(({ context }) => context.fsEditActor, ({ event }) => event),
                 sendTo(({ context }) => context.roiActor, ({ event }) => event),
                 sendTo(({ context }) => context.chapterActor, ({ event }) => event),
-                sendTo(({ context }) => context.zoomActor, ({ event }) => event),
                 sendTo(({ context }) => context.fsActionActor, ({ event }) => event),
             ]
         },
@@ -157,7 +151,6 @@ export const projectParentMachine = createMachine({
                 }),
                 sendTo(({ context }) => context.fsEditActor, ({ event }) => event),
                 sendTo(({ context }) => context.chapterActor, ({ event }) => event),
-                // sendTo(({ context }) => context.zoomActor, ({ event }) => event),    // Not spawned yet
                 // sendTo(({ context }) => context.fsActionActor, ({ event }) => event), // Not spawned yet
             ]
         },
@@ -192,7 +185,6 @@ export const projectParentMachine = createMachine({
                 sendTo(({ context }) => context.fsEditActor, ({ event }) => event),
                 sendTo(({ context }) => context.roiActor, ({ event }) => event),
                 sendTo(({ context }) => context.chapterActor, ({ event }) => event),
-                // sendTo(({ context }) => context.zoomActor, ({ event }) => event),
                 // sendTo(({ context }) => context.motionActor, ({ event }) => event),
                 // sendTo(({ context }) => context.fsActionActor, ({ event }) => event),
             ]
@@ -215,10 +207,6 @@ export const projectParentMachine = createMachine({
             actions: sendTo(({ context }) => context.chapterActor, ({ event }) => event.event)
         },
 
-        FORWARD_TO_ZOOM: {
-            actions: sendTo(({ context }) => context.zoomActor, ({ event }) => event.event)
-        },
-
         FORWARD_TO_MOTION: {
             actions: sendTo(({ context }) => context.motionActor, ({ event }) => event.event)
         },
@@ -238,7 +226,6 @@ export const projectParentMachine = createMachine({
                     roiActor: ({ spawn }) => spawn(roiMachine, { id: 'roi' }),
                     chapterActor: ({ spawn }) => spawn(chapterMachine, { id: 'chapter' }),
                     // Future: spawn other machines when they're created
-                    // zoomActor: ({ spawn }) => spawn(zoomMachine, { id: 'zoom' }),
                     // motionActor: ({ spawn }) => spawn(motionMachine, { id: 'motion' }),
                     // fsActionActor: ({ spawn }) => spawn(fsActionMachine, { id: 'fsAction' }),
                 })
@@ -260,7 +247,6 @@ export const projectParentMachine = createMachine({
                     on: {
                         SWITCH_TO_CHAPTERS_EDITING: 'chapters_editing',
                         SWITCH_TO_ROI_EDITING: 'roi_editing',
-                        SWITCH_TO_ZOOM_EDITING: 'zoom_editing',
                         SWITCH_TO_MOTION_EDITING: 'motion_editing',
                         SWITCH_TO_FSACTION_EDITING: 'fsaction_editing',
                     }
@@ -271,7 +257,6 @@ export const projectParentMachine = createMachine({
                     on: {
                         SWITCH_TO_PLAYING: 'playing',
                         SWITCH_TO_ROI_EDITING: 'roi_editing',
-                        SWITCH_TO_ZOOM_EDITING: 'zoom_editing',
                         SWITCH_TO_MOTION_EDITING: 'motion_editing',
                         SWITCH_TO_FSACTION_EDITING: 'fsaction_editing',
                     }
@@ -282,18 +267,6 @@ export const projectParentMachine = createMachine({
                     on: {
                         SWITCH_TO_PLAYING: 'playing',
                         SWITCH_TO_CHAPTERS_EDITING: 'chapters_editing',
-                        SWITCH_TO_ZOOM_EDITING: 'zoom_editing',
-                        SWITCH_TO_MOTION_EDITING: 'motion_editing',
-                        SWITCH_TO_FSACTION_EDITING: 'fsaction_editing',
-                    }
-                },
-
-                zoom_editing: {
-                    description: 'Zoom/pan editing mode',
-                    on: {
-                        SWITCH_TO_PLAYING: 'playing',
-                        SWITCH_TO_CHAPTERS_EDITING: 'chapters_editing',
-                        SWITCH_TO_ROI_EDITING: 'roi_editing',
                         SWITCH_TO_MOTION_EDITING: 'motion_editing',
                         SWITCH_TO_FSACTION_EDITING: 'fsaction_editing',
                     }
@@ -305,7 +278,6 @@ export const projectParentMachine = createMachine({
                         SWITCH_TO_PLAYING: 'playing',
                         SWITCH_TO_CHAPTERS_EDITING: 'chapters_editing',
                         SWITCH_TO_ROI_EDITING: 'roi_editing',
-                        SWITCH_TO_ZOOM_EDITING: 'zoom_editing',
                         SWITCH_TO_FSACTION_EDITING: 'fsaction_editing',
                     }
                 },
@@ -316,7 +288,6 @@ export const projectParentMachine = createMachine({
                         SWITCH_TO_PLAYING: 'playing',
                         SWITCH_TO_CHAPTERS_EDITING: 'chapters_editing',
                         SWITCH_TO_ROI_EDITING: 'roi_editing',
-                        SWITCH_TO_ZOOM_EDITING: 'zoom_editing',
                         SWITCH_TO_MOTION_EDITING: 'motion_editing',
                     }
                 }

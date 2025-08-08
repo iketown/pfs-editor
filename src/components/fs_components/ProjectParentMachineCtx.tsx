@@ -33,11 +33,6 @@ export const useChapterActorRef = () => {
   return actorRef.getSnapshot().context.chapterActor;
 };
 
-export const useZoomActorRef = () => {
-  const actorRef = useProjectParentActorRef();
-  return actorRef.getSnapshot().context.zoomActor;
-};
-
 export const useMotionActorRef = () => {
   const actorRef = useProjectParentActorRef();
   return actorRef.getSnapshot().context.motionActor;
@@ -67,11 +62,6 @@ export const useRoiState = () => {
 export const useChapterState = () => {
   const chapterActor = useChapterActorRef();
   return chapterActor?.getSnapshot();
-};
-
-export const useZoomState = () => {
-  const zoomActor = useZoomActorRef();
-  return zoomActor?.getSnapshot();
 };
 
 export const useMotionState = () => {
@@ -162,16 +152,6 @@ export const useRoiSelector = (selector: (state: any) => any) => {
 export const useChapterSelector = (selector: (state: any) => any) => {
   const chapterActor = useChapterActorRef();
   return useSelector(chapterActor, selector);
-};
-
-/**
- * Selector for Zoom machine state
- * @param selector Function that receives state with ZoomContext
- * @returns Selected value from Zoom machine state
- */
-export const useZoomSelector = (selector: (state: any) => any) => {
-  const zoomActor = useZoomActorRef();
-  return useSelector(zoomActor, selector);
 };
 
 /**

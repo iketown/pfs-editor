@@ -5,7 +5,7 @@ import {
   useProjectParentSelector,
   useRoiActorRef
 } from './ProjectParentMachineCtx';
-// import { useProjectParentSelector } from './TypedSelectors';
+import { useActiveRoiZoomState, useActiveRoiWithZoom } from './TypedSelectors';
 import { Button } from '@/components/ui/button';
 import {
   Eye,
@@ -35,9 +35,12 @@ const VideoControls: React.FC<VideoControlsProps> = ({ className = '' }) => {
   const videoFps = useProjectParentSelector((state) => state.context.videoFps);
   const hideVideo = useFsEditSelector((state) => state.context.hideVideo);
 
-  // Local state for play/pause and zoom
+  // Local state for play/pause
   const [isPlaying, setIsPlaying] = React.useState(false);
-  const [isZoomed, setIsZoomed] = React.useState(false);
+
+  // Get zoom state and active ROI from ROI machine
+  const isZoomed = useActiveRoiZoomState();
+  const activeROI = useActiveRoiWithZoom();
 
   // Handle play/pause
   const handlePlayPause = () => {
@@ -73,11 +76,11 @@ const VideoControls: React.FC<VideoControlsProps> = ({ className = '' }) => {
     }
   };
 
-  // Handle zoom toggle (placeholder for now)
+  // Handle zoom toggle - toggle the active ROI's zoom state
   const handleZoomToggle = () => {
-    setIsZoomed(!isZoomed);
-    // TODO: Implement zoom functionality
-    console.log('Zoom toggle:', !isZoomed);
+    roiSend({
+      type: 'TOGGLE_ROI_ZOOM'
+    });
   };
 
   // Handle video visibility toggle
@@ -169,14 +172,22 @@ const VideoControls: React.FC<VideoControlsProps> = ({ className = '' }) => {
           variant='outline'
           size='sm'
           onClick={handleZoomToggle}
+          disabled={!activeROI}
           className='flex items-center gap-1'
+          title={
+            !activeROI
+              ? 'No active ROI to zoom'
+              : isZoomed
+                ? 'Zoom out'
+                : 'Zoom in'
+          }
         >
           {isZoomed ? (
             <ZoomOut className='h-4 w-4' />
           ) : (
             <ZoomIn className='h-4 w-4' />
           )}
-          Zoom
+          {isZoomed ? 'Zoom Out' : 'Zoom In'}
         </Button>
       </div>
     </div>

@@ -26,7 +26,9 @@ export type RoiEvent =
     | { type: 'VIDEO_TIME_UPDATE'; time: number }
     | { type: 'SET_VIDEO_FPS'; fps: number }
     | { type: 'SET_PROJECT_ID'; projectId: string }
-    | { type: 'LOAD_ROIS'; rois: { [roi_id: string]: ROI } };
+    | { type: 'LOAD_ROIS'; rois: { [roi_id: string]: ROI } }
+    | { type: 'TOGGLE_ROI_ZOOM'; roiId?: string } // Toggle zoom for specific ROI or active ROI
+    | { type: 'SET_ROI_ZOOM'; roiId: string; zoomed: boolean }; // Set zoom state for specific ROI
 
 const initialROI: ROI = { x: 0, y: 0, w: 100, h: 100, id: 'default', timeStart: 0 };
 
@@ -109,6 +111,12 @@ export const roiMachine = createMachine({
                                 'removeRoi',
                                 'saveRois' // Add saveRois action after removing ROI
                             ]
+                        },
+                        TOGGLE_ROI_ZOOM: {
+                            actions: ['toggleRoiZoom', 'saveRois']
+                        },
+                        SET_ROI_ZOOM: {
+                            actions: ['setRoiZoom', 'saveRois']
                         },
                     }
                 },
