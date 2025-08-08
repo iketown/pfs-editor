@@ -9,7 +9,8 @@ import {
   useSendToFsEdit,
   useSendToRoi,
   useFsEditContext,
-  useRoiContext
+  useRoiContext,
+  useProjectParentSelector
 } from './ProjectParentMachineCtx';
 
 export default function ProjectParentExample() {
@@ -20,6 +21,9 @@ export default function ProjectParentExample() {
   const sendToRoi = useSendToRoi();
   const fsEditContext = useFsEditContext();
   const roiContext = useRoiContext();
+  const currentTime = useProjectParentSelector(
+    (state) => state.context.currentTime
+  );
 
   const handleSetProjectId = () => {
     sendToFsEdit({ type: 'SET_PROJECT_ID', projectId: 'example-project-123' });
@@ -124,7 +128,7 @@ export default function ProjectParentExample() {
               <CardContent>
                 <div className='space-y-1 text-xs'>
                   <div>Project ID: {fsEditContext?.projectId || 'null'}</div>
-                  <div>Video Time: {fsEditContext?.videoTime || 0}</div>
+                  <div>Current Time: {currentTime || 0}</div>
                   <div>Video Duration: {fsEditContext?.videoDuration || 0}</div>
                 </div>
               </CardContent>

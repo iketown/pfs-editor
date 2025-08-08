@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import TimeRange from 'react-video-timelines-slider';
 import { useEditActorRef, useEditSelector } from './FsEditActorContext';
+import { useProjectParentSelector } from './TypedSelectors';
 import { format } from 'date-fns';
 import type { FunscriptObject, FSChapter } from '@/types/funscript-types';
 
@@ -12,32 +13,17 @@ const VideoTimeline: React.FC<VideoTimelineProps> = ({ className = '' }) => {
   const { send: editSend } = useEditActorRef();
 
   // Get state from context
-  const videoTime = useEditSelector((state) => state.context.videoTime);
-  const videoFps = useEditSelector((state) => state.context.videoFps);
-  const funscript = useEditSelector(
-    (state) => state.context.funscript
-  ) as FunscriptObject | null;
-  const loopStart = useEditSelector((state) => state.context.loopStart);
-  const loopEnd = useEditSelector((state) => state.context.loopEnd);
-
-  // Video time is already in seconds, but timeline library expects milliseconds
-  const currentTimeMs = videoTime * 1000;
-
-  // Calculate video duration from funscript or use a default
-  const videoDuration = useMemo(() => {
-    if (funscript?.metadata?.duration) {
-      // actual duration of video
-      return funscript.metadata.duration * 1000; // Convert to ms
-    }
-    if (funscript?.actions && funscript.actions.length > 0) {
-      // Fallback: calculate from last action time
-      const lastAction = funscript.actions[funscript.actions.length - 1];
-      return lastAction.at * 1000; // Convert to ms
-    }
-    return 60000; // Default 1 minute
-  }, [funscript]);
-
-  // Chapter markers removed as requested - will handle differently
+  const currentTime = useProjectParentSelector(
+    (state) => state.context.currentTime
+  );
+  const videoFps = useProjectParentSelector((state) => state.context.videoFps);
+  const loopStart = useProjectParentSelector(
+    (state) => state.context.rangeStart
+  );
+  const videoDuration = useProjectParentSelector(
+    (state) => state.context.videoDuration
+  );
+  const loopEnd = useProjectParentSelector((state) => state.context.rangeEnd);
 
   // Set up loop interval (if not set, use full video)
   const loopInterval = useMemo(() => {

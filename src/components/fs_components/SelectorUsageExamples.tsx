@@ -2,8 +2,9 @@ import React from 'react';
 import {
   useRoiSelector,
   useFsEditSelector,
-  useLoaderSelector
-} from './typedSelectors';
+  useLoaderSelector,
+  useProjectParentSelector
+} from './TypedSelectors';
 
 // Example component showing the typed selectors
 export const SelectorExamples: React.FC = () => {
@@ -39,7 +40,7 @@ export const useTypedRoiData = () => {
 export const useTypedFsEditData = () => {
   return {
     videoUrl: useFsEditSelector((state) => state.context.videoUrl),
-    videoTime: useFsEditSelector((state) => state.context.videoTime),
+    currentTime: useProjectParentSelector((state) => state.context.currentTime),
     videoDuration: useFsEditSelector((state) => state.context.videoDuration),
     selectedActionIds: useFsEditSelector(
       (state) => state.context.selectedActionIds

@@ -5,6 +5,7 @@ import {
   useEditActorRef,
   useEditSelector
 } from '@/components/fs_components/FsEditActorContext';
+import { useProjectParentSelector } from './TypedSelectors';
 import { RoiActorContext } from '@/components/fs_components/RoiActorContext';
 import type { FunscriptObject } from '@/types/funscript-types';
 import {
@@ -45,11 +46,11 @@ export function FSGraph() {
   const selectedActionIds = useEditSelector(
     (state) => state.context.selectedActionIds
   ) as string[];
-  const videoFps = useEditSelector((state) => state.context.videoFps) as
-    | number
-    | null;
-  const videoTime = useEditSelector(
-    (state) => state.context.videoTime
+  const videoFps = useProjectParentSelector(
+    (state) => state.context.videoFps
+  ) as number | null;
+  const currentTime = useProjectParentSelector(
+    (state) => state.context.currentTime
   ) as number;
   const { send: roiSend } = RoiActorContext.useActorRef();
   const { send: editSend } = useEditActorRef();
@@ -217,7 +218,7 @@ export function FSGraph() {
         <div style={{ height: 30 }}>
           {/* FrameIndicator component would go here */}
           <div className='text-muted-foreground mb-2 text-xs'>
-            Current Time: {videoTime.toFixed(2)}s
+            Current Time: {currentTime.toFixed(2)}s
           </div>
         </div>
       )}

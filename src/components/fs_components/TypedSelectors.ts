@@ -10,7 +10,8 @@ import {
     useChapterActorRef,
     useZoomActorRef,
     useMotionActorRef,
-    useFsActionActorRef
+    useFsActionActorRef,
+    useProjectParentSelector as _uPPS
 } from './ProjectParentMachineCtx';
 
 // Type for machine state
@@ -19,7 +20,7 @@ type MachineState<TContext> = {
     value: any;
     event: any;
 };
-
+export const useProjectParentSelector = _uPPS;
 // Typed selector functions
 export const useLoaderSelector = <T>(selector: (state: MachineState<LoaderContext>) => T): T => {
     const loaderActor = useLoaderActorRef();

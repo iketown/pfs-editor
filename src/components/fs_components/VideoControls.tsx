@@ -1,19 +1,21 @@
 import React from 'react';
 import {
   useFsEditActorRef,
-  useRoiActorRef,
-  useFsEditSelector
+  useFsEditSelector,
+  useProjectParentSelector,
+  useRoiActorRef
 } from './ProjectParentMachineCtx';
+// import { useProjectParentSelector } from './TypedSelectors';
 import { Button } from '@/components/ui/button';
 import {
-  Play,
+  Eye,
+  EyeOff,
   Pause,
+  Play,
   SkipBack,
   SkipForward,
   ZoomIn,
-  ZoomOut,
-  Eye,
-  EyeOff
+  ZoomOut
 } from 'lucide-react';
 
 interface VideoControlsProps {
@@ -23,13 +25,14 @@ interface VideoControlsProps {
 const VideoControls: React.FC<VideoControlsProps> = ({ className = '' }) => {
   const { send: editSend } = useFsEditActorRef();
   const { send: roiSend } = useRoiActorRef();
-
+  const currentTime = useProjectParentSelector(
+    (state) => state.context.currentTime
+  );
   // Get current state from contexts
   const playerRef = useFsEditSelector(
     (state) => state.context.playerRef
   ) as React.RefObject<HTMLVideoElement> | null;
-  const videoTime = useFsEditSelector((state) => state.context.videoTime);
-  const videoFps = useFsEditSelector((state) => state.context.videoFps);
+  const videoFps = useProjectParentSelector((state) => state.context.videoFps);
   const hideVideo = useFsEditSelector((state) => state.context.hideVideo);
 
   // Local state for play/pause and zoom
@@ -43,7 +46,7 @@ const VideoControls: React.FC<VideoControlsProps> = ({ className = '' }) => {
       if (isPlaying) {
         video.pause();
       } else {
-        video.currentTime = videoTime;
+        video.currentTime = currentTime;
         video.play();
       }
       setIsPlaying(!isPlaying);
@@ -55,7 +58,7 @@ const VideoControls: React.FC<VideoControlsProps> = ({ className = '' }) => {
     const video = playerRef?.current;
     if (video && videoFps) {
       const frameTime = 1 / videoFps; // Time per frame in seconds
-      const newTime = Math.max(0, videoTime - frameTime);
+      const newTime = Math.max(0, currentTime - frameTime);
       editSend({ type: 'SEEK_VIDEO', time: newTime });
     }
   };
@@ -65,7 +68,7 @@ const VideoControls: React.FC<VideoControlsProps> = ({ className = '' }) => {
     const video = playerRef?.current;
     if (video && videoFps) {
       const frameTime = 1 / videoFps; // Time per frame in seconds
-      const newTime = videoTime + frameTime;
+      const newTime = currentTime + frameTime;
       editSend({ type: 'SEEK_VIDEO', time: newTime });
     }
   };

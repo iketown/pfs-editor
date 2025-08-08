@@ -127,9 +127,9 @@ export const projectParentMachine = createMachine({
                     }
                 }),
                 // Forward to existing child actors only
-                sendTo(({ context }) => context.fsEditActor, ({ event }) => event),
-                sendTo(({ context }) => context.roiActor, ({ event }) => event),
-                sendTo(({ context }) => context.chapterActor, ({ event }) => event),
+                // sendTo(({ context }) => context.fsEditActor, ({ event }) => event),
+                // sendTo(({ context }) => context.roiActor, ({ event }) => event),
+                // sendTo(({ context }) => context.chapterActor, ({ event }) => event),
                 // sendTo(({ context }) => context.motionActor, ({ event }) => event),  // Not spawned yet
                 // sendTo(({ context }) => context.fsActionActor, ({ event }) => event), // Not spawned yet
             ]
@@ -139,6 +139,7 @@ export const projectParentMachine = createMachine({
             actions: [
                 assign(({ context, event }) => {
                     const { playerRef } = context;
+                    console.log('VIDEO_SEEK', event, playerRef?.current);
                     if (playerRef) {
                         playerRef.current.currentTime = event.time;
                     }

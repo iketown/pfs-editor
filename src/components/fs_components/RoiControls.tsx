@@ -25,11 +25,12 @@ import React, { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import {
-  // useRoiSelector,
   useFsEditActorRef,
+  useProjectParentActorRef,
   useProjectParentSelector,
   useRoiActorRef
 } from './ProjectParentMachineCtx';
+
 import { useRoiSelector } from './TypedSelectors';
 
 // Form schema for ROI validation
@@ -47,7 +48,7 @@ type RoiFormData = z.infer<typeof roiFormSchema>;
 const RoiControls: React.FC = () => {
   const { send: roiSend } = useRoiActorRef();
   const { send: editSend } = useFsEditActorRef();
-
+  const { send: parentSend } = useProjectParentActorRef();
   // Get state from roi machine
   const roisObject = useRoiSelector((state) => state.context.rois);
   const selectedROIid = useRoiSelector((state) => state.context.selectedROIid);
@@ -130,9 +131,9 @@ const RoiControls: React.FC = () => {
       setEditingROI(roi);
       setIsEditing(true);
       roiSend({ type: 'SELECT_ROI', roiId: roi.id });
-      editSend({ type: 'SEEK_VIDEO', time: roi.timeStart });
+      parentSend({ type: 'VIDEO_SEEK', time: roi.timeStart });
     },
-    [form, roiSend, editSend]
+    [form, roiSend, parentSend]
   );
 
   // Handle saving ROI changes
@@ -202,12 +203,12 @@ const RoiControls: React.FC = () => {
     (value: string) => {
       roiSend({ type: 'SELECT_ROI', roiId: value });
       if (!!value) {
-        // send a VIDEO_TIME_UPDATE event to the roi machine
+        // send a SEEK_VIDEO event to seek to the ROI start time
         const roi = roisObject[value];
         console.log('selected roi', roi);
 
         if (roi) {
-          editSend({ type: 'VIDEO_TIME_UPDATE', time: roi.timeStart });
+          parentSend({ type: 'VIDEO_SEEK', time: roi.timeStart });
         }
       }
     },

@@ -25,6 +25,7 @@ import {
   useEditSelector
 } from './FsEditActorContext';
 import { useRoiActorRef } from './RoiActorContext';
+import { useProjectParentSelector } from './TypedSelectors';
 
 ChartJS.register(
   CategoryScale,
@@ -47,8 +48,8 @@ export default function FSGraph({ funscript }: { funscript: FunscriptObject }) {
   const videoFps = useEditSelector((state) => state.context.videoFps) as
     | number
     | null;
-  const videoTime = useEditSelector(
-    (state) => state.context.videoTime
+  const currentTime = useProjectParentSelector(
+    (state) => state.context.currentTime
   ) as number;
   const { send: roiSend } = useRoiActorRef();
   const { send: editSend } = useEditActorRef();
@@ -215,7 +216,7 @@ export default function FSGraph({ funscript }: { funscript: FunscriptObject }) {
           <FrameIndicator
             chartRef={chartRef}
             fps={videoFps}
-            currentTime={videoTime}
+            currentTime={currentTime}
             onFrameClick={handleFrameClick}
             height={30}
           />

@@ -2,6 +2,7 @@
 
 import React, { useCallback, useMemo } from 'react';
 import { useRoiSelector, useRoiActorRef } from './ProjectParentMachineCtx';
+import { useProjectParentSelector } from './TypedSelectors';
 import {
   useFsEditSelector,
   useFsEditActorRef
@@ -14,10 +15,14 @@ import { ROI } from '@/types/roi-types';
 const ROIRangeSlider: React.FC = () => {
   const { send: roiSend } = useRoiActorRef();
   const { send: editSend } = useFsEditActorRef();
-  const rangeStart = useFsEditSelector((state) => state.context.rangeStart);
-  const rangeEnd = useFsEditSelector((state) => state.context.rangeEnd);
+  const rangeStart = useProjectParentSelector(
+    (state) => state.context.rangeStart
+  );
+  const rangeEnd = useProjectParentSelector((state) => state.context.rangeEnd);
   // Get current video time from edit machine
-  const videoTime = useFsEditSelector((state) => state.context.videoTime);
+  const currentTime = useProjectParentSelector(
+    (state) => state.context.currentTime
+  );
   const videoDuration = useFsEditSelector(
     (state) => state.context.videoDuration
   );
@@ -30,7 +35,6 @@ const ROIRangeSlider: React.FC = () => {
 
   // Convert ROI times to seconds for the slider (they're already in seconds now)
   const roiPositions = useMemo(() => rois.map((roi) => roi.timeStart), [rois]);
-  const currentTimeSeconds = useMemo(() => videoTime, [videoTime]);
 
   // Format time for display
   const formatTime = (seconds: number): string => {
@@ -41,7 +45,6 @@ const ROIRangeSlider: React.FC = () => {
 
   // Handle adding a new ROI at current time
   const handleAddROI = useCallback(() => {
-    const currentTime = currentTimeSeconds; // Already in seconds
     const newROI: ROI = {
       id: `roi-${Date.now()}`,
       title: `ROI ${rois.length + 1}`,
@@ -52,7 +55,7 @@ const ROIRangeSlider: React.FC = () => {
       timeStart: currentTime
     };
     roiSend({ type: 'ADD_ROI', roi: newROI });
-  }, [currentTimeSeconds, rois.length, roiSend]);
+  }, [currentTime, rois.length, roiSend]);
 
   // Handle removing an ROI
   const handleRemoveROI = useCallback(
@@ -76,7 +79,7 @@ const ROIRangeSlider: React.FC = () => {
       <div className='flex items-center justify-between'>
         <h3 className='text-sm font-medium'>ROI Timeline</h3>
         <Button size='sm' variant='outline' onClick={handleAddROI}>
-          Add ROI at {formatTime(currentTimeSeconds)}
+          Add ROI at {formatTime(currentTime)}
         </Button>
       </div>
 
@@ -137,7 +140,7 @@ const ROIRangeSlider: React.FC = () => {
           {/* Current time indicator */}
           <div
             className='absolute top-0 bottom-0 w-0.5 bg-red-500'
-            style={{ left: `${(currentTimeSeconds / videoDuration) * 100}%` }}
+            style={{ left: `${(currentTime / videoDuration) * 100}%` }}
           />
         </div>
 
