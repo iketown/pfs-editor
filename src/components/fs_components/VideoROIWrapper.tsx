@@ -1,16 +1,16 @@
+import { ROI } from '@/types/roi-types';
 import React, {
-  useRef,
-  useState,
-  useEffect,
-  ReactNode,
   CSSProperties,
+  ReactNode,
+  useCallback,
+  useEffect,
   useMemo,
-  useCallback
+  useRef,
+  useState
 } from 'react';
 import Moveable, { OnDrag, OnResize } from 'react-moveable';
-import { useRoiSelector, useRoiActorRef } from './ProjectParentMachineCtx';
+import { useRoiActorRef, useRoiSelector } from './ProjectParentMachineCtx';
 import { useActiveRoiWithZoom } from './TypedSelectors';
-import { ROI } from '@/types/roi-types';
 
 interface VideoROIWrapperProps {
   style?: CSSProperties;
