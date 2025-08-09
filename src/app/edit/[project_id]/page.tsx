@@ -187,12 +187,12 @@ export function EditProjectPage() {
                 {videoUrl ? (
                   <div>
                     <VideoControls />
-                    <VideoPlayer className='h-64 w-full object-cover' />
+                    <VideoPlayer className='h-96 w-full object-cover' />
                     <VideoPlayhead />
                     <VideoCustomControls />
                   </div>
                 ) : (
-                  <div className='bg-muted flex h-64 flex-col items-center justify-center rounded'>
+                  <div className='bg-muted flex h-96 flex-col items-center justify-center rounded'>
                     <p className='text-muted-foreground'>
                       {videoPrompt || 'No video file available'}
                     </p>

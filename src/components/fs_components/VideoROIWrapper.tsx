@@ -103,7 +103,7 @@ export const VideoROIWrapper: React.FC<VideoROIWrapperProps> = ({
       transformOrigin: 'top left',
       transition: 'transform 0.3s ease-in-out'
     };
-  }, [activeROI, containerElement, playerRef, svgSize]);
+  }, [activeROI, containerElement, playerRef]);
 
   const onUpdateROI = useCallback(
     (updatedROI: ROI, save: boolean = false) => {
@@ -194,7 +194,7 @@ export const VideoROIWrapper: React.FC<VideoROIWrapperProps> = ({
       <div style={zoomTransform}>{children}</div>
 
       {/* Only render SVG and Moveable if there's an active ROI */}
-      {activeROI && (
+      {activeROI && !activeROI.zoomed && (
         <>
           <svg
             width={svgSize.w}
