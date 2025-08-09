@@ -68,6 +68,101 @@ function videoToDisplay(pt, vidWidth, vidHeight, displayWidth, displayHeight) {
 
 ---
 
+## Zoom View & Transforms (ROI-as-Viewport)
+
+When **zoomed**, the player is wrapped in a container that applies a CSS transform so the ROI effectively fills the viewport. This changes how you convert pointer positions to video coordinates.
+
+### Transform the children
+
+Your component sets:
+
+```ts
+const scale = Math.min(containerRect.width / roiWidth, containerRect.height / roiHeight);
+const translateX = -roiX * scale + (containerRect.width - roiWidth * scale) / 2;
+const translateY = -roiY * scale + (containerRect.height - roiHeight * scale) / 2;
+
+// Applied to a wrapper around the <video>
+style = {
+  transform: `scale(${scale}) translate(${translateX / scale}px, ${translateY / scale}px)`,
+  transformOrigin: 'top left'
+};
+```
+
+This means the mapping from **container/display space → video space** in zoom mode is:
+
+```ts
+// pointer is a point relative to the container's top-left (e.g., from getBoundingClientRect math)
+function displayToVideoZoom(pointer: {x: number; y: number}, scale: number, translateX: number, translateY: number) {
+  // Inverse of: v' = scale * v + [translateX, translateY]
+  const x = (pointer.x - translateX) / scale;
+  const y = (pointer.y - translateY) / scale;
+  return { x, y }; // in video pixels
+}
+```
+
+### Practical notes
+
+* **Clicks while zoomed**: capture pointer in container coords, then call `displayToVideoZoom(...)` to get **video-space** coords before emitting `POINT.ADD`.
+* **Bounds**: in zoom mode, only accept points if they’re inside the current **ROI (video space)** because the viewport may show only that portion.
+* **Overlay rendering**: your current code hides the SVG/Moveable when `zoomed`. If you later render overlays while zoomed, draw them in **video space** and let the CSS transform position them automatically (they should be children of the same transformed wrapper), or convert to container space with the **forward** transform:
+
+  ```ts
+  function videoToDisplayZoom(pt: {x:number;y:number}, scale:number, translateX:number, translateY:number) {
+    return { x: pt.x * scale + translateX, y: pt.y * scale + translateY };
+  }
+  ```
+* **OpenCV**: still operates in **video space**. The zoom transform is purely visual and should not change the inputs you pass to LK optical flow (`calcOpticalFlowPyrLK`).
+* **Storage**: continue storing all `{time,x,y}` in video pixels. Zoom/resizes won’t affect persisted data.
+
+\----------------- | --------------------------------------------------------------------------------------------------------------------------- |
+\| **Video space**   | Pixel coordinates from the original source frame (`vidWidth`, `vidHeight`) — this is what OpenCV works with.                |
+\| **Display space** | Pixel coordinates as rendered in the DOM (`displayWidth`, `displayHeight`) — this is what the user sees and interacts with. |
+
+**ROI Conversion (display → video)**
+
+```ts
+function displayToVideo(roiDisplay, vidWidth, vidHeight, displayWidth, displayHeight) {
+  const scaleX = vidWidth / displayWidth;
+  const scaleY = vidHeight / displayHeight;
+  return {
+    x: roiDisplay.x * scaleX,
+    y: roiDisplay.y * scaleY,
+    width: roiDisplay.width * scaleX,
+    height: roiDisplay.height * scaleY
+  };
+}
+```
+
+**Points Conversion (display → video)**
+
+```ts
+function pointDisplayToVideo(pt, vidWidth, vidHeight, displayWidth, displayHeight) {
+  return {
+    x: pt.x * (vidWidth / displayWidth),
+    y: pt.y * (vidHeight / displayHeight)
+  };
+}
+```
+
+**Video → Display (for overlay rendering)**
+
+```ts
+function videoToDisplay(pt, vidWidth, vidHeight, displayWidth, displayHeight) {
+  return {
+    x: pt.x * (displayWidth / vidWidth),
+    y: pt.y * (displayHeight / vidHeight)
+  };
+}
+```
+
+**Why This Matters**
+
+* ROI cropping inside OpenCV must match what the user sees.
+* Store `{time, x, y}` in **video space** so resizing doesn’t invalidate data.
+* Always convert between spaces when drawing or interpreting clicks.
+
+---
+
 ## Data Model
 
 ```ts
