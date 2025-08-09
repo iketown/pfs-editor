@@ -83,9 +83,18 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
     // For now, use a default FPS of 30 as it's most common
     // In a real implementation, you might want to analyze the video stream
-    console.log('Using default FPS: 30');
     parentSend({ type: 'SET_VIDEO_FPS', fps: 30 });
     parentSend({ type: 'SET_VIDEO_DURATION', duration: video.duration });
+    parentSend({
+      type: 'SET_VIDEO_DIMENSIONS',
+      vidWidth: video.videoWidth,
+      vidHeight: video.videoHeight
+    });
+    parentSend({
+      type: 'SET_DISPLAY_DIMENSIONS',
+      displayWidth: video.clientWidth,
+      displayHeight: video.clientHeight
+    });
   };
 
   if (!videoUrl || !mounted) return null;

@@ -18,6 +18,11 @@ export interface ProjectParentContext {
     projectId: string | null;
     rangeStart: number;
     rangeEnd: number;
+    // Video dimensions
+    vidHeight: number | null; // Original video file height
+    vidWidth: number | null;  // Original video file width
+    displayHeight: number | null; // Current display height (container size)
+    displayWidth: number | null;  // Current display width (container size)
     // Child actors
     loaderActor: any;
     fsEditActor: any;
@@ -38,6 +43,8 @@ export type ProjectParentEvent =
     | { type: 'SET_VIDEO_FPS'; fps: number }
     | { type: 'SET_PROJECT_ID'; projectId: string }
     | { type: 'SET_VIDEO_RANGE'; rangeStart: number; rangeEnd: number }
+    | { type: 'SET_VIDEO_DIMENSIONS'; vidWidth: number; vidHeight: number }
+    | { type: 'SET_DISPLAY_DIMENSIONS'; displayWidth: number; displayHeight: number }
     // Mode switching events
     | { type: 'SWITCH_TO_PLAYING' }
     | { type: 'SWITCH_TO_CHAPTERS_EDITING' }
@@ -71,6 +78,10 @@ export const projectParentMachine = createMachine({
         rangeEnd: 0,
         videoFps: null,
         projectId: null,
+        vidHeight: null,
+        vidWidth: null,
+        displayHeight: null,
+        displayWidth: null,
         loaderActor: null,
         fsEditActor: null,
         roiActor: null,
@@ -161,6 +172,32 @@ export const projectParentMachine = createMachine({
                     rangeStart: ({ event }) => event.rangeStart,
                     rangeEnd: ({ event }) => event.rangeEnd
                 }),
+            ]
+        },
+
+        SET_VIDEO_DIMENSIONS: {
+            actions: [
+                assign({
+                    vidWidth: ({ event }) => event.vidWidth,
+                    vidHeight: ({ event }) => event.vidHeight
+                }),
+                // Forward to child actors that might need video dimensions
+                // sendTo(({ context }) => context.fsEditActor, ({ event }) => event),
+                // sendTo(({ context }) => context.roiActor, ({ event }) => event),
+                // sendTo(({ context }) => context.chapterActor, ({ event }) => event),
+            ]
+        },
+
+        SET_DISPLAY_DIMENSIONS: {
+            actions: [
+                assign({
+                    displayWidth: ({ event }) => event.displayWidth,
+                    displayHeight: ({ event }) => event.displayHeight
+                }),
+                // Forward to child actors that might need display dimensions
+                sendTo(({ context }) => context.fsEditActor, ({ event }) => event),
+                sendTo(({ context }) => context.roiActor, ({ event }) => event),
+                sendTo(({ context }) => context.chapterActor, ({ event }) => event),
             ]
         },
 
